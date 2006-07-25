@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<sections>
+	<section name="databasesettings">
+		<item key="connectionstring" value="Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;" />
+	</section>
+	<section name="logging">
+		<item key="logfilename" value="D:\DMS_Controlled\Space_Manager_Net\bin\SpaceManagerLog" />
+	</section>
+	<section name="programcontrol">
+		<item key="modulename" value="Space: WD39548" />
+		<item key="machname" value="Proto-4" />
+		<item key="drives" value="E:,F:" />	
+		<item key="minfreegigabytes" value="250" />
+		<item key="perspective" value="client" />	
+	    	<item key="maxrepetitions" value="1" />
+		<item key="debuglevel" value="0" />
+		<item key="mgractive" value="True" />
+	</section>
+	<section name="archive">
+		<item key="username" value="dmsarch" />
+		<item key="password" value="bb7unwdo" />
+		<item key="usetls" value="true" />
+		<comment> If usetls=false then serverport setting is not used </comment>
+		<item key="serverport" value="2121" />
+	</section>
+</sections>
