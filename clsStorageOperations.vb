@@ -188,6 +188,8 @@ Public Class clsStorageOperations
 		Catch ex As Exception
 			m_message = "ERROR: " + Replace(ex.Message, vbCrLf, " ")
 			m_message = StripPwd(m_message)
+		Finally
+			FTP1.Close()
 			FTP1.Dispose()
 		End Try
 
