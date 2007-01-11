@@ -25,6 +25,7 @@ Public Class clsMainProcess
 	Private m_IniFileName As String = "SpaceManager.xml"
 	Private m_MgrActive As Boolean = True
 	Private m_JobsFound As Boolean
+	Private m_DebugLevel As Integer = 0
 #End Region
 
   ' create full path to ini file
@@ -52,7 +53,7 @@ Public Class clsMainProcess
 
 		' create the object that will manage the purge tasks
 		'
-		myPurgeTask = New clsPurgeTask(myMgrSettings, myLogger)
+		myPurgeTask = New clsPurgeTask(myMgrSettings, myLogger, m_DebugLevel)
 
 		' create the object that will manage the unpurge tasks
 		'
@@ -78,6 +79,10 @@ Public Class clsMainProcess
 		'
 		m_MgrActive = CBool(myMgrSettings.GetParam("programcontrol", "mgractive"))
 
+		' Debug level
+		'
+		m_DebugLevel = CInt(myMgrSettings.GetParam("programcontrol", "debuglevel"))
+
 	End Sub
 
 	' determine if free space on disk is above acceptable threshold
@@ -98,7 +103,13 @@ Public Class clsMainProcess
 		availableSpace = System.Convert.ToDouble(disk("FreeSpace"))
 		availableSpace /= 2 ^ 30		'convert raw byte count to gigabytes
 
+		If m_DebugLevel > 3 Then
+			myLogger.PostEntry("Space Threshold: " & m_spaceThreshold.ToString & ", Avail space: " & availableSpace.ToString, _
+			  ILogger.logMsgType.logDebug, True)
+		End If
+
 		Return availableSpace > m_spaceThreshold
+
 	End Function
 
 	' Manage the storage space for the given drive on the storage server
@@ -112,35 +123,45 @@ Public Class clsMainProcess
 
 		Dim PurgeCheckReqd As Boolean = True
 		Dim UnpurgeCheckReqd As Boolean = True
+		Dim UnPurgeAllowed As Boolean = True
 
 		Try
 			While UnpurgeCheckReqd		' keep checking for unpurges while there is necessity
 				While PurgeCheckReqd		 ' keep checking for purges while there is necessity
 					If SpaceAboveThreshold(machine, drive) Then
-						PurgeCheckReqd = False					' we don't have to keep checking for purgable datasets
+						PurgeCheckReqd = False					  ' we don't have to keep checking for purgable datasets
+						UnPurgeAllowed = True
 						myLogger.PostEntry("No purge required", ILogger.logMsgType.logNormal, True)
 					Else
 						myPurgeTask.RequestTask(drive)
 						If Not myPurgeTask.TaskWasAssigned Then
-							PurgeCheckReqd = False					 ' no point to keep checking for purgable datasets
+							PurgeCheckReqd = False						  ' no point to keep checking for purgable datasets
+							UnPurgeAllowed = False							 'drive is short on space, so we don't want to allow unpurging
 							myLogger.PostEntry("Purge needed; no purge tasks assigned", ILogger.logMsgType.logWarning, False)
 						Else
 							rp = myStorageOperations.PurgeDataset(myPurgeTask)
+							'							System.Threading.Thread.Sleep(5000)					 'Delay 5 seconds to prevent database transaction lock
 							myPurgeTask.CloseTask(rp, myStorageOperations.Message)
 						End If
 					End If
 				End While		 'PurgeCheckReqd
 
-				myUnpurgeTask.RequestTask(drive)
-				If Not myUnpurgeTask.TaskWasAssigned Then
-					UnpurgeCheckReqd = False				' no need to keep checking
-					myLogger.PostEntry("No unpurge required", ILogger.logMsgType.logNormal, True)
+				If UnPurgeAllowed Then
+					myUnpurgeTask.RequestTask(drive)
+					If Not myUnpurgeTask.TaskWasAssigned Then
+						UnpurgeCheckReqd = False						' no need to keep checking
+						myLogger.PostEntry("No unpurge required", ILogger.logMsgType.logNormal, True)
+					Else
+						ru = myStorageOperations.UnpurgeDataset(myUnpurgeTask)
+						myUnpurgeTask.CloseTask(ru, myStorageOperations.Message)
+						'						System.Threading.Thread.Sleep(5000)						'Delay 5 seconds to prevent database transaction lock
+						PurgeCheckReqd = True						 ' we need to go back and check our free space
+					End If
 				Else
-					ru = myStorageOperations.UnpurgeDataset(myUnpurgeTask)
-					myUnpurgeTask.CloseTask(ru, myStorageOperations.Message)
-					PurgeCheckReqd = True			' we need to go back and check our free space
+					myLogger.PostEntry("Unpurge needed, drive free space below threshold", ILogger.logMsgType.logWarning, False)
+					UnpurgeCheckReqd = False			'Force an exit from the unpurge loop
 				End If
-			End While		'UnpurgeCheckReqd
+			End While			 'UnpurgeCheckReqd
 		Catch e As Exception
 			'' future
 		End Try
@@ -227,6 +248,7 @@ Public Class clsMainProcess
 		m_clientPerspective = (myMgrSettings.GetParam("programcontrol", "perspective") = "client")
 		m_maxRepetitions = Integer.Parse(myMgrSettings.GetParam("programcontrol", "maxrepetitions"))
 		m_MgrActive = CBool(myMgrSettings.GetParam("programcontrol", "mgractive"))
+		m_DebugLevel = CInt(myMgrSettings.GetParam("programcontrol", "debuglevel"))
 
 	End Function
 

@@ -4,13 +4,13 @@
 		<item key="connectionstring" value="Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;" />
 	</section>
 	<section name="logging">
-		<item key="logfilename" value="D:\DMS_Controlled\Space_Manager_Net\bin\SpaceManagerLog" />
+		<item key="logfilename" value="D:\DMS_Controlled\Space_Manager_Rev750\bin\SpaceManagerLog" />
 	</section>
 	<section name="programcontrol">
-		<item key="modulename" value="Space: WD39548" />
-		<item key="machname" value="Proto-4" />
-		<item key="drives" value="E:,F:" />	
-		<item key="minfreegigabytes" value="250" />
+		<item key="modulename" value="Space: WE10129" />
+		<item key="machname" value="Proto-7" />
+		<item key="drives" value="F:,G:" />	
+		<item key="minfreegigabytes" value="130" />
 		<item key="perspective" value="client" />	
 	    	<item key="maxrepetitions" value="1" />
 		<item key="debuglevel" value="0" />
