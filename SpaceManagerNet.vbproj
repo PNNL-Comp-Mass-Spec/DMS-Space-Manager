@@ -27,7 +27,7 @@
                     Name = "Debug"
                     BaseAddress = "285212672"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = ""
+                    DefineConstants = "DoDelete=True"
                     DefineDebug = "true"
                     DefineTrace = "true"
                     DebugSymbols = "true"
@@ -83,12 +83,6 @@
                     HintPath = "..\..\..\WINDOWS\Microsoft.NET\Framework\v1.0.3705\System.Management.dll"
                 />
                 <Reference
-                    Name = "Dart.PowerTCP.SecureFtp"
-                    AssemblyName = "Dart.PowerTCP.SecureFtp"
-                    HintPath = "C:\Program Files\PowerTCP\Secure FTP for .NET\Bin\Dart.PowerTCP.SecureFtp.DLL"
-                    Private = "True"
-                />
-                <Reference
                     Name = "PRISM"
                     AssemblyName = "PRISM"
                     HintPath = "bin\PRISM.dll"
@@ -135,25 +129,6 @@
                     RelPath = "clsStorageOperations.vb"
                     SubType = "Code"
                     BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "clsUnpurgeTask.vb"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Form1.vb"
-                    SubType = "Form"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Form1.resx"
-                    DependentUpon = "Form1.vb"
-                    BuildAction = "EmbeddedResource"
-                />
-                <File
-                    RelPath = "licenses.licx"
-                    BuildAction = "EmbeddedResource"
                 />
                 <File
                     RelPath = "SpaceManager.xml"

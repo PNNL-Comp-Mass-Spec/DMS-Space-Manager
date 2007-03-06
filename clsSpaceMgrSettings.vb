@@ -13,20 +13,16 @@ Namespace MgrSettings
 	Public Class clsSpaceMgrSettings
 		Implements IMgrParams
 
+#Region "Module variables"
 		'ini file reader
 		Private m_IniFilePath As String = ""
 		Private m_iniFileReader As IniFileReader
 
 		'default section name
 		Private m_defaultSection As String = ""
+#End Region
 
-		Public Sub New(Optional ByVal iniFilePath As String = "")
-			If iniFilePath <> "" Then
-				m_IniFilePath = iniFilePath
-				LoadSettings()
-			End If
-		End Sub
-
+#Region "Properties"
 		Public Property IniFilePath() As String
 			Get
 				Return m_IniFilePath
@@ -35,6 +31,14 @@ Namespace MgrSettings
 				m_IniFilePath = Value
 			End Set
 		End Property
+#End Region
+
+		Public Sub New(Optional ByVal iniFilePath As String = "")
+			If iniFilePath <> "" Then
+				m_IniFilePath = iniFilePath
+				LoadSettings()
+			End If
+		End Sub
 
 		Public Function LoadSettings() As Boolean
 			m_iniFileReader = New IniFileReader(m_IniFilePath, False)
