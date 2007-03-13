@@ -166,21 +166,23 @@ Public Class clsMainProcess
 
 		' do space management function for each of the managed drives on the storage server
 
-		' get list of drives from ini file parameter
-		Dim driveList As String = myMgrSettings.GetParam("programcontrol", "drives")
+		If IsMgrActive() Then
+			' get list of drives from ini file parameter
+			Dim driveList As String = myMgrSettings.GetParam("programcontrol", "drives")
 
-		' get name of machine
-		Dim machine As String = myMgrSettings.GetParam("programcontrol", "machname")
+			' get name of machine
+			Dim machine As String = myMgrSettings.GetParam("programcontrol", "machname")
 
-		' extract each drive name from list and run the space management process for it
-		Dim drives As String() = Split(driveList, ";")
-		Dim drive As String
-		For Each drive In drives
-			DoSpaceManagementForOneDrive(machine, drive)
-			myLogger.PostEntry("Space management complete for drive " & drive, ILogger.logMsgType.logNormal, True)
-		Next
+			' extract each drive name from list and run the space management process for it
+			Dim drives As String() = Split(driveList, ";")
+			Dim drive As String
+			For Each drive In drives
+				DoSpaceManagementForOneDrive(machine, drive)
+				myLogger.PostEntry("Space management complete for drive " & drive, ILogger.logMsgType.logNormal, True)
+			Next
+			myLogger.PostEntry("All space management tasks complete", ILogger.logMsgType.logHealth, False)
+		End If
 
-		myLogger.PostEntry("All space management tasks complete", ILogger.logMsgType.logHealth, False)
 		myLogger.PostEntry("===== Closing Space Manager =====", ILogger.logMsgType.logNormal, True)
 
 	End Sub
@@ -196,7 +198,7 @@ Public Class clsMainProcess
 
 		DoSetup()
 		myLogger.PostEntry("===== Started Space Manager V" & Application.ProductVersion & " ===== ", _
-		  myLogger.logMsgType.logNormal, True)
+		 myLogger.logMsgType.logNormal, True)
 
 		'Set up FileWatcher to detect setup file changes
 		Dim Fi As FileInfo

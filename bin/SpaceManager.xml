@@ -4,16 +4,16 @@
 		<item key="connectionstring" value="Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;" />
 	</section>
 	<section name="logging">
-		<item key="logfilename" value="D:\DMS_Controlled\Space_Manager_DeepPurge\bin\SpaceMan" />
+		<item key="logfilename" value="D:\DMS_Controlled\Space_Manager\bin\SpaceMan" />
 	</section>
 	<section name="programcontrol">
 		<item key="modulename" value="Space: WE10129" />
 		<item key="machname" value="Proto-3" />
 		<comment>List is drive1,threshold1;drive2,threshold2</comment>
-		<item key="drives" value="G:,205" />	
+		<item key="drives" value="G:,10" />	
 		<item key="perspective" value="client" />	
 	    	<item key="maxrepetitions" value="5" />
 		<item key="debuglevel" value="5" />
-		<item key="mgractive" value="True" />
+		<item key="mgractive" value="False" />
 	</section>
 </sections>
