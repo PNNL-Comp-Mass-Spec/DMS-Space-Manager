@@ -269,6 +269,7 @@ Public Class clsStorageOperations
 		For Each FileToDelete As String In DsFiles
 			Try
 #If DoDelete Then
+				SetAttr(FileToDelete, FileAttribute.Normal)
 				File.Delete(FileToDelete)
 #End If
 			Catch ex As Exception
