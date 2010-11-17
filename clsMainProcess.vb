@@ -123,6 +123,7 @@ Public Class clsMainProcess
 
 		Dim LoopCounter As Integer = 0
 		Dim PurgeCheckReqd As Boolean = True
+		Dim ErrorCounter As Integer = 0
 
 		DriveData = SplitDriveString(Drive)
 		If DriveData.GetUpperBound(0) = -1 Then
@@ -132,7 +133,7 @@ Public Class clsMainProcess
 		End If
 
 		Try
-			While (PurgeCheckReqd) And (LoopCounter < m_maxRepetitions)			 ' keep checking for purges while there is necessity
+			While (PurgeCheckReqd) And (LoopCounter < m_maxRepetitions) And (ErrorCounter < 10)		 ' keep checking for purges while there is necessity
 				If Not PerformJobPrereqs() Then Exit While
 				Select Case SpaceAboveThreshold(Machine, DriveData)
 					Case SPACE_CHECK_ERROR					  'Error
@@ -147,6 +148,11 @@ Public Class clsMainProcess
 							myLogger.PostEntry("Purge needed; no purge tasks assigned", ILogger.logMsgType.logWarning, False)
 						Else
 							rp = myStorageOperations.PurgeDataset(myPurgeTask)
+							If rp = IPurgeTaskParams.CloseOutType.CLOSEOUT_SUCCESS Then
+								ErrorCounter = 0
+							ElseIf rp = IPurgeTaskParams.CloseOutType.CLOSEOUT_FAILED Then
+								ErrorCounter += 1
+							End If
 							myPurgeTask.CloseTask(rp, myStorageOperations.Message)
 						End If
 				End Select
@@ -154,6 +160,9 @@ Public Class clsMainProcess
 			End While			  'PurgeCheckReqd
 			If LoopCounter >= m_maxRepetitions Then
 				myLogger.PostEntry("Max repetition count reached", ILogger.logMsgType.logNormal, True)
+			End If
+			If ErrorCounter >= 10 Then
+				myLogger.PostEntry("Max error count reached", ILogger.logMsgType.logError, True)
 			End If
 		Catch e As Exception
 			Dim Msg As String = "clsMainProcess.DoSpaceManagementForOneDrive(), exception: " & e.Message
