@@ -7,11 +7,11 @@
 		<item key="logfilename" value="C:\DMS_Programs\DMS4\SpaceManagerNet\bin\Logs\SpaceManagerLog" />
 	</section>
 	<section name="programcontrol">
-		<item key="modulename" value="Space: Proto-3" />
-		<item key="machname" value="Proto-3" />
-		<item key="drives" value="E:" />	
+		<item key="modulename" value="Space: Proto-9" />
+		<item key="machname" value="Proto-9" />
+		<item key="drives" value="G:" />	
 		<item key="minfreegigabytes" value="100" />
-		<item key="perspective" value="server" />	
+		<item key="perspective" value="client" />	
 	    <item key="maxrepetitions" value="5" />
 		<item key="debuglevel" value="0" />
 	</section>

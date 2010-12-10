@@ -8,12 +8,12 @@
 	</section>
 	<section name="programcontrol">
 		<item key="modulename" value="Space: WE10129" />
-		<item key="machname" value="Proto-3" />
+		<item key="machname" value="Proto-9" />
 		<comment>List is drive1,threshold1;drive2,threshold2</comment>
-		<item key="drives" value="G:,10" />	
+		<item key="drives" value="G:,400" />	
 		<item key="perspective" value="client" />	
 	    	<item key="maxrepetitions" value="5" />
 		<item key="debuglevel" value="5" />
-		<item key="mgractive" value="False" />
+		<item key="mgractive" value="True" />
 	</section>
 </sections>

@@ -3,6 +3,7 @@ Imports SpaceManagerNet.MgrSettings
 Imports PRISM.Logging
 Imports PRISM.Files
 Imports System.Security.Cryptography
+Imports DataFolderAccessVerifierDLL
 
 Public Class clsStorageOperations
 
@@ -29,6 +30,9 @@ Public Class clsStorageOperations
 
 	' debug level
 	Private m_DebugLevel As Integer = 0
+
+	' archive data access verification
+	Private WithEvents m_AccessVerifier As clsFolderAccessVerifier
 #End Region
 
 #Region "Properties"
@@ -47,6 +51,15 @@ Public Class clsStorageOperations
 		m_DebugLevel = DebugLevel
 
 		m_clientPerspective = (m_mgrParams.GetParam("programcontrol", "perspective") = "client")
+		m_AccessVerifier = New clsFolderAccessVerifier
+
+		With m_AccessVerifier
+			.FolderTimeoutSeconds = 15
+			.FileTimeoutSeconds = 5
+			.RecurseSubfolders = True
+			.RecurseFoldersMaxLevels = 0
+			.IgnoreTimeoutErrorsWhenRecursing = True
+		End With
 
 	End Sub
 
@@ -226,6 +239,19 @@ Public Class clsStorageOperations
 		'Get path to dataset folder in archive
 		DsPathSamba = PurgeParams.GetParam("SambaStoragePath") & PurgeParams.GetParam("datasetfolder")
 
+		'Determine if dataset folder in archive has been sent to tape (causes timeout errors)
+		Msg = "Verifying archived folder " & DsPathSamba & " is on disk"
+		m_logger.PostEntry(Msg, ILogger.logMsgType.logNormal, True)
+		If m_AccessVerifier.ProcessFolder(DsPathSamba) Then
+			'Success - just make a log entry
+			Msg = "Archive folder " & DsPathSamba & " successfully verified"
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logNormal, True)
+		Else
+			Msg = m_AccessVerifier.GetResultsSummary()
+			m_logger.PostEntry(Msg, ILogger.logMsgType.logError, True)
+			Return PurgeTask.IPurgeTaskParams.CloseOutType.CLOSEOUT_FAILED
+		End If
+
 		m_logger.PostEntry("Verifying archive integrity, dataset " & DsPathSvr, ILogger.logMsgType.logNormal, True)
 		Dim CompRes As clsStorageOperations.ArchiveCompareResults = CompareDatasetFolders(DsName, DsPathSvr, DsPathSamba)
 		Select Case CompRes
@@ -307,4 +333,15 @@ Public Class clsStorageOperations
 
 	End Function
 
+	Private Sub m_AccessVerifier_ErrorEvent(ByVal strMessage As String) Handles m_AccessVerifier.ErrorEvent
+		m_logger.PostEntry(strMessage, ILogger.logMsgType.logError, True)
+	End Sub
+
+	Private Sub m_AccessVerifier_MessageEvent(ByVal strMessage As String) Handles m_AccessVerifier.MessageEvent
+		m_logger.PostEntry(strMessage, ILogger.logMsgType.logNormal, True)
+	End Sub
+
+	Private Sub m_AccessVerifier_WarningEvent(ByVal strMessage As String) Handles m_AccessVerifier.WarningEvent
+		m_logger.PostEntry(strMessage, ILogger.logMsgType.logWarning, True)
+	End Sub
 End Class
