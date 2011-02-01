@@ -25,6 +25,7 @@ namespace Space_Manager
 		#region "Constants"
 			const string RESULT_FILE_NAME_PREFIX = "results.";
 			const string STAGED_FILE_NAME_PREFIX = "stagemd5.";
+			const string WAITING_FOR_HASH_FILE = "(HASH)";
 		#endregion
 
 		#region "Enums"
@@ -33,7 +34,8 @@ namespace Space_Manager
 				Compare_Equal,
 				Compare_Not_Equal,
 				Compare_Storage_Server_Folder_Missing,
-				Compare_Error
+				Compare_Error,
+				Compare_Waiting_For_Hash
 			}
 		#endregion
 
@@ -109,6 +111,9 @@ namespace Space_Manager
 						// Sever/Archive mismatch; an archive update is required before purging
 						bool retVal = DeleteArchiveHashResultsFile(datasetName);
 						return EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED;
+					case ArchiveCompareResults.Compare_Waiting_For_Hash:
+						// Hash file not in archive yet, but creation file exists. Skip dataset and tell DMS to try again later
+						return EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE;
 				}
 
 				//Purge the dataset folder by deleting contents
@@ -287,6 +292,13 @@ namespace Space_Manager
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 							return ArchiveCompareResults.Compare_Not_Equal;
 						}
+						else if (CompRes == ArchiveCompareResults.Compare_Waiting_For_Hash)
+						{
+							//A hash file wasn't found. Skip dataset and notify DMS to try again later
+							msg = "Waiting for hash file generation, dataset " + datasetName;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Waiting_For_Hash;
+						}
 						else
 						{
 							//There was a problem with the file comparison. Error message has already been logged, so just exit
@@ -354,6 +366,12 @@ namespace Space_Manager
 					return ArchiveCompareResults.Compare_Error;
 				}
 
+				if (archiveFileHash == WAITING_FOR_HASH_FILE)
+				{
+					// There is no hash file, but a stagemd5 file exists. Skip dataset and tell DMS to wait before trying again
+					return ArchiveCompareResults.Compare_Waiting_For_Hash;
+				}
+
 				//Get hash for server file
 				serverFileHash = GenerateHashFromFile(serverFile);
 				if (string.IsNullOrEmpty(serverFileHash))
@@ -384,7 +402,8 @@ namespace Space_Manager
 			{
 				// Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
 				// will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
-				// and extract the file hash if found. If not found, the purge task fails.
+				// and extract the file hash if found. If hash file not found, return string that tells manager to  
+				//	request result file creation
 
 				string msg;
 				string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
@@ -395,23 +414,32 @@ namespace Space_Manager
 				// Find out if there's a results file for this dataset
 				string hashFileNamePath = Path.Combine(hashFileFolder, RESULT_FILE_NAME_PREFIX + datasetName);
 
-				if (!File.Exists(hashFileNamePath))
+				try
 				{
-					// Hash file not found in archive
-					msg = "Hash results file not found for dataset " + datasetName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					// Check to see if a stagemd5 file exists for this dataset. At present, this is for info only
-					string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + datasetName);
-					if (File.Exists(stagedFileNamePath))
+					if (!File.Exists(hashFileNamePath))
 					{
-						msg = "Staged file " + stagedFileNamePath + " exists.";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						// Hash file not found in archive
+						msg = "Hash results file not found for dataset " + datasetName;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						// Check to see if a stagemd5 file exists for this dataset. At present, this is for info only
+						string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + datasetName);
+						if (File.Exists(stagedFileNamePath))
+						{
+							msg = "Found stagemd5 file " + stagedFileNamePath + " for this dataset.";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						}
+						else
+						{
+							msg = "No stagemd5 file found for this dataset";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						}
+						return WAITING_FOR_HASH_FILE;
 					}
-					else
-					{
-						msg = "No stagedmd5 file found for this dataset";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					}
+				}
+				catch (Exception ex)
+				{
+					msg = "Exception searching for archive hash results file";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 					return "";
 				}
 

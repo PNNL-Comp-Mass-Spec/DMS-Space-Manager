@@ -1,5 +1,16 @@
-﻿namespace Space_Manager
+﻿
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2011, Battelle Memorial Institute
+// Created 02/01/2011
+//
+// Last modified 02/01/2011
+//*********************************************************************************************************
+namespace Space_Manager
 {
+	// Namespace level values for application
+
 	#region "Enums"
 		//Status constants
 		public enum EnumMgrStatus : short
@@ -34,7 +45,8 @@
 		{
 			CLOSEOUT_SUCCESS = 0,
 			CLOSEOUT_FAILED = 1,
-			CLOSEOUT_UPDATE_REQUIRED = 2
+			CLOSEOUT_UPDATE_REQUIRED = 2,
+			CLOSEOUT_WAITING_HASH_FILE = 3
 		}
 
 		public enum EnumRequestTaskResult : short

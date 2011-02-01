@@ -163,6 +163,10 @@ namespace Space_Manager
 						myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt));
 						myCmd.Parameters["@infoOnly"].Direction = ParameterDirection.Input;
 						myCmd.Parameters["@infoOnly"].Value = 0;
+
+						myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt));
+						myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Direction = ParameterDirection.Input;
+						myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 1;
 					}
 
 					msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;

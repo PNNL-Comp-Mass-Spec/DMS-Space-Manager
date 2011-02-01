@@ -62,10 +62,10 @@ namespace Space_Manager
 			private int m_ErrorCount = 0;
 			private IStatusFile m_StatusFile;
 			private clsMessageHandler m_MsgHandler;
-			private LoopExitCode m_LoopExitCode;
-			private bool m_Running;
+			private LoopExitCode m_LoopExitCode = LoopExitCode.DisabledLocally;
+//			private bool m_Running;
 			private System.Timers.Timer m_StatusTimer;
-			private DateTime m_DurationStart;
+			private DateTime m_DurationStart = DateTime.Now;
 			private clsStorageOperations m_StorageOps;
 		#endregion
 		
@@ -457,13 +457,13 @@ namespace Space_Manager
 				{
 					case "shutdown":
 						m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
-						m_Running = false;
+//						m_Running = false;
 						break;
 					case "readconfig":
 						msg = "Reload config message received";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 						m_ConfigChanged = true;
-						m_Running = false;
+//						m_Running = false;
 						break;
 					default:
 						// Invalid command received; do nothing except log it
