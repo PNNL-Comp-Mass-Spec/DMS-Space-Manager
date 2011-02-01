@@ -1,2 +1,2 @@
-Deletion disabled for testing via compilation constants. To enable for deploymnet compile, change compilation constant "DoDeleteNot" to "DoDelete" before compiling.
+Deletion disabled for testing via compilation constants. Enable deletion for deployment compile by changing compilation constant "DoDeleteNot" to "DoDelete" before compiling.
 
