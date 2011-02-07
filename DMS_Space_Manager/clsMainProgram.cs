@@ -356,6 +356,11 @@ namespace Space_Manager
 								repCounter++;
 //								continue;
 								break;
+							case EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE:
+								m_ErrorCount = 0;
+								repCounter++;
+//								continue;
+								break;
 						}
 
 						// Close the purge task and continue purging this drive
