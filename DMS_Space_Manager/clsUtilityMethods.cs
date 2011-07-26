@@ -96,13 +96,14 @@ namespace Space_Manager
 			/// <param name="driveData">Data for drive to be checked</param>
 			/// <param name="perspective">Client/Server setting for manager</param>
 			/// <returns>Enum indicating space status</returns>
-			public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData)
+            public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
 			{
 				double availableSpace = 0;
 				string requestStr;
 				SpaceCheckResults testResult = SpaceCheckResults.Error;
 				// Set client/server flag based on config
 				bool client = perspective == "client" ? true : false;
+                driveFreeSpaceGB = -1;
 
 				// Get WMI object representing drive
 				if (client)
@@ -119,12 +120,15 @@ namespace Space_Manager
 					ManagementObject disk = new ManagementObject(requestStr);
 					disk.Get();
 					availableSpace = System.Convert.ToDouble(disk["FreeSpace"]);
-					availableSpace /= Math.Pow(2D, 30D);	// Convert to GB
-					if (availableSpace > driveData.MinDriveSpace)
-					{
-						testResult = SpaceCheckResults.Above_Threshold;
-					}
-					else testResult = SpaceCheckResults.Below_Threshold;
+                    driveFreeSpaceGB = availableSpace / Math.Pow(2D, 30D);	// Convert to GB
+                    if (driveFreeSpaceGB > driveData.MinDriveSpace)
+                    {
+                        testResult = SpaceCheckResults.Above_Threshold;
+                    }
+                    else
+                    {
+                        testResult = SpaceCheckResults.Below_Threshold;
+                    }
 				}
 				catch (Exception ex)
 				{
@@ -134,8 +138,8 @@ namespace Space_Manager
 				}
 
 				// Log space requirement if debug logging enabled
-				string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() + 
-					", Avail space: " + availableSpace.ToString("####0.0");
+				string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() +
+                    ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
 
 				return testResult;

@@ -284,14 +284,16 @@ namespace Space_Manager
 						}
 
 						// Check available space on server drive and compare it with min allowed space
+                        double driveFreeSpaceGB = 0;
 						SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(m_MgrSettings.GetParam("machname"),
 																												m_MgrSettings.GetParam("perspective"),
-																												testDrive);
+																												testDrive,
+                                                                                                                out driveFreeSpaceGB);
 
 						if (checkResult == SpaceCheckResults.Above_Threshold)
 						{
 							// Drive doesn't need purging, so continue to next drive
-							msg = "No purge required, drive " + testDrive.DriveLetter;
+                            msg = "No purge required, drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB,0).ToString() + " GB free vs. " +  Math.Round(testDrive.MinDriveSpace, 0).ToString() + " GB threshold";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 							repCounter++;
 							break;
