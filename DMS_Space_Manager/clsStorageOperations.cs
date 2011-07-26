@@ -43,6 +43,11 @@ namespace Space_Manager
 			IMgrParams m_MgrParams;
 			string m_Msg;
 			bool m_ClientPerspective = false;
+
+            string m_HashFileDataset = string.Empty;
+            string m_HashFileNamePath = string.Empty;
+            string[] m_HashFileContents;
+
 		#endregion
 
 		#region "Properties"
@@ -381,7 +386,7 @@ namespace Space_Manager
 				}
 
 				// Compare the two hash values
-				if (serverFileHash == archiveFileHash)
+                if (string.Equals(serverFileHash, archiveFileHash))
 				{
 					return ArchiveCompareResults.Compare_Equal;
 				}
@@ -406,58 +411,30 @@ namespace Space_Manager
 				//	request result file creation
 
 				string msg;
-				string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+                bool bHashFileLoaded = false;
 
-				msg = "Getting archive hash for file " + fileNamePath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                msg = "Getting archive hash for file " + fileNamePath;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				// Find out if there's a results file for this dataset
-				string hashFileNamePath = Path.Combine(hashFileFolder, RESULT_FILE_NAME_PREFIX + datasetName);
+                if (!string.IsNullOrEmpty(m_HashFileDataset) && string.Equals(m_HashFileDataset, datasetName))
+                {
+                    // Hash file has already been loaded into memory; no need to re-load it
+                    bHashFileLoaded = true;
+                }
+                else
+                {
+                    bool bWaitingForHashFile;
 
-				try
-				{
-					if (!File.Exists(hashFileNamePath))
-					{
-						// Hash file not found in archive
-						msg = "Hash results file not found for dataset " + datasetName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-						// Check to see if a stagemd5 file exists for this dataset. At present, this is for info only
-						string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + datasetName);
-						if (File.Exists(stagedFileNamePath))
-						{
-							msg = "Found stagemd5 file " + stagedFileNamePath + " for this dataset.";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						}
-						else
-						{
-							msg = "No stagemd5 file found for this dataset";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						}
-						return WAITING_FOR_HASH_FILE;
-					}
-				}
-				catch (Exception ex)
-				{
-					msg = "Exception searching for archive hash results file";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-					return "";
-				}
+                    bHashFileLoaded = LoadHashFile(datasetName, out bWaitingForHashFile);
 
-				msg = "Hash file for dataset found. File name = " + hashFileNamePath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-				string[] resultsFileLines;
-				// Read in results file
-				try
-				{
-					resultsFileLines = File.ReadAllLines(hashFileNamePath);
-				}
-				catch (Exception ex)
-				{
-					msg = "Exception reading hash file " + hashFileNamePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-					return "";
-				}
+                    if (!bHashFileLoaded)
+                    {
+                        if (bWaitingForHashFile)
+                            return WAITING_FOR_HASH_FILE;
+                        else
+                            return "";
+                    }
+                }
 
 				// From the input file name, strip off all characters up to the dataset name
 				string filePath;
@@ -475,7 +452,7 @@ namespace Space_Manager
 
 				// Search the hash file contents for a file that matches the input file
 				string hashline = "";
-				foreach (string testLine in resultsFileLines)
+                foreach (string testLine in m_HashFileContents)
 				{
 					// Replace the Linux folder separation character with the Windows one
 					string tmpLine = testLine.Replace(@"/", @"\");
@@ -489,12 +466,12 @@ namespace Space_Manager
 				// Was a line containing a matching file name found?
 				if (hashline == "")
 				{
-					msg = "Hash not found for file " + fileNamePath + " in results file " + hashFileNamePath; ;
+                    msg = "Hash not found for file " + fileNamePath + " in results file " + m_HashFileNamePath; ;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return "";
 				}
 
-				// Extract the hash falue from the found line
+				// Extract the hash value from the found line
 				string[] lineParts = hashline.Split(new char[] { ' ' });
 				if (lineParts.Length > 1)
 				{
@@ -503,11 +480,81 @@ namespace Space_Manager
 				}
 				else
 				{
-					msg = "Invalid line " + hashline + " in results file " + hashFileNamePath;
+                    msg = "Invalid line " + hashline + " in results file " + m_HashFileNamePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return "";
 				}
 			}	// End sub
+
+
+            /// <summary>
+            /// Loads the hash file for the given dataset into memory 
+            /// </summary>
+            /// <param name="datasetName"></param>
+            /// <returns></returns>
+            private bool LoadHashFile(string datasetName, out bool bWaitingForHashFile)
+            {
+
+                string msg;
+                string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+
+                // Find out if there's a results file for this dataset
+                string hashFileNamePath = Path.Combine(hashFileFolder, RESULT_FILE_NAME_PREFIX + datasetName);
+
+                bWaitingForHashFile = false;
+                m_HashFileDataset = string.Empty;
+
+                try
+                {
+                    if (!File.Exists(hashFileNamePath))
+                    {
+                        // Hash file not found in archive
+                        msg = "Hash results file not found for dataset " + datasetName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        // Check to see if a stagemd5 file exists for this dataset. At present, this is for info only
+                        string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + datasetName);
+                        if (File.Exists(stagedFileNamePath))
+                        {
+                            msg = "Found stagemd5 file " + stagedFileNamePath + " for this dataset.";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        }
+                        else
+                        {
+                            msg = "No stagemd5 file found for this dataset";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        }
+                        bWaitingForHashFile = true;
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception searching for archive hash results file";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    return false;
+                }
+
+                msg = "Hash file for dataset found. File name = " + hashFileNamePath;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+                // Read in results file
+                try
+                {
+                    m_HashFileContents = File.ReadAllLines(hashFileNamePath);
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception reading hash file " + hashFileNamePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    return false;
+                }
+
+                // If we get here, then the file has successfully been loaded
+                m_HashFileDataset = string.Copy(datasetName);
+                m_HashFileNamePath = string.Copy(hashFileNamePath);
+
+                return true;
+            }
 
 			/// <summary>
 			/// Generates MD5 hash of a file's contents
