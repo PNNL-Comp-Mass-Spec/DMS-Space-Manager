@@ -332,6 +332,7 @@ namespace Space_Manager
 					catch (Exception ex)
 					{
 						//TODO: Figure out appropriate action
+						Console.WriteLine("Error writing status file: " + ex.Message);
 					}
 				}
 				catch

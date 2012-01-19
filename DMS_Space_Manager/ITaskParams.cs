@@ -21,7 +21,7 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Properties"
-			StringDictionary TaskDictionary { get; }
+			System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
 		#endregion
 
 		#region "Methods"

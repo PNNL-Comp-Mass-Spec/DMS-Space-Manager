@@ -26,7 +26,7 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Class variables"
-		StringDictionary m_ParamDictionary = null;
+		System.Collections.Generic.Dictionary<string, string> m_ParamDictionary = null;
 		bool m_MCParamsLoaded = false;
 		#endregion
 
@@ -92,10 +92,10 @@ namespace Space_Manager
 			return true;
 		}	// End sub
 
-		private StringDictionary LoadMgrSettingsFromFile()
+		private System.Collections.Generic.Dictionary<string, string> LoadMgrSettingsFromFile()
 		{
 			// Load initial settings into string dictionary for return
-			StringDictionary RetDict = new StringDictionary();
+			System.Collections.Generic.Dictionary<string, string> RetDict = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 			string TempStr;
 
 			//				My.Settings.Reload()
@@ -118,7 +118,7 @@ namespace Space_Manager
 			return RetDict;
 		}	// End sub
 
-		private bool CheckInitialSettings(StringDictionary InpDict)
+		private bool CheckInitialSettings(System.Collections.Generic.Dictionary<string, string> InpDict)
 		{
 			string MyMsg = null;
 
@@ -147,7 +147,7 @@ namespace Space_Manager
 			return LoadMgrSettingsFromDB(ref m_ParamDictionary);
 		}	// End sub
 
-		public bool LoadMgrSettingsFromDB(ref StringDictionary MgrSettingsDict)
+		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict)
 		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 			short RetryCount = 3;
@@ -246,8 +246,11 @@ namespace Space_Manager
 
 		public string GetParam(string ItemKey)
 		{
-			string RetStr = m_ParamDictionary[ItemKey];
-			return RetStr;
+			string RetStr;
+			if (m_ParamDictionary.TryGetValue(ItemKey, out RetStr))
+				return RetStr;
+			else 
+				return string.Empty;
 		}
 
 		public void SetParam(string ItemKey, string ItemValue)

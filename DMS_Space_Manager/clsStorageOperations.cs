@@ -26,6 +26,9 @@ namespace Space_Manager
 		const string RESULT_FILE_NAME_PREFIX = "results.";
 		const string STAGED_FILE_NAME_PREFIX = "stagemd5.";
 		const string WAITING_FOR_HASH_FILE = "(HASH)";
+		const string HASH_NOT_FOUND = "(HASH NOT FOUND)";
+		const string HASH_MISMATCH = "#HashMismatch#";
+
 		#endregion
 
 		#region "Enums"
@@ -35,26 +38,35 @@ namespace Space_Manager
 			Compare_Not_Equal,
 			Compare_Storage_Server_Folder_Missing,
 			Compare_Error,
-			Compare_Waiting_For_Hash
+			Compare_Waiting_For_Hash,
+			Hash_Not_Found_For_File
+		}
+		#endregion
+
+		#region "Structures"
+		public struct udtDatasetInfoType
+		{
+			public string DatasetName;
+			public string DatasetFolderName;
+			public string Instrument;
+			public string YearQuarter;
 		}
 		#endregion
 
 		#region "Class variables"
 		IMgrParams m_MgrParams;
-		string m_Msg;
 		bool m_ClientPerspective = false;
 
-		string m_HashFileDataset = string.Empty;
-		string m_HashFileNamePath = string.Empty;
-		string[] m_HashFileContents;
+		string m_MD5ResultsFileDatasetName = string.Empty;
+		string m_MD5ResultsFilePath = string.Empty;
+
+		// This dictionary object contains the full path to a file as the key and the MD5 hash as the value
+		// File paths are not case sensitive
+		System.Collections.Generic.Dictionary<string, string> m_HashFileContents;
 
 		#endregion
 
 		#region "Properties"
-		public string Message
-		{
-			get { return m_Msg; }
-		}
 		#endregion
 
 		#region "Constructors"
@@ -77,7 +89,14 @@ namespace Space_Manager
 			string datasetPathSvr = "";
 			string datasetPathSamba = "";
 			string msg = "";
-			string datasetName = purgeParams.GetParam("dataset");
+			bool retVal;
+
+			udtDatasetInfoType udtDatasetInfo = new udtDatasetInfoType();
+
+			udtDatasetInfo.DatasetName = purgeParams.GetParam("dataset");
+			udtDatasetInfo.DatasetFolderName = purgeParams.GetParam("Folder");
+			udtDatasetInfo.Instrument = purgeParams.GetParam("Instrument");
+			udtDatasetInfo.YearQuarter = purgeParams.GetParam("DatasetYearQuarter");
 
 			//Get path to dataset folder on server
 			{
@@ -91,15 +110,16 @@ namespace Space_Manager
 					//Manager is running on storage server
 					datasetPathSvr = purgeParams.GetParam("StorageVol");
 				}
-				datasetPathSvr += (purgeParams.GetParam("storagePath") + purgeParams.GetParam("Folder"));
+				datasetPathSvr = System.IO.Path.Combine(datasetPathSvr, purgeParams.GetParam("storagePath"));
+				datasetPathSvr = System.IO.Path.Combine(datasetPathSvr, udtDatasetInfo.DatasetFolderName);
 
 				//Get path to dataset folder in archive
-				datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), purgeParams.GetParam("Folder"));
+				datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetFolderName);
 			}
 
 			msg = "Verifying archive integrity, dataset " + datasetPathSvr;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-			ArchiveCompareResults CompRes = CompareDatasetFolders(datasetName, datasetPathSvr, datasetPathSamba);
+			ArchiveCompareResults CompRes = CompareDatasetFolders(udtDatasetInfo, datasetPathSvr, datasetPathSamba);
 			switch (CompRes)
 			{
 				case ArchiveCompareResults.Compare_Equal:
@@ -108,16 +128,20 @@ namespace Space_Manager
 				case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
 					// This is OK, but we need to update the database to show dataset is purged
 					return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
 				case ArchiveCompareResults.Compare_Error:
 					// Unable to perform comparison operation; set purge task failed
 					//	Error was logged during comparison
 					return EnumCloseOutType.CLOSEOUT_FAILED;
+
 				case ArchiveCompareResults.Compare_Not_Equal:
 					// Sever/Archive mismatch; an archive update is required before purging
-					bool retVal = DeleteArchiveHashResultsFile(datasetName);
+					retVal = UpdateMD5ResultsFile(udtDatasetInfo);
 					return EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED;
+
 				case ArchiveCompareResults.Compare_Waiting_For_Hash:
-					// Hash file not in archive yet, but creation file exists. Skip dataset and tell DMS to try again later
+					// MD5 results file not found, but stagemd5 file exists. Skip dataset and tell DMS to try again later
+					retVal = UpdateMD5ResultsFile(udtDatasetInfo);
 					return EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE;
 			}
 
@@ -126,19 +150,19 @@ namespace Space_Manager
 
 			//Get a file listing for the dataset folder on the server
 			string[] datasetFiles = Directory.GetFiles(datasetPathSvr);
-			msg = "Dataset " + datasetName + ": " + datasetFiles.GetLength(0).ToString() + " files found";
+			msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFiles.GetLength(0).ToString() + " files found";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			//Get a folder listing for the dataset folder on the server
 			string[] datasetFolders = Directory.GetDirectories(datasetPathSvr);
-			msg = "Dataset " + datasetName + ": " + datasetFolders.GetLength(0).ToString() + " folders found";
+			msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFolders.GetLength(0).ToString() + " folders found";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			//Verify at least 1 file or folder was found to purge
 			if ((datasetFiles.GetLength(0) == 0) & (datasetFolders.GetLength(0) == 0))
 			{
 				//Nothing was found to purge. Something's rotten in DMS
-				msg = "No purgeable data found for datset " + datasetName;
+				msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
@@ -211,11 +235,12 @@ namespace Space_Manager
 			msg = "Deleted folders in dataset folder " + datasetPathSvr;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Delete the results.* hash file in the archive
-			DeleteArchiveHashResultsFile(datasetName);
+			// Deprecated:
+			// // Delete the results.* hash file in the archive
+			// // DeleteArchiveHashResultsFile(datasetName);
 
 			// If we got to here, then log success and exit
-			msg = "Purged dataset " + datasetName;
+			msg = "Purged dataset " + udtDatasetInfo.DatasetName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
@@ -227,11 +252,14 @@ namespace Space_Manager
 		/// <param name="svrDatasetNamePath">Location of dataset folder on server</param>
 		/// <param name="sambaDatasetNamePath">Location of dataset folder in archive (samba)</param>
 		/// <returns></returns>
-		public ArchiveCompareResults CompareDatasetFolders(string datasetName, string svrDatasetNamePath, string sambaDatasetNamePath)
+		public ArchiveCompareResults CompareDatasetFolders(udtDatasetInfoType udtDatasetInfo, string svrDatasetNamePath, string sambaDatasetNamePath)
 		{
 			System.Collections.ArrayList serverFiles = null;
 			string archFileName;
 			string msg;
+
+			string sMismatchMessage = string.Empty;
+			ArchiveCompareResults eCompResultOverall = ArchiveCompareResults.Compare_Equal;
 
 			//Verify server dataset folder exists. If it doesn't, that's OK - it may have been removed during a manual
 			//	purge. We just need to update the database.
@@ -264,7 +292,8 @@ namespace Space_Manager
 				return ArchiveCompareResults.Compare_Error;
 			}
 
-			//Loop through results folder file list, checking for archive copies and comparing if archive copy present
+			// Loop through results folder file list, checking for archive copies and comparing if archive copy present
+			// We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mis-match is present
 			foreach (string SvrFileName in serverFiles)
 			{
 				//Convert the file name on the storage server to its equivalent in the archive
@@ -285,24 +314,35 @@ namespace Space_Manager
 				if (File.Exists(archFileName))
 				{
 					//File exists in archive, so compare the server and archive versions
-					ArchiveCompareResults CompRes = CompareTwoFiles(SvrFileName, archFileName, datasetName);
+					ArchiveCompareResults CompRes = CompareTwoFiles(SvrFileName, archFileName, udtDatasetInfo);
 					if (CompRes == ArchiveCompareResults.Compare_Equal)
 					{
-						//Do nothing
+						// Hash codes match; continue checking
 					}
 					else if (CompRes == ArchiveCompareResults.Compare_Not_Equal)
 					{
-						//An update is required
-						msg = "Update required. Server file " + SvrFileName + " doesn't match archive file " + archFileName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						return ArchiveCompareResults.Compare_Not_Equal;
+						// An update is required
+						if (string.IsNullOrEmpty(sMismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal)
+							sMismatchMessage = "  Update required. Server file " + SvrFileName + " doesn't match archive file " + archFileName;
+
+						eCompResultOverall = ArchiveCompareResults.Compare_Not_Equal;
 					}
 					else if (CompRes == ArchiveCompareResults.Compare_Waiting_For_Hash)
 					{
-						//A hash file wasn't found. Skip dataset and notify DMS to try again later
-						msg = "Waiting for hash file generation, dataset " + datasetName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						// A hash file wasn't found. Skip dataset and notify DMS to try again later
+						// This is logged as a debug message since we've already logged "Found stagemd5 file: \\a1.emsl.pnl.gov\dmsmd5\stagemd5.DatasetName"
+						msg = "  Waiting for hash file generation";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						return ArchiveCompareResults.Compare_Waiting_For_Hash;
+					}
+					else if (CompRes == ArchiveCompareResults.Hash_Not_Found_For_File)
+					{
+						if (eCompResultOverall == ArchiveCompareResults.Compare_Equal)
+						{
+							eCompResultOverall = ArchiveCompareResults.Compare_Waiting_For_Hash;
+							sMismatchMessage = "  Hash code not found for one or more files";
+						}
+						
 					}
 					else
 					{
@@ -313,14 +353,28 @@ namespace Space_Manager
 				else
 				{
 					//File doesn't exist in archive, so update will be required
-					msg = "Update required. No copy of server file " + SvrFileName + " found in archive";
+					msg = "  Update required. Server file not found in archive: " + SvrFileName;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					return ArchiveCompareResults.Compare_Not_Equal;
 				}
+			} // foreach File in serverFiles
+
+			switch (eCompResultOverall)
+			{
+				case ArchiveCompareResults.Compare_Not_Equal:					
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sMismatchMessage);
+					break;
+
+				case ArchiveCompareResults.Compare_Waiting_For_Hash:
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sMismatchMessage);
+					break;
+
+				default:
+					break;
 			}
 
-			//If we got to this point, the folders are identical
-			return ArchiveCompareResults.Compare_Equal;
+			return eCompResultOverall;
+			
 		}	// End sub
 
 		/// <summary>
@@ -353,19 +407,20 @@ namespace Space_Manager
 		/// <param name="inpFile1">First file to compare</param>
 		/// <param name="inpFile2">Second file to compare</param>
 		/// <returns>Enum containing compare results</returns>
-		private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, string datasetName)
+		private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
 		{
 			string msg;
 
 			string serverFileHash = null;	//String version of serverFile hash
 			string archiveFileHash = null;	//String version of archiveFile hash
+			string sFilePathInDictionary = string.Empty;
 
 			msg = "Comparing file " + serverFile + " to file " + archiveFile;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Get hash for archive file
-			archiveFileHash = GetArchiveFileHash(serverFile, datasetName);
-			if (archiveFileHash == "")
+			archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
+			if (archiveFileHash == string.Empty)
 			{
 				//There was a problem. Description has already been logged
 				return ArchiveCompareResults.Compare_Error;
@@ -373,8 +428,14 @@ namespace Space_Manager
 
 			if (archiveFileHash == WAITING_FOR_HASH_FILE)
 			{
-				// There is no hash file, but a stagemd5 file exists. Skip dataset and tell DMS to wait before trying again
+				// There is no hash file, but an MD5 results file or stagemd5 file exists. Skip dataset and tell DMS to wait before trying again
 				return ArchiveCompareResults.Compare_Waiting_For_Hash;
+			}
+
+			if (archiveFileHash == HASH_NOT_FOUND)
+			{
+				// There is a hash file, but no line exists for serverFile.  Skip dataset and tell DMS to wait before trying again
+				return ArchiveCompareResults.Hash_Not_Found_For_File;
 			}
 
 			//Get hash for server file
@@ -392,10 +453,27 @@ namespace Space_Manager
 			}
 			else
 			{
+				// Update the cached hash value to #HashMismatch#
+				m_HashFileContents[sFilePathInDictionary] = HASH_MISMATCH;
+
 				return ArchiveCompareResults.Compare_Not_Equal;
 				//Files not equal
 			}
 		}	// End sub
+
+		private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
+		{
+			string hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
+
+			// Find out if there's a results file for this dataset
+			string sMD5ResultsFilePath;
+
+			sMD5ResultsFilePath = System.IO.Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
+			sMD5ResultsFilePath = System.IO.Path.Combine(sMD5ResultsFilePath, udtDatasetInfo.YearQuarter);
+			sMD5ResultsFilePath = System.IO.Path.Combine(sMD5ResultsFilePath, RESULT_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
+
+			return sMD5ResultsFilePath;
+		}
 
 		/// <summary>
 		/// Gets the hash value for a file from the results.datasetname file in the archive
@@ -403,20 +481,22 @@ namespace Space_Manager
 		/// <param name="fileNamePath">File on storage server to find a matching archive hatch for</param>
 		/// <param name="datasetName">Name of dataset being purged</param>
 		/// <returns>Hash value for success; Empty string otherwise</returns>
-		private string GetArchiveFileHash(string fileNamePath, string datasetName)
+		private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
 		{
 			// Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
 			// will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
 			// and extract the file hash if found. If hash file not found, return string that tells manager to  
-			//	request result file creation
+			//request result file creation
 
 			string msg;
 			bool bHashFileLoaded = false;
 
+			sFilePathInDictionary = string.Empty;
+
 			msg = "Getting archive hash for file " + fileNamePath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			if (!string.IsNullOrEmpty(m_HashFileDataset) && string.Equals(m_HashFileDataset, datasetName))
+			if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) && string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName) && m_HashFileContents != null)
 			{
 				// Hash file has already been loaded into memory; no need to re-load it
 				bHashFileLoaded = true;
@@ -425,133 +505,167 @@ namespace Space_Manager
 			{
 				bool bWaitingForHashFile;
 
-				bHashFileLoaded = LoadHashFile(datasetName, out bWaitingForHashFile);
+				m_HashFileContents = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+				bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out bWaitingForHashFile);
 
 				if (!bHashFileLoaded)
 				{
 					if (bWaitingForHashFile)
 						return WAITING_FOR_HASH_FILE;
 					else
-						return "";
+						// Error occurred (and has been logged)
+						return string.Empty;
 				}
 			}
 
-			// From the input file name, strip off all characters up to the dataset name
-			string filePath;
-			int dsNameStart = fileNamePath.IndexOf(datasetName);
-			if (!(dsNameStart == -1))
-			{
-				filePath = fileNamePath.Remove(0, dsNameStart);
-			}
-			else
-			{
-				msg = "Dataset name not found in server file path " + fileNamePath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return "";
-			}
 
 			// Search the hash file contents for a file that matches the input file
-			string hashline = "";
-			foreach (string testLine in m_HashFileContents)
-			{
-				// Replace the Linux folder separation character with the Windows one
-				string tmpLine = testLine.Replace(@"/", @"\");
-				if (tmpLine.Contains(filePath))
-				{
-					hashline = tmpLine;
-					break;
-				}
-			}
+			string filePathUnix = fileNamePath.Replace(@"\", @"/");
+			string MD5HashCode = string.Empty;
 
-			// Was a line containing a matching file name found?
-			if (hashline == "")
-			{
-				msg = "Hash not found for file " + fileNamePath + " in results file " + m_HashFileNamePath; ;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return "";
-			}
+			string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+			string sFileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, sSubfolderTofind);
 
-			// Extract the hash value from the found line
-			string[] lineParts = hashline.Split(new char[] { ' ' });
-			if (lineParts.Length > 1)
+			if (string.IsNullOrEmpty(sFileNameTrimmed))
 			{
-				// The hash value is in the first field of the lineParts array
-				return lineParts[0];
+				msg = "  Did not find " + sSubfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 			}
 			else
 			{
-				msg = "Invalid line " + hashline + " in results file " + m_HashFileNamePath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return "";
+				if (!m_HashFileContents.TryGetValue(sFileNameTrimmed, out MD5HashCode))
+				{
+					msg = "  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+					return HASH_NOT_FOUND;
+				}
+				else
+				{
+					sFilePathInDictionary = string.Copy(sFileNameTrimmed);
+					return MD5HashCode;
+				}
 			}
+
+			return string.Empty;
+
 		}	// End sub
 
 
 		/// <summary>
-		/// Loads the hash file for the given dataset into memory 
+		/// Loads the MD5 results file for the given dataset into memory 
 		/// </summary>
 		/// <param name="datasetName"></param>
 		/// <returns></returns>
-		private bool LoadHashFile(string datasetName, out bool bWaitingForHashFile)
+		private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool bWaitingForHashFile)
 		{
 
 			string msg;
-			string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
 
-			// Find out if there's a results file for this dataset
-			string hashFileNamePath = Path.Combine(hashFileFolder, RESULT_FILE_NAME_PREFIX + datasetName);
+			// Find out if there's an MD5 results file for this dataset
+			string sMD5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
 			bWaitingForHashFile = false;
-			m_HashFileDataset = string.Empty;
+			m_MD5ResultsFileDatasetName = string.Empty;
 
 			try
 			{
-				if (!File.Exists(hashFileNamePath))
+				if (!File.Exists(sMD5ResultsFilePath))
 				{
-					// Hash file not found in archive
-					msg = "Hash results file not found for dataset " + datasetName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					// Check to see if a stagemd5 file exists for this dataset. At present, this is for info only
-					string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + datasetName);
+					// MD5 results file not found in archive
+					msg = "  MD5 results file not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+
+					// Check to see if a stagemd5 file exists for this dataset. 
+					// This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
+
+					string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+
+					string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
 					if (File.Exists(stagedFileNamePath))
 					{
-						msg = "Found stagemd5 file " + stagedFileNamePath + " for this dataset.";
+						msg = "  Found stagemd5 file: " + stagedFileNamePath;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					}
 					else
 					{
-						msg = "No stagemd5 file found for this dataset";
+						// DatasetPurgeArchiveHelper needs to create a stagemd5 file for this datatset
+						// Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
+						//   eventually we should get MD5 result files and then we should be able to purge this dataset
+						msg = "  Stagemd5 file not found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					}
+
 					bWaitingForHashFile = true;
 					return false;
 				}
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception searching for archive hash results file";
+				msg = "  Exception searching for MD5 results file";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
 
-			msg = "Hash file for dataset found. File name = " + hashFileNamePath;
+			msg = "MD5 results file for dataset found. File name = " + sMD5ResultsFilePath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Read in results file
 			try
 			{
-				m_HashFileContents = File.ReadAllLines(hashFileNamePath);
+				m_HashFileContents.Clear();
+
+				string[] sContents = File.ReadAllLines(sMD5ResultsFilePath);
+				char[] cSplitChars = new char[] { ' ' };
+
+				foreach (string sInputLine in sContents)
+				{
+
+					// Extract the MD5 results value from the found line
+					// Format is MD5 code, then a space, then a full path to the file
+					// Example:
+					// 2036b65346acd59f3dd044b6a97bf44a /archive/dmsarch/LTQ_Orb_1/2008_1/EIF_Plasma_C_18_10Jan08_Draco_07-12-24/Seq200901221155_Auto362389/EIF_Plasma_C_18_10Jan08_Draco_07-12-24_out.zip
+
+					string[] lineParts = sInputLine.Split(cSplitChars, 2);
+					if (lineParts.Length > 1)
+					{
+
+						// For the above example, we want to store:
+						// "Seq200901221155_Auto362389/EIF_Plasma_C_18_10Jan08_Draco_07-12-24_out.zip" and "2036b65346acd59f3dd044b6a97bf44a"
+						string sFileNamePath = lineParts[1];
+						string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+
+						string sFileNameTrimmed = TrimPathAfterSubfolder(sFileNamePath, sSubfolderTofind);
+
+						if (String.IsNullOrEmpty(sFileNameTrimmed))
+						{
+							msg = "Did not find " + sSubfolderTofind + " in line " + sInputLine + " in results file " + sMD5ResultsFilePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						}
+						else
+						{
+							m_HashFileContents.Add(sFileNameTrimmed, lineParts[0]);
+						}
+					}
+					else
+					{
+						// Invalid line; skip it (but continue parsing the file)
+						msg = "Unable to split line " + sInputLine + " in results file " + sMD5ResultsFilePath;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+					}
+				}
+
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception reading hash file " + hashFileNamePath;
+				msg = "Exception reading MD5 results file " + sMD5ResultsFilePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
 
 			// If we get here, then the file has successfully been loaded
-			m_HashFileDataset = string.Copy(datasetName);
-			m_HashFileNamePath = string.Copy(hashFileNamePath);
+			m_MD5ResultsFileDatasetName = string.Copy(udtDatasetInfo.DatasetName);
+			m_MD5ResultsFilePath = string.Copy(sMD5ResultsFilePath);
 
 			return true;
 		}
@@ -614,44 +728,168 @@ namespace Space_Manager
 		}	// End sub
 
 		/// <summary>
-		/// Deletes the archive hash file for a dataset
+		/// Looks for sSubfolderTofind in sFileNamePath
+		/// If found, returns the text that occurs after sSubfolderTofind
+		/// If not found, then returns an empty string
+		/// </summary>
+		/// <param name="sFileNamePath"></param>
+		/// <param name="sSubfolderTofind"></param>
+		/// <returns></returns>
+		private string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
+		{
+			int iStartIndex = 0;
+
+			iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind);
+
+			if (iStartIndex >= 0)
+			{
+				if (iStartIndex + sSubfolderTofind.Length < sFileNamePath.Length)
+					return sFileNamePath.Substring(iStartIndex + sSubfolderTofind.Length);
+				else
+					return string.Empty;
+			}
+			else
+			{
+				return string.Empty;
+			}
+		}
+
+		/// <summary>
+		/// Updates the archive hash file for a dataset to only retain lines where the MD5 hash value agree
 		/// </summary>
 		/// <param name="dsName">Dataset name</param>
 		/// <returns>TRUE for success; FALSE otherwise</returns>
-		private bool DeleteArchiveHashResultsFile(string dsName)
+		private bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
 		{
 			string msg;
-			string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+			string sCurrentStep = "Start";
 
-			// Find out if there's a results file for this dataset
-			string hashFileNamePath = Path.Combine(hashFileFolder, RESULT_FILE_NAME_PREFIX + dsName);
-			if (!File.Exists(hashFileNamePath))
+			// Find out if there's a master MD5 results file for this dataset
+			string sMD5ResultsFileMaster = GenerateMD5ResultsFilePath(udtDatasetInfo);
+
+			if (!File.Exists(sMD5ResultsFileMaster))
 			{
-				// Hash file not found in archive
-				msg = "Hash results file not found for dataset " + dsName;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
+				// Master MD5 results file not found; nothing to do
+				return true;
 			}
 
-			// Delete the hash file
+			// Update the hash file to remove any entries with a hash of HASH_MISMATCH in m_HashFileContents
+			// These are files for which the MD5 hash of the actual file doesn't match the hash stored in the master MD5 results file, 
+			//   and we thus need to re-compute the hash using the file in the Archive
+			// In theory, before we do this, the Archive Update manager will update the file
 			try
 			{
-				// Conditional compilation symbol DoDelete makes this true and allows deletion if defined. Otherwise,
-				// condition is false and deletion will not occur
-#if DoDelete
-				File.Delete(hashFileNamePath);
-#endif
-				msg = "Deleted archive hash file " + hashFileNamePath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				string sInputLine;
+				string sMD5HashNew;
+				System.Collections.Generic.List<string> lstUpdatedMD5Info = new System.Collections.Generic.List<string>();
+				bool bWriteUpdatedMD5Info = false;
+
+				char[] cSplitChars = new char[] { ' ' };
+
+				string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+			
+				sCurrentStep = "Read master MD5 results file";
+
+				System.IO.StreamReader srMD5ResultsFileMaster;
+
+				// Open the master MD5 results file and read each line
+				srMD5ResultsFileMaster = new System.IO.StreamReader(new System.IO.FileStream(sMD5ResultsFileMaster, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+				while (srMD5ResultsFileMaster.Peek() > -1)
+				{
+					sInputLine = srMD5ResultsFileMaster.ReadLine();
+
+					// Extract the MD5 results value from sLineIn
+					// Format is MD5 code, then a space, then a full path to the file
+					// Example:
+					// 2036b65346acd59f3dd044b6a97bf44a /archive/dmsarch/LTQ_Orb_1/2008_1/EIF_Plasma_C_18_10Jan08_Draco_07-12-24/Seq200901221155_Auto362389/EIF_Plasma_C_18_10Jan08_Draco_07-12-24_out.zip
+
+					string[] lineParts = sInputLine.Split(cSplitChars, 2);
+					if (lineParts.Length > 1)
+					{
+						// Look for the unix file path in m_HashFileContents
+
+						string sFileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], sSubfolderTofind);
+
+						if (string.IsNullOrEmpty(sFileNameTrimmed))
+						{
+							// Did not find in lineParts[1]; this is unexpected
+							// An error should have already been logged when function LoadMD5ResultsFile() parsed this file
+						}
+						else
+						{
+
+							if (m_HashFileContents.TryGetValue(sFileNameTrimmed, out sMD5HashNew))
+							{
+								// Match found; examine sMD5HashNew	
+								if (sMD5HashNew == HASH_MISMATCH)
+								{
+									// We need the DatasetPurgeArchiveHelper to create a new stagemd5 file that computes a new hash for this file
+									// Do not include this line in lstUpdatedMD5Info;
+									bWriteUpdatedMD5Info = true;
+								}
+								else
+								{
+									// Hash codes match; retain this line
+									lstUpdatedMD5Info.Add(sInputLine);
+								}
+							}
+							else
+							{
+								// Match not found in m_HashFileContents
+								// Retain this line
+								lstUpdatedMD5Info.Add(sInputLine);
+							}
+						}
+
+					}
+				} // while Peek() > -1
+
+				srMD5ResultsFileMaster.Close();
+
+				if (bWriteUpdatedMD5Info)
+				{
+					string sMD5ResultsFilePathTemp = sMD5ResultsFileMaster + ".updated";
+					System.IO.StreamWriter swUpdatedMD5Results;
+
+					sCurrentStep = "Create " + sMD5ResultsFilePathTemp;
+					swUpdatedMD5Results = new System.IO.StreamWriter(new System.IO.FileStream(sMD5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+					foreach (string sOutputLine in lstUpdatedMD5Info)
+					{
+						swUpdatedMD5Results.WriteLine(sOutputLine);
+					}
+
+					swUpdatedMD5Results.Close();
+					System.Threading.Thread.Sleep(100);
+
+					sCurrentStep = "Overwrite master MD5 results file with " + sMD5ResultsFilePathTemp;
+					System.IO.File.Copy(sMD5ResultsFilePathTemp, sMD5ResultsFileMaster, true);
+					System.Threading.Thread.Sleep(100);
+
+					sCurrentStep = "Delete " + sMD5ResultsFilePathTemp;
+					System.IO.File.Delete(sMD5ResultsFilePathTemp);
+
+					msg = "  Updated MD5 results file " + sMD5ResultsFileMaster;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+				}
+				else
+				{
+					msg = "MD5 results file does not require updating: " + sMD5ResultsFileMaster;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				}
+
 				return true;
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception deleting hash file " + hashFileNamePath;
+				msg = "Exception updating MD5 results file " + sMD5ResultsFileMaster;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
 		}	// End sub
+
 		#endregion
 	}	// End class
 }	// End namespace

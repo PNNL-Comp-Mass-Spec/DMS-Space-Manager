@@ -28,17 +28,17 @@ namespace Space_Manager
 			Invalid
 		}
 
-		private enum LoopExitCode
-		{
-			NoTaskFound,
-			ConfigChanged,
-			ExceededMaxTaskCount,
-			DisabledMC,
-			DisabledLocally,
-			ExcessiveErrors,
-			InvalidWorkDir,
-			ShutdownCmdReceived
-		}
+		//private enum LoopExitCode
+		//{
+		//    NoTaskFound,
+		//    ConfigChanged,
+		//    ExceededMaxTaskCount,
+		//    DisabledMC,
+		//    DisabledLocally,
+		//    ExcessiveErrors,
+		//    InvalidWorkDir,
+		//    ShutdownCmdReceived
+		//}
 
 		private enum DriveOpStatus
 		{
@@ -62,8 +62,8 @@ namespace Space_Manager
 		private int m_ErrorCount = 0;
 		private IStatusFile m_StatusFile;
 		private clsMessageHandler m_MsgHandler;
-		private LoopExitCode m_LoopExitCode = LoopExitCode.DisabledLocally;
-		//			private bool m_Running;
+		// private LoopExitCode m_LoopExitCode = LoopExitCode.DisabledLocally;
+		// private bool m_Running;
 		private System.Timers.Timer m_StatusTimer;
 		private DateTime m_DurationStart = DateTime.UtcNow;
 		private clsStorageOperations m_StorageOps;
@@ -369,6 +369,7 @@ namespace Space_Manager
 					m_Task.CloseTask(purgeResult);
 
 				}	// End purge loop for current drive
+
 			}	// End drive loop
 
 			// Set status and exit method
@@ -463,14 +464,14 @@ namespace Space_Manager
 			switch (recvCmd.MachCmd.ToLower())
 			{
 				case "shutdown":
-					m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
-					//						m_Running = false;
+					//     m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
+					//	   m_Running = false;
 					break;
 				case "readconfig":
 					msg = "Reload config message received";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					m_ConfigChanged = true;
-					//						m_Running = false;
+					//	   m_Running = false;
 					break;
 				default:
 					// Invalid command received; do nothing except log it

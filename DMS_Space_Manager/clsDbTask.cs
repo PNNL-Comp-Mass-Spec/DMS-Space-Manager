@@ -31,9 +31,9 @@ namespace Space_Manager
 			protected IMgrParams m_MgrParams;
 			protected string m_ConnStr;
 			protected string m_BrokerConnStr;
-			protected StringCollection m_ErrorList = new StringCollection();
+			protected System.Collections.Generic.List<string> m_ErrorList = new System.Collections.Generic.List<string>();
 			protected bool m_TaskWasAssigned = false;
-			protected StringDictionary m_JobParams = new StringDictionary();
+			protected System.Collections.Generic.Dictionary<string, string> m_JobParams = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 		#endregion
 
 		#region "Properties"
@@ -45,7 +45,7 @@ namespace Space_Manager
 				}
 			}
 
-			public StringDictionary TaskDictionary 
+			public System.Collections.Generic.Dictionary<string, string> TaskDictionary 
 			{	get 
 				{ 
 					return m_JobParams;
@@ -223,8 +223,21 @@ namespace Space_Manager
 				}
 
 				// Fill string dictionary with parameter values
+
+				// Example parameters:
+				// dataset: 08232011_UBQ_500MS_AGC_1E6_01
+				// DatasetID: 237350
+				// Folder: 08232011_UBQ_500MS_AGC_1E6_01
+				// StorageVol: G:\
+				// storagePath: VOrbiETD02\2011_3\
+				// StorageVolExternal: \\proto-9\
+				// RawDataType: dot_raw_files
+				// SambaStoragePath: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD02\2011_3
+				// Instrument: VOrbiETD02
+				// DatasetCreated: 2011-08-29 13:42:05
+				// DatasetYearQuarter: 2011_3
+
 				m_JobParams.Clear();
-				m_JobParams = new StringDictionary();
 				try
 				{
 					foreach (DataRow currRow in dt.Rows)
