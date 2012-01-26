@@ -64,6 +64,8 @@ namespace Space_Manager
 		// File paths are not case sensitive
 		System.Collections.Generic.Dictionary<string, string> m_HashFileContents;
 
+		string m_LastMD5WarnDataset = string.Empty;
+
 		#endregion
 
 		#region "Properties"
@@ -255,17 +257,18 @@ namespace Space_Manager
 		public ArchiveCompareResults CompareDatasetFolders(udtDatasetInfoType udtDatasetInfo, string svrDatasetNamePath, string sambaDatasetNamePath)
 		{
 			System.Collections.ArrayList serverFiles = null;
-			string archFileName;
+			string archFilePath;
 			string msg;
 
 			string sMismatchMessage = string.Empty;
 			ArchiveCompareResults eCompResultOverall = ArchiveCompareResults.Compare_Equal;
+			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(svrDatasetNamePath);
 
 			//Verify server dataset folder exists. If it doesn't, that's OK - it may have been removed during a manual
 			//	purge. We just need to update the database.
-			if (!Directory.Exists(svrDatasetNamePath))
+			if (!diDatasetFolder.Exists)
 			{
-				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " not found";
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " not found; assuming manually purged";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 				return ArchiveCompareResults.Compare_Equal;
 			}
@@ -273,7 +276,7 @@ namespace Space_Manager
 			//Verify Samba dataset folder exists
 			if (!Directory.Exists(sambaDatasetNamePath))
 			{
-				msg = "clsUpdateOps.CompareDatasetFolders, folder " + sambaDatasetNamePath + " not found";
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return ArchiveCompareResults.Compare_Error;
 			}
@@ -292,29 +295,40 @@ namespace Space_Manager
 				return ArchiveCompareResults.Compare_Error;
 			}
 
+			// If the dataset folder is empty yet the parent folder exists, then assume it was manually purged; just update the database
+			if (serverFiles.Count == 0 && diDatasetFolder.Parent.Exists)
+			{
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " is empty; assuming manually purged";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+				return ArchiveCompareResults.Compare_Equal;
+			}
+
 			// Loop through results folder file list, checking for archive copies and comparing if archive copy present
 			// We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mis-match is present
-			foreach (string SvrFileName in serverFiles)
+			foreach (string SvrFilePath in serverFiles)
 			{
-				//Convert the file name on the storage server to its equivalent in the archive
-				archFileName = ConvertServerPathToArchivePath(svrDatasetNamePath, sambaDatasetNamePath, SvrFileName);
-				if (archFileName.Length == 0)
+				// Convert the file name on the storage server to its equivalent in the archive
+				archFilePath = ConvertServerPathToArchivePath(svrDatasetNamePath, sambaDatasetNamePath, SvrFilePath);
+				if (archFilePath.Length == 0)
 				{
-					msg = "File name not returned when converting from server path to archive path for file" + SvrFileName;
+					msg = "File name not returned when converting from server path to archive path for file" + SvrFilePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return ArchiveCompareResults.Compare_Error;
 				}
-				else if (archFileName == "Error")
+				else if (archFilePath == "Error")
 				{
 					//Error was logged by called function, so just return
 					return ArchiveCompareResults.Compare_Error;
 				}
 
 				//Determine if file exists in archive
-				if (File.Exists(archFileName))
+				System.IO.FileInfo fiArchiveFile = new System.IO.FileInfo(archFilePath);
+
+				if (fiArchiveFile.Exists)
 				{
-					//File exists in archive, so compare the server and archive versions
-					ArchiveCompareResults CompRes = CompareTwoFiles(SvrFileName, archFileName, udtDatasetInfo);
+					// File exists in archive, so compare the server and archive versions
+					ArchiveCompareResults CompRes = CompareTwoFiles(SvrFilePath, archFilePath, udtDatasetInfo);
+
 					if (CompRes == ArchiveCompareResults.Compare_Equal)
 					{
 						// Hash codes match; continue checking
@@ -323,26 +337,81 @@ namespace Space_Manager
 					{
 						// An update is required
 						if (string.IsNullOrEmpty(sMismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal)
-							sMismatchMessage = "  Update required. Server file " + SvrFileName + " doesn't match archive file " + archFileName;
+							sMismatchMessage = "  Update required. Server file " + SvrFilePath + " doesn't match archive file " + archFilePath;
 
 						eCompResultOverall = ArchiveCompareResults.Compare_Not_Equal;
 					}
-					else if (CompRes == ArchiveCompareResults.Compare_Waiting_For_Hash)
+					else if (CompRes == ArchiveCompareResults.Compare_Waiting_For_Hash || CompRes == ArchiveCompareResults.Hash_Not_Found_For_File)
 					{
-						// A hash file wasn't found. Skip dataset and notify DMS to try again later
-						// This is logged as a debug message since we've already logged "Found stagemd5 file: \\a1.emsl.pnl.gov\dmsmd5\stagemd5.DatasetName"
-						msg = "  Waiting for hash file generation";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-						return ArchiveCompareResults.Compare_Waiting_For_Hash;
-					}
-					else if (CompRes == ArchiveCompareResults.Hash_Not_Found_For_File)
-					{
-						if (eCompResultOverall == ArchiveCompareResults.Compare_Equal)
+
+						// If this file is over AGED_FILE_DAYS days old and is in a subfolder then only compare file dates
+						// If the file in the archive is newer than this file, then assume the archive copy is valid
+						// Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
+						// Due to the slow speed of restoring files to tape we have switched to simply comparing dates
+
+						const int AGED_FILE_DAYS = 240;
+
+						System.IO.FileInfo fiServerFile = new System.IO.FileInfo(SvrFilePath);
+						bool bAssumeEqual = false;
+
+						if (System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays >= AGED_FILE_DAYS || 
+							System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays >= 30 && diDatasetFolder.Name.ToLower().StartsWith("blank"))
 						{
-							eCompResultOverall = ArchiveCompareResults.Compare_Waiting_For_Hash;
-							sMismatchMessage = "  Hash code not found for one or more files";
+							if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
+							{
+								// Copy in archive is the same size and same date (or newer)
+								if (fiServerFile.DirectoryName != diDatasetFolder.FullName)
+								{
+									// File is in a subfolder; assume equal and continue checking
+									bAssumeEqual = true;
+								}
+								else
+								{
+									if (fiServerFile.Name.StartsWith("x_") || fiServerFile.Name == "metadata.xml")
+									{
+										// File is not critical; assume equal and continue checking
+										bAssumeEqual = true;
+									}
+								}
+							}
+
 						}
-						
+
+						if (bAssumeEqual)
+						{
+							msg = "File is over " + AGED_FILE_DAYS + " days old and matches archive; assuming equal: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						}
+						else
+						{
+
+							if (CompRes == ArchiveCompareResults.Compare_Waiting_For_Hash)
+							{
+								// A hash file wasn't found. Skip dataset and notify DMS to try again later
+								// This is logged as a debug message since we've already logged "Found stagemd5 file: \\a1.emsl.pnl.gov\dmsmd5\stagemd5.DatasetName"
+								msg = "  Waiting for hash file generation";
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+								return ArchiveCompareResults.Compare_Waiting_For_Hash;
+							}
+							else if (CompRes == ArchiveCompareResults.Hash_Not_Found_For_File)
+							{
+
+								if (eCompResultOverall == ArchiveCompareResults.Compare_Equal)
+								{
+									eCompResultOverall = ArchiveCompareResults.Compare_Waiting_For_Hash;
+									sMismatchMessage = "  Hash code not found for one or more files";
+								}
+							}
+							else
+							{
+								// This code should never be reached
+								msg = "Logic bug comparing CompRes to ArchiveCompareResults.Compare_Waiting_For_Hash and ArchiveCompareResults.Hash_Not_Found_For_File";
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+								return ArchiveCompareResults.Compare_Error;
+							}
+
+						}
+
 					}
 					else
 					{
@@ -353,7 +422,7 @@ namespace Space_Manager
 				else
 				{
 					//File doesn't exist in archive, so update will be required
-					msg = "  Update required. Server file not found in archive: " + SvrFileName;
+					msg = "  Update required. Server file not found in archive: " + SvrFilePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					return ArchiveCompareResults.Compare_Not_Equal;
 				}
@@ -361,7 +430,7 @@ namespace Space_Manager
 
 			switch (eCompResultOverall)
 			{
-				case ArchiveCompareResults.Compare_Not_Equal:					
+				case ArchiveCompareResults.Compare_Not_Equal:
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sMismatchMessage);
 					break;
 
@@ -374,7 +443,7 @@ namespace Space_Manager
 			}
 
 			return eCompResultOverall;
-			
+
 		}	// End sub
 
 		/// <summary>
@@ -438,7 +507,7 @@ namespace Space_Manager
 				return ArchiveCompareResults.Hash_Not_Found_For_File;
 			}
 
-			//Get hash for server file
+			// Get hash for server file
 			serverFileHash = GenerateHashFromFile(serverFile);
 			if (string.IsNullOrEmpty(serverFileHash))
 			{
@@ -572,28 +641,39 @@ namespace Space_Manager
 			{
 				if (!File.Exists(sMD5ResultsFilePath))
 				{
-					// MD5 results file not found in archive
-					msg = "  MD5 results file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-
-					// Check to see if a stagemd5 file exists for this dataset. 
-					// This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
-
-					string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
-
-					string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
-					if (File.Exists(stagedFileNamePath))
+					// MD5 results file not found
+					if (string.Compare(udtDatasetInfo.DatasetName, m_LastMD5WarnDataset) != 0)
 					{
-						msg = "  Found stagemd5 file: " + stagedFileNamePath;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					}
-					else
-					{
-						// DatasetPurgeArchiveHelper needs to create a stagemd5 file for this datatset
-						// Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
-						//   eventually we should get MD5 result files and then we should be able to purge this dataset
-						msg = "  Stagemd5 file not found";
+						// Warning not yet posted
+						m_LastMD5WarnDataset = String.Copy(udtDatasetInfo.DatasetName);
+
+						msg = "  MD5 results file not found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+
+						// Check to see if a stagemd5 file exists for this dataset. 
+						// This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
+
+						string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+
+						string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
+						if (File.Exists(stagedFileNamePath))
+						{
+
+							string m_LastStageMD5WarnDataset = string.Empty;
+
+
+							msg = "  Found stagemd5 file: " + stagedFileNamePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						}
+						else
+						{
+							// DatasetPurgeArchiveHelper needs to create a stagemd5 file for this datatset
+							// Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
+							//   eventually we should get MD5 result files and then we should be able to purge this dataset
+							msg = "  Stagemd5 file not found";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						}
+
 					}
 
 					bWaitingForHashFile = true;
@@ -787,7 +867,7 @@ namespace Space_Manager
 				char[] cSplitChars = new char[] { ' ' };
 
 				string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
-			
+
 				sCurrentStep = "Read master MD5 results file";
 
 				System.IO.StreamReader srMD5ResultsFileMaster;
