@@ -147,8 +147,12 @@ namespace Space_Manager
 					return EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE;
 			}
 
+#if DoDelete
 			//Purge the dataset folder by deleting contents
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Purging dataset " + datasetPathSvr);
+#else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: Purging dataset " + datasetPathSvr);
+#endif
 
 			//Get a file listing for the dataset folder on the server
 			string[] datasetFiles = Directory.GetFiles(datasetPathSvr);
@@ -241,8 +245,13 @@ namespace Space_Manager
 			// // Delete the results.* hash file in the archive
 			// // DeleteArchiveHashResultsFile(datasetName);
 
+#if DoDelete
 			// If we got to here, then log success and exit
 			msg = "Purged dataset " + udtDatasetInfo.DatasetName;
+#else
+			msg = "SIMULATE: Purged dataset " + udtDatasetInfo.DatasetName;
+#endif
+
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
@@ -353,9 +362,10 @@ namespace Space_Manager
 
 						System.IO.FileInfo fiServerFile = new System.IO.FileInfo(SvrFilePath);
 						bool bAssumeEqual = false;
+						double dFileAgeDays = System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
-						if (System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays >= AGED_FILE_DAYS || 
-							System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays >= 30 && diDatasetFolder.Name.ToLower().StartsWith("blank"))
+						if (dFileAgeDays >= AGED_FILE_DAYS ||
+							dFileAgeDays >= 30 && diDatasetFolder.Name.ToLower().StartsWith("blank"))
 						{
 							if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
 							{
@@ -379,8 +389,8 @@ namespace Space_Manager
 
 						if (bAssumeEqual)
 						{
-							msg = "File is over " + AGED_FILE_DAYS + " days old and matches archive; assuming equal: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							msg = "    ignoring aged, non-critical file: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 						}
 						else
 						{
