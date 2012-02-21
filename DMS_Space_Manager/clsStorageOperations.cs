@@ -128,8 +128,8 @@ namespace Space_Manager
 					// Nothing needs to be done; continue with method
 					break;
 				case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
-					// This is OK, but we need to update the database to show dataset is purged
-					return EnumCloseOutType.CLOSEOUT_SUCCESS;
+					// Return Failed since we likely need to update the database
+					return EnumCloseOutType.CLOSEOUT_FAILED;
 
 				case ArchiveCompareResults.Compare_Error:
 					// Unable to perform comparison operation; set purge task failed
@@ -154,25 +154,38 @@ namespace Space_Manager
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: Purging dataset " + datasetPathSvr);
 #endif
 
-			//Get a file listing for the dataset folder on the server
-			string[] datasetFiles = Directory.GetFiles(datasetPathSvr);
-			msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFiles.GetLength(0).ToString() + " files found";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			System.Collections.Generic.List<string> datasetFiles = new System.Collections.Generic.List<string>();
+			System.Collections.Generic.List<string> datasetFolders = new System.Collections.Generic.List<string>();
 
-			//Get a folder listing for the dataset folder on the server
-			string[] datasetFolders = Directory.GetDirectories(datasetPathSvr);
-			msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFolders.GetLength(0).ToString() + " folders found";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-			//Verify at least 1 file or folder was found to purge
-			if ((datasetFiles.GetLength(0) == 0) & (datasetFolders.GetLength(0) == 0))
+			try
 			{
-				//Nothing was found to purge. Something's rotten in DMS
-				msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName;
+				// Get a file listing for the dataset folder on the server
+				datasetFiles = Directory.GetFiles(datasetPathSvr).ToList<string>();
+				msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFiles.Count.ToString() + " files found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+				// Get a folder listing for the dataset folder on the server
+				datasetFolders = Directory.GetDirectories(datasetPathSvr).ToList<string>();
+				msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFolders.Count.ToString() + " folders found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+				// Verify at least 1 file or folder was found to purge
+				if ((datasetFiles.Count == 0) && (datasetFolders.Count == 0))
+				{
+					// Nothing was found to purge. Something's rotten in DMS
+					msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+			}
+			catch (Exception ex) {
+				msg = "Exception finding files and folders at " + datasetPathSvr + "; " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
+			
 			// Delete the files in the dataset folder
 			foreach (string fileToDelete in datasetFiles)
 			{
@@ -273,20 +286,19 @@ namespace Space_Manager
 			ArchiveCompareResults eCompResultOverall = ArchiveCompareResults.Compare_Equal;
 			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(svrDatasetNamePath);
 
-			//Verify server dataset folder exists. If it doesn't, that's OK - it may have been removed during a manual
-			//	purge. We just need to update the database.
+			// Verify server dataset folder exists. If it doesn't, then either we're getting Access Denied or the folder was manually purged
 			if (!diDatasetFolder.Exists)
 			{
-				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " not found; assuming manually purged";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-				return ArchiveCompareResults.Compare_Equal;
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " not found; either the folder was manually purged or Access is Denied";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
 			}
 
 			//Verify Samba dataset folder exists
 			if (!Directory.Exists(sambaDatasetNamePath))
 			{
 				msg = "clsUpdateOps.CompareDatasetFolders, folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				return ArchiveCompareResults.Compare_Error;
 			}
 
