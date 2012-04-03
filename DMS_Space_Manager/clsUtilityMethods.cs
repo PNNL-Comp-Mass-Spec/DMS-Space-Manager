@@ -90,7 +90,8 @@ namespace Space_Manager
 			}	// End sub
 
 			/// <summary>
-			/// Uses WMI to determine if free space on disk is above minimum threshold
+			/// For remote drives, uses WMI to determine if free space on disk is above minimum threshold
+			/// For local drives, uses System.IO.DriveInfo
 			/// </summary>
 			/// <param name="machine">Name of server to check</param>
 			/// <param name="driveData">Data for drive to be checked</param>
@@ -100,11 +101,10 @@ namespace Space_Manager
 			{
 				double availableSpace = 0;
 				SpaceCheckResults testResult = SpaceCheckResults.Error;
-				// Set client/server flag based on config
-				bool client = perspective == "client" ? true : false;
-                driveFreeSpaceGB = -1;
+
+				driveFreeSpaceGB = -1;
                 
-				if (client)
+				if (perspective.ToLower().Trim() == "client")
 				{
                     // Checking a remote drive
                     // Get WMI object representing drive
@@ -205,18 +205,13 @@ namespace Space_Manager
                     string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() +
                         ", Drive not found";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
-
                 }
                 else
                 {
                     if (driveFreeSpaceGB > driveData.MinDriveSpace)
-                    {
                         testResult = SpaceCheckResults.Above_Threshold;
-                    }
                     else
-                    {
                         testResult = SpaceCheckResults.Below_Threshold;
-                    }
 
                     // Log space requirement if debug logging enabled
                     string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() +
