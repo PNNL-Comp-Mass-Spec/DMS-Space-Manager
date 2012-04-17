@@ -46,7 +46,8 @@ namespace Space_Manager
 			CLOSEOUT_SUCCESS = 0,
 			CLOSEOUT_FAILED = 1,
 			CLOSEOUT_UPDATE_REQUIRED = 2,
-			CLOSEOUT_WAITING_HASH_FILE = 3
+			CLOSEOUT_WAITING_HASH_FILE = 3,
+			CLOSEOUT_DRIVE_MISSING = 4
 		}
 
 		public enum EnumRequestTaskResult : short

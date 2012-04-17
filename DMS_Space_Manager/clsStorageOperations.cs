@@ -128,8 +128,17 @@ namespace Space_Manager
 					// Nothing needs to be done; continue with method
 					break;
 				case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
-					// Return Failed since we likely need to update the database
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					// Confirm that the share for the dataset actual exists
+					if (ValidateDatasetShareExists(datasetPathSvr))
+					{
+						// Share exists; return Failed since we likely need to update the database
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
+					else
+					{
+						// Share is missing
+						return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
+					}
 
 				case ArchiveCompareResults.Compare_Error:
 					// Unable to perform comparison operation; set purge task failed
@@ -991,6 +1000,37 @@ namespace Space_Manager
 				return false;
 			}
 		}	// End sub
+
+		protected bool ValidateDatasetShareExists(string sDatasetFolderPath)
+		{
+			System.IO.DirectoryInfo diDatasetFolder;
+
+			try
+			{
+				diDatasetFolder = new System.IO.DirectoryInfo(sDatasetFolderPath);
+
+				if (diDatasetFolder.Exists)
+					return true;
+				else
+				{
+					while (diDatasetFolder.Parent != null)
+					{
+						diDatasetFolder = diDatasetFolder.Parent;
+						if (diDatasetFolder.Exists)
+							return true;
+					}
+
+					return false;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				string msg = "Exception validating that folder " + sDatasetFolderPath + " exists: " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+		}
 
 		#endregion
 	}	// End class

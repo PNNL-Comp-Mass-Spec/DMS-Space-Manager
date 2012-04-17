@@ -202,8 +202,7 @@ namespace Space_Manager
                     testResult = SpaceCheckResults.Error;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() +
-                        ", Drive not found";
+                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() + ", Drive not found";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
                 }
                 else
@@ -214,8 +213,7 @@ namespace Space_Manager
                         testResult = SpaceCheckResults.Below_Threshold;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() +
-                        ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
+                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
 
                 }

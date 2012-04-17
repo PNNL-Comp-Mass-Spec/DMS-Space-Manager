@@ -245,8 +245,10 @@ namespace Space_Manager
 						// Something has happened that requires restarting manager
 						methodReturnCode = RESTART_NOT_OK;
 					}
-					else methodReturnCode = RESTART_OK;	// Something is requiring a manager restart
-
+					else
+					{
+						methodReturnCode = RESTART_OK;	// Something is requiring a manager restart
+					}
 					// Exit the drive test loop
 					break;
 				}
@@ -286,9 +288,9 @@ namespace Space_Manager
 					// Check available space on server drive and compare it with min allowed space
 					double driveFreeSpaceGB = 0;
 					SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(m_MgrSettings.GetParam("machname"),
-																											m_MgrSettings.GetParam("perspective"),
-																											testDrive,
-																											out driveFreeSpaceGB);
+																					  m_MgrSettings.GetParam("perspective"),
+																					  testDrive,
+																					  out driveFreeSpaceGB);
 
 					if (checkResult == SpaceCheckResults.Above_Threshold)
 					{
@@ -346,27 +348,34 @@ namespace Space_Manager
 						case EnumCloseOutType.CLOSEOUT_SUCCESS:
 							repCounter++;
 							m_ErrorCount = 0;
-							//								continue;
 							break;
 						case EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED:
-							m_ErrorCount = 0;
 							repCounter++;
-							//								continue;
+							m_ErrorCount = 0;
 							break;
 						case EnumCloseOutType.CLOSEOUT_FAILED:
 							m_ErrorCount++;
 							repCounter++;
-							//								continue;
 							break;
 						case EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE:
-							m_ErrorCount = 0;
 							repCounter++;
-							//								continue;
+							m_ErrorCount = 0;
+							break;
+						case EnumCloseOutType.CLOSEOUT_DRIVE_MISSING:
+							repCounter++;
 							break;
 					}
 
-					// Close the purge task and continue purging this drive
+
+					// Close the purge task
 					m_Task.CloseTask(purgeResult);
+
+					if (purgeResult == EnumCloseOutType.CLOSEOUT_DRIVE_MISSING)
+					{
+						msg = "Drive not found; moving on to next drive";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						break;
+					}					
 
 				}	// End purge loop for current drive
 
@@ -401,7 +410,7 @@ namespace Space_Manager
 			{
 				// Too many errors - something must be seriously wrong. Human intervention may be required
 				msg = "Excessive errors. Error count = " + m_ErrorCount.ToString() + ". Manager is being disabled";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
 				{
 					msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
