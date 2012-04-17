@@ -255,6 +255,7 @@ namespace Space_Manager
 
 				// Start a purge loop for the current drive
 				bool purgeRunning = true;
+				bool bDriveInfoLogged = false;
 				while (purgeRunning)
 				{
 					// Check for configuration changes
@@ -307,6 +308,13 @@ namespace Space_Manager
 						m_ErrorCount++;
 						repCounter++;
 						break;
+					}
+
+					if (!bDriveInfoLogged)
+					{
+						bDriveInfoLogged = true;
+						msg = "Purge required   , drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0).ToString() + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0).ToString() + " GB threshold";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					}
 
 					// Request a purge task
