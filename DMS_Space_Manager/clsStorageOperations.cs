@@ -228,7 +228,7 @@ namespace Space_Manager
 					// Conditional compilation symbol DoDelete makes this true and allows deletion if defined. Otherwise,
 					// condition is false and deletion will not occur
 #if DoDelete
-					Directory.Delete(folderToDelete, true);
+					DeleteFolderRecurse(folderToDelete);
 #endif
 				}
 				catch (Exception ex)
@@ -561,6 +561,67 @@ namespace Space_Manager
 			}
 		}	// End sub
 
+		/// <summary>
+		/// Deletes a folder, including all of files files and subfolders
+		/// Assures that the ReadOnly bit is turned off for each folder
+		/// </summary>
+		/// <param name="sFolderPath"></param>
+		/// <returns></returns>
+		private bool DeleteFolderRecurse(string sFolderPath)
+		{
+			System.IO.DirectoryInfo diFolder;
+
+			diFolder = new System.IO.DirectoryInfo(sFolderPath);
+
+			if (diFolder.Exists)
+			{
+				foreach (System.IO.DirectoryInfo diSubFolder in diFolder.GetDirectories())
+				{
+					// Check whether the folder is marked as Read-Only
+					if ((diSubFolder.Attributes & System.IO.FileAttributes.ReadOnly) == System.IO.FileAttributes.ReadOnly)
+						diSubFolder.Attributes = diSubFolder.Attributes & ~System.IO.FileAttributes.ReadOnly;
+
+					DeleteFolderRecurse(diSubFolder.FullName);
+				}
+
+				try
+				{
+					diFolder.Delete(true);
+				}
+				catch
+				{
+					// The folder might have readonly files
+					// Manually delete each file
+					DeleteFilesCheckReadonly(diFolder);
+					diFolder.Delete(true);
+				}
+
+				return true;
+			}
+			else
+			{
+				// Folder not found; return true anyway
+				return true;
+			}
+
+
+		}
+
+		/// <summary>
+		/// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
+		/// </summary>
+		/// <param name="diFolder"></param>
+		private void DeleteFilesCheckReadonly(System.IO.DirectoryInfo diFolder)
+		{
+			foreach (System.IO.FileInfo fiFile in diFolder.GetFiles("*", System.IO.SearchOption.AllDirectories))
+			{
+				if ((fiFile.Attributes & System.IO.FileAttributes.ReadOnly) == System.IO.FileAttributes.ReadOnly)
+					fiFile.Attributes = fiFile.Attributes & ~System.IO.FileAttributes.ReadOnly;
+
+				fiFile.Delete();
+			}
+		}
+
 		private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
 		{
 			string hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
@@ -755,7 +816,11 @@ namespace Space_Manager
 						}
 						else
 						{
-							m_HashFileContents.Add(sFileNameTrimmed, lineParts[0]);
+							// MD5 results files should not have duplicate entries, but it is possible, so need to check for this							
+							if (m_HashFileContents.ContainsKey(sFileNameTrimmed))
+								m_HashFileContents[sFileNameTrimmed] = lineParts[0];
+							else
+								m_HashFileContents.Add(sFileNameTrimmed, lineParts[0]);
 						}
 					}
 					else
