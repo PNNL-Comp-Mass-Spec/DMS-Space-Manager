@@ -318,8 +318,7 @@ namespace Space_Manager
 					//Since the document is now in a string, we can close the XWriter
 					XWriter.Close();
 					XWriter = null;
-					GC.Collect();
-					GC.WaitForPendingFinalizers();
+					PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 					//Write the output file
 					StreamWriter OutFile = default(StreamWriter);
