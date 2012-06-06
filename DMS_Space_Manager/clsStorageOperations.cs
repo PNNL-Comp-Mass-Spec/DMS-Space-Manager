@@ -378,8 +378,9 @@ namespace Space_Manager
 						// If the file in the archive is newer than this file, then assume the archive copy is valid
 						// Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
 						// Due to the slow speed of restoring files to tape we have switched to simply comparing dates
+						// In June 2012 I changed AGED_FILE_DAYS from 240 to 45 days since the archive retention period has become quite short
 
-						const int AGED_FILE_DAYS = 240;
+						const int AGED_FILE_DAYS = 45;
 
 						System.IO.FileInfo fiServerFile = new System.IO.FileInfo(SvrFilePath);
 						bool bAssumeEqual = false;
