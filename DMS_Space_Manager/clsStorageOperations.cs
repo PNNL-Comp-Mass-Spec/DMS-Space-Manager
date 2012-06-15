@@ -39,8 +39,17 @@ namespace Space_Manager
 			Compare_Storage_Server_Folder_Missing,
 			Compare_Error,
 			Compare_Waiting_For_Hash,
-			Hash_Not_Found_For_File
+			Hash_Not_Found_For_File,
+			Compare_Archive_Samba_Share_Missing
 		}
+
+		public enum PurgePolicyConstants
+		{
+			Auto = 0,
+			PurgeAllExceptQC = 1,
+			PurgeAll = 2
+		}
+
 		#endregion
 
 		#region "Structures"
@@ -50,6 +59,9 @@ namespace Space_Manager
 			public string DatasetFolderName;
 			public string Instrument;
 			public string YearQuarter;
+			public string ServerFolderPath;				// Folder path of this dataset on the storage server
+			public PurgePolicyConstants PurgePolicy;
+			public string RawDataType;
 		}
 		#endregion
 
@@ -88,7 +100,6 @@ namespace Space_Manager
 		/// <returns>Enum representing state of task</returns>
 		public EnumCloseOutType PurgeDataset(ITaskParams purgeParams)
 		{
-			string datasetPathSvr = "";
 			string datasetPathSamba = "";
 			string msg = "";
 			bool retVal;
@@ -99,37 +110,45 @@ namespace Space_Manager
 			udtDatasetInfo.DatasetFolderName = purgeParams.GetParam("Folder");
 			udtDatasetInfo.Instrument = purgeParams.GetParam("Instrument");
 			udtDatasetInfo.YearQuarter = purgeParams.GetParam("DatasetYearQuarter");
+			udtDatasetInfo.ServerFolderPath = string.Empty;
+			udtDatasetInfo.PurgePolicy = GetPurgePolicyEnum(purgeParams.GetParam("PurgePolicy"));
+			udtDatasetInfo.RawDataType = purgeParams.GetParam("RawDataType");
 
-			//Get path to dataset folder on server
+			// Get path to dataset folder on server
 			{
 				if (m_ClientPerspective)
 				{
-					//Manager is running on a client
-					datasetPathSvr = purgeParams.GetParam("StorageVolExternal");
+					// Manager is running on a client
+					udtDatasetInfo.ServerFolderPath = purgeParams.GetParam("StorageVolExternal");
 				}
 				else
 				{
 					//Manager is running on storage server
-					datasetPathSvr = purgeParams.GetParam("StorageVol");
+					udtDatasetInfo.ServerFolderPath = purgeParams.GetParam("StorageVol");
 				}
-				datasetPathSvr = System.IO.Path.Combine(datasetPathSvr, purgeParams.GetParam("storagePath"));
-				datasetPathSvr = System.IO.Path.Combine(datasetPathSvr, udtDatasetInfo.DatasetFolderName);
+				udtDatasetInfo.ServerFolderPath = System.IO.Path.Combine(udtDatasetInfo.ServerFolderPath, purgeParams.GetParam("storagePath"));
+				udtDatasetInfo.ServerFolderPath = System.IO.Path.Combine(udtDatasetInfo.ServerFolderPath, udtDatasetInfo.DatasetFolderName);
 
 				//Get path to dataset folder in archive
 				datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetFolderName);
 			}
 
-			msg = "Verifying archive integrity, dataset " + datasetPathSvr;
+			msg = "Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-			ArchiveCompareResults CompRes = CompareDatasetFolders(udtDatasetInfo, datasetPathSvr, datasetPathSamba);
+
+			System.Collections.Generic.SortedSet<string> lstServerFilesToPurge;
+			System.Collections.Generic.List<int> lstJobsToPurge;
+			ArchiveCompareResults CompRes = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out lstServerFilesToPurge, out lstJobsToPurge);
+
 			switch (CompRes)
 			{
 				case ArchiveCompareResults.Compare_Equal:
-					// Nothing needs to be done; continue with method
+					// Everything matches up
 					break;
+
 				case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
 					// Confirm that the share for the dataset actual exists
-					if (ValidateDatasetShareExists(datasetPathSvr))
+					if (ValidateDatasetShareExists(udtDatasetInfo.ServerFolderPath))
 					{
 						// Share exists; return Failed since we likely need to update the database
 						return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -154,59 +173,86 @@ namespace Space_Manager
 					// MD5 results file not found, but stagemd5 file exists. Skip dataset and tell DMS to try again later
 					retVal = UpdateMD5ResultsFile(udtDatasetInfo);
 					return EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE;
+
+				case ArchiveCompareResults.Compare_Archive_Samba_Share_Missing:
+					// Archive share is missing
+					return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
+
+				default:
+					// Unrecognized result code
+					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-#if DoDelete
-			//Purge the dataset folder by deleting contents
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Purging dataset " + datasetPathSvr);
-#else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: Purging dataset " + datasetPathSvr);
-#endif
-
-			System.Collections.Generic.List<string> datasetFiles = new System.Collections.Generic.List<string>();
-			System.Collections.Generic.List<string> datasetFolders = new System.Collections.Generic.List<string>();
-
-			try
+			if ((lstServerFilesToPurge.Count == 0))
 			{
-				// Get a file listing for the dataset folder on the server
-				datasetFiles = Directory.GetFiles(datasetPathSvr).ToList<string>();
-				msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFiles.Count.ToString() + " files found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				// Nothing was found to purge.
+				msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
 
-				// Get a folder listing for the dataset folder on the server
-				datasetFolders = Directory.GetDirectories(datasetPathSvr).ToList<string>();
-				msg = "Dataset " + udtDatasetInfo.DatasetName + ": " + datasetFolders.Count.ToString() + " folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-				// Verify at least 1 file or folder was found to purge
-				if ((datasetFiles.Count == 0) && (datasetFolders.Count == 0))
+				switch (udtDatasetInfo.PurgePolicy)
 				{
-					// Nothing was found to purge. Something's rotten in DMS
-					msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					case PurgePolicyConstants.Auto:
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						return EnumCloseOutType.CLOSEOUT_PURGE_AUTO;
+
+					case PurgePolicyConstants.PurgeAllExceptQC:
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						return EnumCloseOutType.CLOSEOUT_PURGE_ALL_EXCEPT_QC;
+
+					case PurgePolicyConstants.PurgeAll:
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+
+					default:
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 			}
-			catch (Exception ex) {
-				msg = "Exception finding files and folders at " + datasetPathSvr + "; " + ex.Message;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
 
-			
-			// Delete the files in the dataset folder
-			foreach (string fileToDelete in datasetFiles)
+
+#if DoDelete
+			//Purge the dataset folder by deleting contents
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Purging dataset " + udtDatasetInfo.ServerFolderPath);
+#else
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: Purging dataset " + udtDatasetInfo.ServerFolderPath);
+#endif
+
+			// This list keeps track of the folders that we are processing
+			System.Collections.Generic.SortedSet<string> lstServerFolders = new System.Collections.Generic.SortedSet<string>();
+
+			int iFilesDeleted = 0;
+			int iFoldersDeleted = 0;
+
+			// Delete the files listed in lstServerFilesToPurge
+			// If the PurgePolicy is AutoPurge or Delete All Except QC then the files in lstServerFilesToPurge could be a subset of the actual files present
+			foreach (string fileToDelete in lstServerFilesToPurge)
 			{
 				try
 				{
-					// Conditional compilation symbol DoDelete makes this true and allows deletion if defined. Otherwise,
-					// condition is false and deletion will not occur
+					System.IO.FileInfo fiFile = new System.IO.FileInfo(fileToDelete);
+					if (!lstServerFolders.Contains(fiFile.Directory.FullName))
+						lstServerFolders.Add(fiFile.Directory.FullName);
 
+					if (fiFile.Exists)
+					{
 #if DoDelete
-					//TODO: Find C# equivalent to VB's SetAttr: SetAttr(fileToDelete, FileAttribute.Normal)
-					System.IO.File.Delete(fileToDelete);
+						// This code will only be reached if conditional compilation symbol DoDelete is defined
+						try
+						{
+							fiFile.Delete();
+						}
+						catch
+						{
+							// Check the ReadOnly flag then retry the deletion
+							if ((fiFile.Attributes & System.IO.FileAttributes.ReadOnly) == System.IO.FileAttributes.ReadOnly)
+								fiFile.Attributes = fiFile.Attributes & ~System.IO.FileAttributes.ReadOnly;
+
+							fiFile.Delete();
+						}
 #endif
+						iFilesDeleted += 1;
+					}
+
 				}
 				catch (Exception ex)
 				{
@@ -217,88 +263,115 @@ namespace Space_Manager
 			}
 
 			// Log debug message
-			msg = "Deleted files in dataset folder " + datasetPathSvr;
+			msg = "Deleted " + iFilesDeleted + " file" + CheckPlural(iFilesDeleted);
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Delete the folders in the dataset folder, leaving the dataset folder intact
-			foreach (string folderToDelete in datasetFolders)
+			// Look for empty folders that can now be deleted
+			foreach (string serverFolder in lstServerFolders)
 			{
 				try
 				{
-					// Conditional compilation symbol DoDelete makes this true and allows deletion if defined. Otherwise,
-					// condition is false and deletion will not occur
-#if DoDelete
-					DeleteFolderRecurse(folderToDelete);
-#endif
+					if (serverFolder != udtDatasetInfo.ServerFolderPath)
+						// Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
+						DeleteFolderIfEmpty(serverFolder, ref iFoldersDeleted);
 				}
 				catch (Exception ex)
 				{
-					msg = "Exception deleting folder " + folderToDelete + "; " + ex.Message;
+					msg = "Exception deleting folder " + serverFolder + "; " + ex.Message;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
 
 			// Log debug message
-			msg = "Deleted folders in dataset folder " + datasetPathSvr;
+			msg = "Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted);
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Delete the dataset folder
+			// Delete the dataset folder if it is empty
 			try
 			{
-				// Conditional compilation symbol DoDelete makes this true and allows deletion if defined. Otherwise,
-				// condition is false and deletion will not occur
-#if DoDelete
-				Directory.Delete(datasetPathSvr, true);
-#endif
+				// Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
+				DeleteFolderIfEmpty(udtDatasetInfo.ServerFolderPath, ref iFoldersDeleted);
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception deleting dataset folder " + datasetPathSvr + "; " + ex.Message;
+				msg = "Exception deleting dataset folder " + udtDatasetInfo.ServerFolderPath + "; " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Log debug message
-			msg = "Deleted folders in dataset folder " + datasetPathSvr;
+			msg = "Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Deprecated:
-			// // Delete the results.* hash file in the archive
-			// // DeleteArchiveHashResultsFile(datasetName);
+			// Mark the jobs in lstJobsToPurge as purged
+			MarkPurgedJobs(lstJobsToPurge);
 
-#if DoDelete
 			// If we got to here, then log success and exit
-			msg = "Purged dataset " + udtDatasetInfo.DatasetName;
-#else
-			msg = "SIMULATE: Purged dataset " + udtDatasetInfo.DatasetName;
+			msg = "Purged dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
+
+#if !DoDelete
+			msg = "SIMULATE: " + msg;
 #endif
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-			return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+			switch (udtDatasetInfo.PurgePolicy)
+			{
+				case PurgePolicyConstants.Auto:
+					return EnumCloseOutType.CLOSEOUT_PURGE_AUTO;
+
+				case PurgePolicyConstants.PurgeAllExceptQC:
+					return EnumCloseOutType.CLOSEOUT_PURGE_ALL_EXCEPT_QC;
+
+				case PurgePolicyConstants.PurgeAll:
+					return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+				default:
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unrecognized purge policy");
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+		}	// End Sub
+
+		/// <summary>
+		/// Returns "s" if the value is 0 or greater than 1
+		/// Returns "" if the value is 1
+		/// </summary>
+		/// <param name="iValue"></param>
+		/// <returns></returns>
+		protected string CheckPlural(int iValue)
+		{
+			if (iValue == 1)
+				return string.Empty;
+			else
+				return "s";
+		}
 
 		/// <summary>
 		/// Compares the contents of two dataset folders
 		/// </summary>
 		/// <param name="datasetName">Neme of dataset</param>
-		/// <param name="svrDatasetNamePath">Location of dataset folder on server</param>
 		/// <param name="sambaDatasetNamePath">Location of dataset folder in archive (samba)</param>
 		/// <returns></returns>
-		public ArchiveCompareResults CompareDatasetFolders(udtDatasetInfoType udtDatasetInfo, string svrDatasetNamePath, string sambaDatasetNamePath)
+		public ArchiveCompareResults CompareDatasetFolders(udtDatasetInfoType udtDatasetInfo, string sambaDatasetNamePath,
+			out System.Collections.Generic.SortedSet<string> lstServerFilesToPurge,
+			out System.Collections.Generic.List<int> lstJobsToPurge)
 		{
-			System.Collections.ArrayList serverFiles = null;
+			lstServerFilesToPurge = new System.Collections.Generic.SortedSet<string>();
+			lstJobsToPurge = new System.Collections.Generic.List<int>();
+
 			string archFilePath;
 			string msg;
 
 			string sMismatchMessage = string.Empty;
 			ArchiveCompareResults eCompResultOverall = ArchiveCompareResults.Compare_Equal;
-			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(svrDatasetNamePath);
+			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(udtDatasetInfo.ServerFolderPath);
 
 			// Verify server dataset folder exists. If it doesn't, then either we're getting Access Denied or the folder was manually purged
 			if (!diDatasetFolder.Exists)
 			{
-				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " not found; either the folder was manually purged or Access is Denied";
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " not found; either the folder was manually purged or Access is Denied";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
 			}
@@ -308,40 +381,30 @@ namespace Space_Manager
 			{
 				msg = "clsUpdateOps.CompareDatasetFolders, folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-				return ArchiveCompareResults.Compare_Error;
+				return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
 			}
-
-			//Get a list of all files in the results folder and subfolders
-			try
-			{
-				string[] DirsToScan = { svrDatasetNamePath };
-				DirectoryScanner DirScanner = new DirectoryScanner(DirsToScan);
-				DirScanner.PerformScan(ref serverFiles, "*.*");
-			}
-			catch (Exception ex)
-			{
-				msg = "clsUpdateOps.CompareJobFolders; exception getting file listing: " + ex.Message;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return ArchiveCompareResults.Compare_Error;
-			}
-
+			
 			// If the dataset folder is empty yet the parent folder exists, then assume it was manually purged; just update the database
-			if (serverFiles.Count == 0 && diDatasetFolder.Parent.Exists)
+			if (diDatasetFolder.GetFileSystemInfos().Length == 0 && diDatasetFolder.Parent.Exists)
 			{
-				msg = "clsUpdateOps.CompareDatasetFolders, folder " + svrDatasetNamePath + " is empty; assuming manually purged";
+				msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " is empty; assuming manually purged";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 				return ArchiveCompareResults.Compare_Equal;
 			}
 
-			// Loop through results folder file list, checking for archive copies and comparing if archive copy present
+			// Find files to purge based on the purge policy
+			clsPurgeableFileSearcher oPurgeableFileSearcher = new clsPurgeableFileSearcher();
+			lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(diDatasetFolder, udtDatasetInfo, out lstJobsToPurge);
+
+			// Loop through the file list, checking for archive copies and comparing if archive copy present
 			// We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mis-match is present
-			foreach (string SvrFilePath in serverFiles)
+			foreach (string sServerFilePath in lstServerFilesToPurge)
 			{
 				// Convert the file name on the storage server to its equivalent in the archive
-				archFilePath = ConvertServerPathToArchivePath(svrDatasetNamePath, sambaDatasetNamePath, SvrFilePath);
+				archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
 				if (archFilePath.Length == 0)
 				{
-					msg = "File name not returned when converting from server path to archive path for file" + SvrFilePath;
+					msg = "File name not returned when converting from server path to archive path for file" + sServerFilePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return ArchiveCompareResults.Compare_Error;
 				}
@@ -357,7 +420,7 @@ namespace Space_Manager
 				if (fiArchiveFile.Exists)
 				{
 					// File exists in archive, so compare the server and archive versions
-					ArchiveCompareResults CompRes = CompareTwoFiles(SvrFilePath, archFilePath, udtDatasetInfo);
+					ArchiveCompareResults CompRes = CompareTwoFiles(sServerFilePath, archFilePath, udtDatasetInfo);
 
 					if (CompRes == ArchiveCompareResults.Compare_Equal)
 					{
@@ -367,7 +430,7 @@ namespace Space_Manager
 					{
 						// An update is required
 						if (string.IsNullOrEmpty(sMismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal)
-							sMismatchMessage = "  Update required. Server file " + SvrFilePath + " doesn't match archive file " + archFilePath;
+							sMismatchMessage = "  Update required. Server file " + sServerFilePath + " doesn't match archive file " + archFilePath;
 
 						eCompResultOverall = ArchiveCompareResults.Compare_Not_Equal;
 					}
@@ -378,11 +441,12 @@ namespace Space_Manager
 						// If the file in the archive is newer than this file, then assume the archive copy is valid
 						// Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
 						// Due to the slow speed of restoring files to tape we have switched to simply comparing dates
-						// In June 2012 I changed AGED_FILE_DAYS from 240 to 45 days since the archive retention period has become quite short
+						//
+						// In June 2012 we changed AGED_FILE_DAYS from 240 to 45 days since the archive retention period has become quite short
 
 						const int AGED_FILE_DAYS = 45;
 
-						System.IO.FileInfo fiServerFile = new System.IO.FileInfo(SvrFilePath);
+						System.IO.FileInfo fiServerFile = new System.IO.FileInfo(sServerFilePath);
 						bool bAssumeEqual = false;
 						double dFileAgeDays = System.DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
@@ -399,7 +463,7 @@ namespace Space_Manager
 								}
 								else
 								{
-									if (fiServerFile.Name.StartsWith("x_") || fiServerFile.Name == "metadata.xml")
+									if (fiServerFile.Name.StartsWith("x_") || fiServerFile.Name == "metadata.xml" || fiServerFile.Name == "metadata.txt")
 									{
 										// File is not critical; assume equal and continue checking
 										bAssumeEqual = true;
@@ -437,7 +501,7 @@ namespace Space_Manager
 							else
 							{
 								// This code should never be reached
-								msg = "Logic bug comparing CompRes to ArchiveCompareResults.Compare_Waiting_For_Hash and ArchiveCompareResults.Hash_Not_Found_For_File";
+								msg = "Logic bug, CompRes = " + CompRes.ToString() + " but should be either ArchiveCompareResults.Compare_Waiting_For_Hash or ArchiveCompareResults.Hash_Not_Found_For_File";
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 								return ArchiveCompareResults.Compare_Error;
 							}
@@ -453,15 +517,31 @@ namespace Space_Manager
 				}
 				else
 				{
-					//File doesn't exist in archive, so update will be required
-					msg = "  Update required. Server file not found in archive: " + SvrFilePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-					return ArchiveCompareResults.Compare_Not_Equal;
+					// File doesn't exist in archive
+					// Either the archive is offline or an update is required
+
+					if (ValidateDatasetShareExists(sambaDatasetNamePath))
+					{
+						msg = "  Update required. Server file not found in archive: " + sServerFilePath;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						return ArchiveCompareResults.Compare_Not_Equal;
+					}
+					else
+					{
+						msg = "  Archive not found via samba path: " + sambaDatasetNamePath;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
+					}
+					
 				}
-			} // foreach File in serverFiles
+			} // foreach File in lstServerFilesToPurge
 
 			switch (eCompResultOverall)
 			{
+				case ArchiveCompareResults.Compare_Equal:
+					// Everything matches up
+					break;
+
 				case ArchiveCompareResults.Compare_Not_Equal:
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sMismatchMessage);
 					break;
@@ -535,7 +615,8 @@ namespace Space_Manager
 
 			if (archiveFileHash == HASH_NOT_FOUND)
 			{
-				// There is a hash file, but no line exists for serverFile.  Skip dataset and tell DMS to wait before trying again
+				// There is a hash file, but no line exists for serverFile.
+				// If this is an aged, non-critical file, we'll ignore it if the file sizes are the same and the file date/time in the archive is newer than the local copy
 				return ArchiveCompareResults.Hash_Not_Found_For_File;
 			}
 
@@ -563,7 +644,31 @@ namespace Space_Manager
 		}	// End sub
 
 		/// <summary>
-		/// Deletes a folder, including all of files files and subfolders
+		/// Delete the given folder if it is empty (no files, and all subfolders are empty)
+		/// </summary>
+		/// <param name="serverFolder"></param>
+		/// <param name="iFoldersDeleted"></param>
+		private void DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
+		{
+
+			System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(serverFolder);
+
+			if (diFolder.Exists)
+			{
+				if (diFolder.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
+				{
+#if DoDelete
+					// This code will only be reached if conditional compilation symbol DoDelete is defined
+					DeleteFolderRecurse(diFolder.FullName);
+#endif
+					iFoldersDeleted += 1;
+				}
+			}
+
+		}
+
+		/// <summary>
+		/// Deletes a folder, including all files and subfolders
 		/// Assures that the ReadOnly bit is turned off for each folder
 		/// </summary>
 		/// <param name="sFolderPath"></param>
@@ -604,7 +709,6 @@ namespace Space_Manager
 				// Folder not found; return true anyway
 				return true;
 			}
-
 
 		}
 
@@ -713,6 +817,45 @@ namespace Space_Manager
 
 		}	// End sub
 
+		protected string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
+		{
+			switch (ePurgePolicy)
+			{
+				case PurgePolicyConstants.Auto:
+					return "Auto";
+				case PurgePolicyConstants.PurgeAllExceptQC:
+					return "Auto all except the QC folder";
+				case PurgePolicyConstants.PurgeAll:
+					return "Purge all files and folders";
+				default:
+					return "??";
+
+			}
+		}
+
+		protected PurgePolicyConstants GetPurgePolicyEnum(string sPurgePolicy)
+		{
+			int iPurgePolicy;
+
+			if (int.TryParse(sPurgePolicy, out iPurgePolicy))
+			{
+				switch (iPurgePolicy)
+				{
+					case 0:
+						return PurgePolicyConstants.Auto;
+					case 1:
+						return PurgePolicyConstants.PurgeAllExceptQC;
+					case 2:
+						return PurgePolicyConstants.PurgeAll;
+					default:
+						return PurgePolicyConstants.Auto;
+
+				}
+			}
+			else
+				return PurgePolicyConstants.Auto;
+
+		}
 
 		/// <summary>
 		/// Loads the MD5 results file for the given dataset into memory 
@@ -904,6 +1047,81 @@ namespace Space_Manager
 			return hashStrBld.ToString();
 		}	// End sub
 
+
+		/// <summary>
+		/// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
+		/// </summary>
+		/// <param name="lstJobsToPurge"></param>
+		protected void MarkPurgedJobs(System.Collections.Generic.List<int> lstJobsToPurge)
+		{
+			const string SP_MARK_PURGED_JOBS = "MarkPurgedJobs";
+
+			string msg;
+
+			if (lstJobsToPurge.Count > 0)
+			{
+				// Construct a comma-separated list of jobs
+				string sJobs = string.Empty;
+
+				foreach (int job in lstJobsToPurge)
+				{
+					if (sJobs.Length > 0)
+						sJobs += "," + job.ToString();
+					else
+						sJobs = job.ToString();
+				}
+
+#if DoDelete
+				// Called stored procedure MarkPurgedJobs
+
+				string connStr = m_MgrParams.GetParam("ConnectionString");
+				int iMaxRetryCount = 3;
+				int ResCode = 0;
+				string sErrorMessage = string.Empty;
+
+				System.Data.SqlClient.SqlParameter oParam;
+
+				//Setup for execution of the stored procedure
+				System.Data.SqlClient.SqlCommand MyCmd = new System.Data.SqlClient.SqlCommand();
+				{
+					MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
+					MyCmd.CommandText = SP_MARK_PURGED_JOBS;
+
+					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+					oParam.Direction = System.Data.ParameterDirection.ReturnValue;
+
+					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@JobList", System.Data.SqlDbType.VarChar, 4000));
+					oParam.Direction = System.Data.ParameterDirection.Input;
+					oParam.Value = sJobs;
+
+					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@InfoOnly", System.Data.SqlDbType.TinyInt));
+					oParam.Direction = System.Data.ParameterDirection.Input;
+					oParam.Value = 0;
+				}
+
+				//Execute the SP
+				ResCode = clsUtilityMethods.ExecuteSP(MyCmd, connStr, iMaxRetryCount, out sErrorMessage);
+				if (ResCode == 0)
+				{
+					msg = "Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+				else
+				{
+					msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
+					if (!string.IsNullOrEmpty(sErrorMessage))
+						msg += ": " + sErrorMessage;
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				}
+#else
+				msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+#endif
+
+			}
+		}
+
 		/// <summary>
 		/// Looks for sSubfolderTofind in sFileNamePath
 		/// If found, returns the text that occurs after sSubfolderTofind
@@ -1067,6 +1285,11 @@ namespace Space_Manager
 			}
 		}	// End sub
 
+		/// <summary>
+		/// Validate that the share for the dataset actually exists
+		/// </summary>
+		/// <param name="sDatasetFolderPath"></param>
+		/// <returns></returns>
 		protected bool ValidateDatasetShareExists(string sDatasetFolderPath)
 		{
 			System.IO.DirectoryInfo diDatasetFolder;

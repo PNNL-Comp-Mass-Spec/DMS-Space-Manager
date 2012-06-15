@@ -81,6 +81,7 @@
     <Compile Include="cfGlobalStuff.cs" />
     <Compile Include="clsBroadcastCmd.cs" />
     <Compile Include="clsDriveData.cs" />
+    <Compile Include="clsPurgeableFileSearcher.cs" />
     <Compile Include="clsSpaceMgrTask.cs" />
     <Compile Include="clsDbTask.cs" />
     <Compile Include="clsLogTools.cs" />

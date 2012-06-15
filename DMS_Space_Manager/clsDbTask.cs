@@ -112,8 +112,9 @@ namespace Space_Manager
 			/// <returns>Result code returned by SP; -1 if unable to execute SP</returns>
 			protected virtual int ExecuteSP(SqlCommand spCmd, ref DataTable outTable, string connStr)
 			{
-				int resCode = -9999;
 				//If this value is in error msg, then exception occurred before ResCode was set
+				int resCode = -9999;
+				
 				string msg = null;
 				System.Diagnostics.Stopwatch myTimer = new System.Diagnostics.Stopwatch();
 				int retryCount = 3;

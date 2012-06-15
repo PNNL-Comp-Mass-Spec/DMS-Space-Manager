@@ -21,25 +21,134 @@ namespace Space_Manager
 		// Holds static utility methods that are put here to avoid cluttering up other classes
 		//**********************************************************************************************************
 
-		#region "Constants"
-		#endregion
-
-		#region "Class variables"
-		#endregion
-
-		#region "Delegates"
-		#endregion
-
-		#region "Events"
-		#endregion
-
-		#region "Properties"
-		#endregion
-
-		#region "Constructors"
+		#region "Enums"
+		public enum StoredProcedureExecutionResult
+		{
+			OK = 0,
+			Deadlock = -4,
+			Excessive_Retries = -5
+		}
 		#endregion
 
 		#region "Methods"
+
+
+		/// <summary>
+		/// Method for executing a db stored procedure when a data table is not returned
+		/// </summary>
+		/// <param name="SpCmd">SQL command object containing stored procedure params</param>
+		/// <param name="ConnStr">Db connection string</param>
+		/// <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+		/// <param name="sErrorMessage">Error message (output)</param>
+		/// <returns>Result code returned by SP; -1 if unable to execute SP</returns>
+		/// <remarks>No logging is performed by this procedure</remarks>
+		public static int ExecuteSP(System.Data.SqlClient.SqlCommand SpCmd, string ConnStr, int MaxRetryCount, out string sErrorMessage)
+		{
+			int TimeoutSeconds = 30;
+			return ExecuteSP(SpCmd, ConnStr, MaxRetryCount, TimeoutSeconds, out sErrorMessage);
+		}
+
+		/// <summary>
+		/// Method for executing a db stored procedure when a data table is not returned
+		/// </summary>
+		/// <param name="SpCmd">SQL command object containing stored procedure params</param>
+		/// <param name="ConnStr">Db connection string</param>
+		/// <param name="MaxRetryCount">Maximum number of times to attempt to call the stored procedure</param>
+		/// <param name="TimeoutSeconds">Database timeout length (seconds)</param>
+		/// <param name="sErrorMessage">Error message (output)</param>
+		/// <returns>Result code returned by SP; -1 if unable to execute SP</returns>
+		/// <remarks>No logging is performed by this procedure</remarks>
+		public static int ExecuteSP(System.Data.SqlClient.SqlCommand SpCmd, string ConnStr, int MaxRetryCount, int TimeoutSeconds, out string sErrorMessage)
+		{
+			//If this value is in error msg, then exception occurred before ResCode was set			
+			int ResCode = -9999;			
+			int RetryCount = MaxRetryCount;
+			bool blnDeadlockOccurred = false;
+
+			sErrorMessage = string.Empty;
+			if (RetryCount < 1)
+			{
+				RetryCount = 1;
+			}
+
+			if (TimeoutSeconds == 0)
+				TimeoutSeconds = 30;
+			if (TimeoutSeconds < 10)
+				TimeoutSeconds = 10;
+
+			//Multiple retry loop for handling SP execution failures
+			while (RetryCount > 0)
+			{
+				blnDeadlockOccurred = false;
+				try
+				{
+					using (System.Data.SqlClient.SqlConnection Cn = new System.Data.SqlClient.SqlConnection(ConnStr))
+					{
+
+						Cn.Open();
+
+						SpCmd.Connection = Cn;
+						SpCmd.CommandTimeout = TimeoutSeconds;
+						SpCmd.ExecuteNonQuery();
+
+						ResCode = Convert.ToInt32(SpCmd.Parameters["@Return"].Value);
+
+					}
+
+					sErrorMessage = string.Empty;
+
+					break;
+				}
+				catch (System.Exception ex)
+				{
+					RetryCount -= 1;
+					sErrorMessage = "clsGlobal.ExecuteSP(), exception calling stored procedure " + SpCmd.CommandText + ", " + ex.Message;
+					sErrorMessage += ". ResCode = " + ResCode + ". Retry count = " + RetryCount;
+					Console.WriteLine(sErrorMessage);
+					if (ex.Message.StartsWith("Could not find stored procedure " + SpCmd.CommandText))
+					{
+						// Exit out of the while loop
+						break;
+					}
+					else if (ex.Message.Contains("was deadlocked"))
+					{
+						blnDeadlockOccurred = true;
+					}
+				}
+
+				if (RetryCount > 0)
+				{
+					//Wait 20 seconds before retrying
+					System.Threading.Thread.Sleep(20000);
+				}
+			}
+
+			if (RetryCount < 1)
+			{
+				//Too many retries, log and return error
+				sErrorMessage = "Excessive retries";
+				if (blnDeadlockOccurred)
+				{
+					sErrorMessage += " (including deadlock)";
+				}
+				sErrorMessage += " executing SP " + SpCmd.CommandText;
+				
+				Console.WriteLine(sErrorMessage);
+				if (blnDeadlockOccurred)
+				{
+					return (int)StoredProcedureExecutionResult.Deadlock;
+				}
+				else
+				{
+					return (int)StoredProcedureExecutionResult.Excessive_Retries;
+				}
+			}
+
+			return ResCode;
+
+		}
+
+	
 			/// <summary>
 			/// Parses a list of drive data objects from a string
 			/// </summary>
@@ -95,7 +204,7 @@ namespace Space_Manager
 			/// </summary>
 			/// <param name="machine">Name of server to check</param>
 			/// <param name="driveData">Data for drive to be checked</param>
-			/// <param name="perspective">Client/Server setting for manager</param>
+			/// <param name="perspective">Client/Server setting for manager.  "Client" means checking a remote drive; "Server" means running on a Proto-x server </param>
 			/// <returns>Enum indicating space status</returns>
             public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
 			{
@@ -144,7 +253,12 @@ namespace Space_Manager
                     catch (Exception ex)
                     {
                         string msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        
+						if (System.Environment.MachineName.ToLower().StartsWith("monroe"))
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						else
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
                         testResult = SpaceCheckResults.Error;
                         if (driveFreeSpaceGB > 0)
                             driveFreeSpaceGB = -driveFreeSpaceGB;

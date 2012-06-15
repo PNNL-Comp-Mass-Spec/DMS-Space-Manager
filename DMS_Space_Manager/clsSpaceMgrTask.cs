@@ -232,7 +232,7 @@ namespace Space_Manager
 			}
 			else
 			{
-				msg = msg = "Successfully set task complete in database, dataset " + m_JobParams["dataset"];
+				msg = "Successfully set task complete in database, dataset " + m_JobParams["dataset"];
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 		}	// End sub

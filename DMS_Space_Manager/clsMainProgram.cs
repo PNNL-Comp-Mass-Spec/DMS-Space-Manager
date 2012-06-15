@@ -354,6 +354,8 @@ namespace Space_Manager
 					switch (purgeResult)
 					{
 						case EnumCloseOutType.CLOSEOUT_SUCCESS:
+						case EnumCloseOutType.CLOSEOUT_PURGE_AUTO:
+						case EnumCloseOutType.CLOSEOUT_PURGE_ALL_EXCEPT_QC:
 							repCounter++;
 							m_ErrorCount = 0;
 							break;
@@ -373,7 +375,6 @@ namespace Space_Manager
 							repCounter++;
 							break;
 					}
-
 
 					// Close the purge task
 					m_Task.CloseTask(purgeResult);
