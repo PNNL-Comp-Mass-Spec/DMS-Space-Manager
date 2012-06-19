@@ -265,7 +265,8 @@ namespace Space_Manager
 
 				if (!subDirProcessed && subDirNameUpper.StartsWith("DTA_GEN") || subDirNameUpper.StartsWith("DTA_REF"))
 				{
-					AddFilesToPurgeDateThreshold(diSubDir, 365, ref lstServerFilesToPurge);
+					// Purge after 1.5 years
+					AddFilesToPurgeDateThreshold(diSubDir, 548, ref lstServerFilesToPurge);
 					subDirProcessed = true;
 				}
 
