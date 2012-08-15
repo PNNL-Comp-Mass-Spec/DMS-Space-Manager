@@ -155,8 +155,7 @@ namespace Space_Manager
 			string ParamKey = null;
 			string ParamVal = null;
 
-			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '"
-										+ m_ParamDictionary["MgrName"] + "'";
+			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + m_ParamDictionary["MgrName"] + "'";
 
 			//Get a table containing data for job
 			DataTable Dt = null;

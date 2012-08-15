@@ -61,9 +61,11 @@ namespace Space_Manager
 		private bool m_ConfigChanged = false;
 		private int m_ErrorCount = 0;
 		private IStatusFile m_StatusFile;
+	
 		private clsMessageHandler m_MsgHandler;
-		// private LoopExitCode m_LoopExitCode = LoopExitCode.DisabledLocally;
-		// private bool m_Running;
+		private bool m_MsgQueueInitSuccess = false;
+
+		private string m_MgrName = "Unknown";
 		private System.Timers.Timer m_StatusTimer;
 		private DateTime m_DurationStart = DateTime.UtcNow;
 		private clsStorageOperations m_StorageOps;
@@ -99,39 +101,40 @@ namespace Space_Manager
 				return false;
 			}
 
+			// Update the cached manager name
+			m_MgrName = m_MgrSettings.GetParam("MgrName");
+
 			// Set up the loggers
 			string logFileName = m_MgrSettings.GetParam("logfilename");
 			int debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
 			clsLogTools.CreateFileLogger(logFileName, debugLevel);
 			string logCnStr = m_MgrSettings.GetParam("connectionstring");
-			string moduleName = m_MgrSettings.GetParam("modulename");
-			clsLogTools.CreateDbLogger(logCnStr, moduleName);
+
+			clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
 
 			// Make initial log entry
 			msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Setup the message queue
+			m_MsgQueueInitSuccess = false;
 			m_MsgHandler = new clsMessageHandler();
 			m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
 			m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
 			m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
 			m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 			m_MsgHandler.MgrSettings = m_MgrSettings;
-			if (!m_MsgHandler.Init())
-			{
-				// Most error messages provided by .Init method, but debug message is here for program tracking
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
-				return false;
-			}
-			else
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
-			}
 
-			//Connect message handler events
-			m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
-			m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
+			// Initialize the message queue
+			// Start this in a separate thread so that we can abort the initialization if necessary
+			InitializeMessageQueue();
+
+			if (m_MsgQueueInitSuccess)
+			{
+				//Connect message handler events
+				m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
+				m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
+			}
 
 			// Setup a file watcher for the config file
 			FileInfo fInfo = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
@@ -156,7 +159,7 @@ namespace Space_Manager
 			//TODO: Might want to put this back in someday
 			//m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
 			m_StatusFile.LogToMsgQueue = bool.Parse(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
-			m_StatusFile.MgrName = m_MgrSettings.GetParam("MgrName");
+			m_StatusFile.MgrName = m_MgrName;
 			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
 			m_StatusFile.WriteStatusFile();
 
@@ -205,6 +208,42 @@ namespace Space_Manager
 			// Everything worked!
 			return true;
 		}	// End sub
+
+		private bool InitializeMessageQueue()
+		{
+
+			System.Threading.Thread worker = new System.Threading.Thread(InitializeMessageQueueWork);
+			worker.Start();
+
+			// Wait a maximum of 15 seconds
+			if (!worker.Join(15000))
+			{
+				worker.Abort();
+				m_MsgQueueInitSuccess = false;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to initialize the message queue (timeout after 15 seconds)");
+			}
+
+			return m_MsgQueueInitSuccess;
+		}
+
+		private void InitializeMessageQueueWork()
+		{
+
+			if (!m_MsgHandler.Init())
+			{
+				// Most error messages provided by .Init method, but debug message is here for program tracking
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
+				m_MsgQueueInitSuccess = false;
+			}
+			else
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
+				m_MsgQueueInitSuccess = true;
+			}
+
+			return;
+		}
+
 
 		/// <summary>
 		/// Performs space management for all drives on specified server
@@ -470,7 +509,7 @@ namespace Space_Manager
 			}
 
 			// Determine if the message applies to this machine
-			if (!recvCmd.MachineList.Contains(m_MgrSettings.GetParam("MgrName")))
+			if (!recvCmd.MachineList.Contains(m_MgrName))
 			{
 				// Received command doesn't apply to this manager
 				msg = "Received command not applicable to this manager instance";
