@@ -352,6 +352,7 @@ namespace Space_Manager
 					if (!bDriveInfoLogged)
 					{
 						bDriveInfoLogged = true;
+						// Note: there are extra spaces after "required" so the log message lines up with the "No purge required" message
 						msg = "Purge required   , drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0).ToString() + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0).ToString() + " GB threshold";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					}

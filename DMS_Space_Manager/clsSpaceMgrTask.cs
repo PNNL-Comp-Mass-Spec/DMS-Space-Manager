@@ -223,9 +223,9 @@ namespace Space_Manager
 		public override void CloseTask(EnumCloseOutType taskResult)
 		{
 			string msg;
-			int compCode = (int)taskResult;
+			int completionCode = (int)taskResult;
 
-			if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, compCode, m_JobParams["dataset"]))
+			if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, completionCode, m_JobParams["dataset"]))
 			{
 				msg = "Error setting task complete in database, dataset " + m_JobParams["dataset"];
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
@@ -244,7 +244,7 @@ namespace Space_Manager
 		/// <param name="CompletionCode">Integer representation of completion code</param>
 		/// <param name="ConnStr">Db connection string</param>
 		/// <returns>TRUE for sucesss; FALSE for failure</returns>
-		public bool SetPurgeTaskComplete(string spName, string connStr, int compCode, string datasetName)
+		public bool SetPurgeTaskComplete(string spName, string connStr, int completionCode, string datasetName)
 		{
 			string msg;
 			bool Outcome = false;
@@ -262,12 +262,13 @@ namespace Space_Manager
 				MyCmd.Parameters["@datasetNum"].Value = datasetName;
 				MyCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int));
 				MyCmd.Parameters["@completionCode"].Direction = ParameterDirection.Input;
-				MyCmd.Parameters["@completionCode"].Value = compCode;
+				MyCmd.Parameters["@completionCode"].Value = completionCode;
 				MyCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
 				MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
 			}
 
-			//Execute the SP
+			// Execute the SP
+			// Note that stored procedure SetPurgeTaskComplete will call MakeNewArchiveUpdateJob in the DMS_Capture database if the completionCode is ??
 			ResCode = ExecuteSP(MyCmd, connStr);
 
 			if (ResCode == 0)
