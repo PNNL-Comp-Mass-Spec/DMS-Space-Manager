@@ -194,6 +194,7 @@ namespace Space_Manager
 				case "dot_wiff_files":
 				case "sciex_wiff_files":
 					AddFilesToPurge(diDatasetFolder, "*.wiff", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.wiff.scan", ref lstServerFilesToPurge);
 					break;
 
 				case "dot_mzml_files":
