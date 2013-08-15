@@ -40,7 +40,8 @@ namespace Space_Manager
 			Compare_Error,
 			Compare_Waiting_For_Hash,
 			Hash_Not_Found_For_File,
-			Compare_Archive_Samba_Share_Missing
+			Compare_Archive_Samba_Share_Missing,
+			Compare_Archive_Samba_DatasetFolder_Missing
 		}
 
 		public enum PurgePolicyConstants
@@ -178,6 +179,10 @@ namespace Space_Manager
 					// Archive share is missing
 					return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
 
+				case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:
+					// Dataset folder not found in the archive
+					return EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED;
+
 				default:
 					// Unrecognized result code
 					return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -186,7 +191,7 @@ namespace Space_Manager
 			if ((lstServerFilesToPurge.Count == 0))
 			{
 				// Nothing was found to purge.
-				msg = "No purgeable data found for datset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
+				msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
 
 				switch (udtDatasetInfo.PurgePolicy)
 				{
@@ -381,7 +386,12 @@ namespace Space_Manager
 			{
 				msg = "clsUpdateOps.CompareDatasetFolders, folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-				return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
+
+				// Check whether the parent folder exists
+				if (ValidateDatasetShareExists(sambaDatasetNamePath, 2))
+					return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+				else
+					return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
 			}
 			
 			// If the dataset folder is empty yet the parent folder exists, then assume it was manually purged; just update the database
@@ -1292,6 +1302,17 @@ namespace Space_Manager
 		/// <returns></returns>
 		protected bool ValidateDatasetShareExists(string sDatasetFolderPath)
 		{
+			return ValidateDatasetShareExists(sDatasetFolderPath);
+		}
+
+		/// <summary>
+		/// Validate that the share for the dataset actually exists
+		/// </summary>
+		/// <param name="sDatasetFolderPath"></param>
+		/// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; 0 means parse all parent folders until a valid one is found</param>
+		/// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
+		protected bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth)
+		{
 			System.IO.DirectoryInfo diDatasetFolder;
 
 			try
@@ -1302,11 +1323,19 @@ namespace Space_Manager
 					return true;
 				else
 				{
+					int parentDepth = 0;
+
 					while (diDatasetFolder.Parent != null)
 					{
 						diDatasetFolder = diDatasetFolder.Parent;
 						if (diDatasetFolder.Exists)
 							return true;
+						else
+						{
+							parentDepth += 1;
+							if (maxParentDepth > 0 && parentDepth > maxParentDepth)
+								break;
+						}
 					}
 
 					return false;

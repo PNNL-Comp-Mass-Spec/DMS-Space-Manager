@@ -308,10 +308,10 @@ namespace Space_Manager
 					}
 
 					// Check to see if iteration limit has been exceeded
-					if (repCounter > maxReps)
+					if (repCounter >= maxReps)
 					{
 						// Exceeded max number of repetitions for this run, so exit
-						msg = "Repetition count " + repCounter.ToString() + " exceeds max of " + maxReps.ToString() + ". Program exiting";
+						msg = "Reached maximum repetition count of " + maxReps.ToString() + "; Program exiting";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 						opStatus = DriveOpStatus.Exit_No_Restart;
 						break;
