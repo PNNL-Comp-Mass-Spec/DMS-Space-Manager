@@ -412,6 +412,7 @@ namespace Space_Manager
 							m_ErrorCount = 0;
 							break;
 						case EnumCloseOutType.CLOSEOUT_DRIVE_MISSING:
+						case EnumCloseOutType.CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE:
 							repCounter++;
 							break;
 					}

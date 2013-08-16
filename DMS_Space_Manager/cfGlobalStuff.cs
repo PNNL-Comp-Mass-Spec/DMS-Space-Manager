@@ -41,6 +41,10 @@ namespace Space_Manager
 			No_Task
 		}
 
+		/// <summary>
+		/// Purge task completion codes
+		/// </summary>
+		/// <remarks>These codes are used by stored procedure SetPurgeTaskComplete</remarks>
 		public enum EnumCloseOutType : short
 		{
 			CLOSEOUT_SUCCESS = 0,					// Purged all data; PurgePolicy=2
@@ -49,7 +53,8 @@ namespace Space_Manager
 			CLOSEOUT_WAITING_HASH_FILE = 3,
 			CLOSEOUT_DRIVE_MISSING = 4,
 			CLOSEOUT_PURGE_AUTO = 5,				// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
-			CLOSEOUT_PURGE_ALL_EXCEPT_QC = 6		// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
+			CLOSEOUT_PURGE_ALL_EXCEPT_QC = 6,		// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
+			CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE = 7
 		}
 
 		public enum EnumRequestTaskResult : short

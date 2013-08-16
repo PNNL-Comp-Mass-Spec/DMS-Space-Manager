@@ -181,7 +181,8 @@ namespace Space_Manager
 
 				case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:
 					// Dataset folder not found in the archive
-					return EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED;
+					// This is typically a folder permissions error and we thus do not want to re-archive the folder, since any newly archived files would still be inaccessible
+					return EnumCloseOutType.CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE;
 
 				default:
 					// Unrecognized result code
@@ -532,9 +533,47 @@ namespace Space_Manager
 
 					if (ValidateDatasetShareExists(sambaDatasetNamePath))
 					{
-						msg = "  Update required. Server file not found in archive: " + sServerFilePath;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						return ArchiveCompareResults.Compare_Not_Equal;
+						// Make sure the archive folder has at least one file
+						// If it doesn't have any files, then we have a permissions error
+						diDatasetFolder = new System.IO.DirectoryInfo(sambaDatasetNamePath);
+						
+						int intFileCount = 0;
+						try
+						{
+							intFileCount = diDatasetFolder.GetFiles().Length;
+						}
+						catch (AccessViolationException)
+						{
+							msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+						}
+						catch (UnauthorizedAccessException)
+						{
+							msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+						}
+						catch (Exception ex)
+						{
+							msg = "  Exception examining Dataset folder in archive (" + sambaDatasetNamePath + "): " + ex.Message;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+						}
+
+						if (intFileCount > 0)
+						{
+							msg = "  Update required. Server file not found in archive: " + sServerFilePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Not_Equal;
+						}
+						else
+						{
+							msg = "  Dataset folder in archive is empty, likely a permissions error: " + sambaDatasetNamePath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+						}
+
 					}
 					else
 					{
@@ -1302,14 +1341,14 @@ namespace Space_Manager
 		/// <returns></returns>
 		protected bool ValidateDatasetShareExists(string sDatasetFolderPath)
 		{
-			return ValidateDatasetShareExists(sDatasetFolderPath);
+			return ValidateDatasetShareExists(sDatasetFolderPath, -1);
 		}
 
 		/// <summary>
 		/// Validate that the share for the dataset actually exists
 		/// </summary>
 		/// <param name="sDatasetFolderPath"></param>
-		/// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; 0 means parse all parent folders until a valid one is found</param>
+		/// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; -1 means parse all parent folders until a valid one is found</param>
 		/// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
 		protected bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth)
 		{
@@ -1323,6 +1362,9 @@ namespace Space_Manager
 					return true;
 				else
 				{
+					if (maxParentDepth == 0)
+						return false;
+
 					int parentDepth = 0;
 
 					while (diDatasetFolder.Parent != null)
@@ -1333,7 +1375,7 @@ namespace Space_Manager
 						else
 						{
 							parentDepth += 1;
-							if (maxParentDepth > 0 && parentDepth > maxParentDepth)
+							if (maxParentDepth > -1 && parentDepth > maxParentDepth)
 								break;
 						}
 					}
