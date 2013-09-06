@@ -9,6 +9,7 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Management;
@@ -200,7 +201,7 @@ namespace Space_Manager
 
 			/// <summary>
 			/// For remote drives, uses WMI to determine if free space on disk is above minimum threshold
-			/// For local drives, uses System.IO.DriveInfo
+			/// For local drives, uses DriveInfo
 			/// </summary>
 			/// <param name="machine">Name of server to check</param>
 			/// <param name="driveData">Data for drive to be checked</param>
@@ -275,7 +276,7 @@ namespace Space_Manager
                     {
                         // Note: WMI string would be: "win32_logicaldisk.deviceid=\"" + driveData.DriveLetter + "\"";
                         // Instantiate a new drive info object
-                        System.IO.DriveInfo diDrive = new System.IO.DriveInfo(driveData.DriveLetter);
+                        DriveInfo diDrive = new DriveInfo(driveData.DriveLetter);
 
                         if (!diDrive.IsReady)
                         {

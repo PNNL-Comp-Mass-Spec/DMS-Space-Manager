@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -15,7 +16,7 @@ namespace Space_Manager
 		/// <param name="diFolder"></param>
 		/// <param name="sFilterSpec"></param>
 		/// <param name="lstServerFilesToPurge"></param>
-		protected int AddFilesToPurge(System.IO.DirectoryInfo diFolder, string sFilterSpec, ref System.Collections.Generic.SortedSet<string> lstServerFilesToPurge)
+		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, ref SortedSet<string> lstServerFilesToPurge)
 		{
 			int minSizeKB = 0;
 			bool recurse = false;
@@ -33,23 +34,23 @@ namespace Space_Manager
 		/// <param name="recurse"></param>
 		/// <param name="lstServerFilesToPurge"></param>
 		/// <returns>The number of files added to lstServerFilesToPurge</returns>
-		protected int AddFilesToPurge(System.IO.DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, ref System.Collections.Generic.SortedSet<string> lstServerFilesToPurge)
+		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, ref SortedSet<string> lstServerFilesToPurge)
 		{
 			int iFilesMatched = 0;
 			string sRequiredFileSuffix = string.Empty;
 
-			System.IO.SearchOption eSearchOption;
+			SearchOption eSearchOption;
 			if (recurse)
-				eSearchOption = System.IO.SearchOption.AllDirectories;
+				eSearchOption = SearchOption.AllDirectories;
 			else
-				eSearchOption = System.IO.SearchOption.TopDirectoryOnly;
+				eSearchOption = SearchOption.TopDirectoryOnly;
 
 			// If sFilterSpec is "*.baf" then .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
 			// We instead want the beahvior to be like DOS, in that "*.baf" should only match analysis.baf
 			if (sFilterSpec.StartsWith("*.") && char.IsLetterOrDigit(sFilterSpec[sFilterSpec.Length - 1]))
 				sRequiredFileSuffix = sFilterSpec.Substring(1).ToLower();
 
-			foreach (System.IO.FileInfo fiFile in diFolder.GetFiles(sFilterSpec, eSearchOption))
+			foreach (FileInfo fiFile in diFolder.GetFiles(sFilterSpec, eSearchOption))
 			{
 				if (sRequiredFileSuffix.Length == 0 || fiFile.Name.ToLower().EndsWith(sRequiredFileSuffix))
 				{
@@ -76,9 +77,9 @@ namespace Space_Manager
 		/// <param name="iAgeThresholdDays"></param>
 		/// <param name="lstServerFilesToPurge"></param>
 		/// <returns>True if the files were all older than the threshold, otherwise false</returns>
-		protected bool AddFilesToPurgeDateThreshold(System.IO.DirectoryInfo diFolder, int iAgeThresholdDays, ref System.Collections.Generic.SortedSet<string> lstServerFilesToPurge)
+		protected bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, ref SortedSet<string> lstServerFilesToPurge)
 		{
-			System.Collections.Generic.List<string> lstFiles;
+			List<string> lstFiles;
 			System.DateTime dtMostRecentUpdate;
 
 			lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
@@ -109,15 +110,15 @@ namespace Space_Manager
 		/// <param name="udtDatasetInfo">Dataset info</param>
 		/// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
 		/// <returns>List of files that are safe to delete</returns>
-		public System.Collections.Generic.SortedSet<string> FindDatasetFilesToPurge(System.IO.DirectoryInfo diDatasetFolder, clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out System.Collections.Generic.List<int> lstJobsToPurge)
+		public SortedSet<string> FindDatasetFilesToPurge(DirectoryInfo diDatasetFolder, clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
 		{
-			System.Collections.Generic.SortedSet<string> lstServerFilesToPurge;
+			SortedSet<string> lstServerFilesToPurge;
 
 			clsStorageOperations.PurgePolicyConstants ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
 			if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAll)
 			{
-				lstServerFilesToPurge = new System.Collections.Generic.SortedSet<string>();
+				lstServerFilesToPurge = new SortedSet<string>();
 				AddFilesToPurge(diDatasetFolder, "*.*", 0, true, ref lstServerFilesToPurge);
 
 				lstJobsToPurge = new List<int>();
@@ -126,10 +127,10 @@ namespace Space_Manager
 
 			if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
 			{
-				lstServerFilesToPurge = new System.Collections.Generic.SortedSet<string>();
+				lstServerFilesToPurge = new SortedSet<string>();
 				AddFilesToPurge(diDatasetFolder, "*.*", 0, false, ref lstServerFilesToPurge);
 
-				foreach (System.IO.DirectoryInfo diSubFolder in diDatasetFolder.GetDirectories())
+				foreach (DirectoryInfo diSubFolder in diDatasetFolder.GetDirectories())
 				{
 					if (diSubFolder.Name != "QC")
 						AddFilesToPurge(diSubFolder, "*.*", 0, true, ref lstServerFilesToPurge);
@@ -144,13 +145,13 @@ namespace Space_Manager
 
 		}
 
-		private System.Collections.Generic.List<string> FindFilesAndNewestDate(System.IO.DirectoryInfo diFolder, out System.DateTime dtMostRecentUpdate)
+		private List<string> FindFilesAndNewestDate(DirectoryInfo diFolder, out System.DateTime dtMostRecentUpdate)
 		{
-			System.Collections.Generic.List<string> lstFiles = new System.Collections.Generic.List<string>();
+			List<string> lstFiles = new List<string>();
 			dtMostRecentUpdate = System.DateTime.MinValue;
 
 			// Find files in diFolder
-			foreach (System.IO.FileInfo fiFile in diFolder.GetFiles("*.*", System.IO.SearchOption.AllDirectories))
+			foreach (FileInfo fiFile in diFolder.GetFiles("*.*", SearchOption.AllDirectories))
 			{
 				if (fiFile.LastWriteTimeUtc > dtMostRecentUpdate)
 				{
@@ -172,16 +173,16 @@ namespace Space_Manager
 		/// <param name="udtDatasetInfo">Dataset info</param>
 		/// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
 		/// <returns>List of files that are safe to delete</returns>
-		public System.Collections.Generic.SortedSet<string> FindDatasetFilesToAutoPurge(clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out System.Collections.Generic.List<int> lstJobsToPurge)
+		public SortedSet<string> FindDatasetFilesToAutoPurge(clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
 		{
 
-			System.Collections.Generic.SortedSet<string> lstServerFilesToPurge = new System.Collections.Generic.SortedSet<string>();
-			lstJobsToPurge = new System.Collections.Generic.List<int>();
+			var lstServerFilesToPurge = new SortedSet<string>();
+			lstJobsToPurge = new List<int>();
 
 			System.Text.RegularExpressions.Regex reJobFolder = new System.Text.RegularExpressions.Regex(@"_Auto(\d+)$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 			System.Text.RegularExpressions.Match reMatch;
 
-			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(udtDatasetInfo.ServerFolderPath);
+			DirectoryInfo diDatasetFolder = new DirectoryInfo(udtDatasetInfo.ServerFolderPath);
 
 			// Process files in the dataset folder
 
@@ -225,7 +226,7 @@ namespace Space_Manager
 			// Process the directories below the dataset folder
 
 			// Construct a list of the folders that exist at the dataset folder level			
-			foreach (System.IO.DirectoryInfo diSubDir in diDatasetFolder.GetDirectories())
+			foreach (DirectoryInfo diSubDir in diDatasetFolder.GetDirectories())
 			{
 				string subDirNameUpper = diSubDir.Name.ToUpper();
 				bool subDirProcessed = false;
@@ -296,7 +297,7 @@ namespace Space_Manager
 								// Files are not yet 3 years old
 								// If all of the files are 1 year old, then purge files over 50 MB
 
-								System.Collections.Generic.List<string> lstFiles;
+								List<string> lstFiles;
 								System.DateTime dtMostRecentUpdate;
 								int iFilesMatched;
 

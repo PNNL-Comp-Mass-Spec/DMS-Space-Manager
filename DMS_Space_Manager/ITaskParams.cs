@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Collections.Specialized;
 
 namespace Space_Manager
 {
@@ -21,7 +20,7 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Properties"
-			System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
+			Dictionary<string, string> TaskDictionary { get; }
 		#endregion
 
 		#region "Methods"

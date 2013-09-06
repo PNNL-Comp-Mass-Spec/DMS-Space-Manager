@@ -7,7 +7,7 @@
 // Last modified 09/08/2010
 //*********************************************************************************************************
 using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
@@ -26,7 +26,7 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Class variables"
-		System.Collections.Generic.Dictionary<string, string> m_ParamDictionary = null;
+		Dictionary<string, string> m_ParamDictionary = null;
 		bool m_MCParamsLoaded = false;
 		#endregion
 
@@ -92,10 +92,10 @@ namespace Space_Manager
 			return true;
 		}	// End sub
 
-		private System.Collections.Generic.Dictionary<string, string> LoadMgrSettingsFromFile()
+		private Dictionary<string, string> LoadMgrSettingsFromFile()
 		{
 			// Load initial settings into string dictionary for return
-			System.Collections.Generic.Dictionary<string, string> RetDict = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			Dictionary<string, string> RetDict = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 			string TempStr;
 
 			//				My.Settings.Reload()
@@ -118,7 +118,7 @@ namespace Space_Manager
 			return RetDict;
 		}	// End sub
 
-		private bool CheckInitialSettings(System.Collections.Generic.Dictionary<string, string> InpDict)
+		private bool CheckInitialSettings(Dictionary<string, string> InpDict)
 		{
 			string MyMsg = null;
 
@@ -147,7 +147,7 @@ namespace Space_Manager
 			return LoadMgrSettingsFromDB(ref m_ParamDictionary);
 		}	// End sub
 
-		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict)
+		public bool LoadMgrSettingsFromDB(ref Dictionary<string, string> MgrSettingsDict)
 		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 			short RetryCount = 3;

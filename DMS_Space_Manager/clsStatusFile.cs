@@ -309,7 +309,7 @@ namespace Space_Manager
 
 					//Use a streamreader to copy the XML text to a string variable
 					MemStream.Seek(0, SeekOrigin.Begin);
-					MemStreamReader = new System.IO.StreamReader(MemStream);
+					MemStreamReader = new StreamReader(MemStream);
 					XMLText = MemStreamReader.ReadToEnd();
 
 					MemStreamReader.Close();

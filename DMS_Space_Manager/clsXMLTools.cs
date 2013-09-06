@@ -8,7 +8,6 @@
 //*********************************************************************************************************
 using System;
 using System.Xml;
-using System.Collections.Specialized;
 
 namespace Space_Manager
 {
@@ -19,67 +18,73 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Methods"
-			/// <summary>
-			/// Converts command XML string into a dictionary of strings (future)
-			/// </summary>
-			/// <param name="InputXML">XML string to parse</param>
-			/// <returns>String dictionary of command sections</returns>
-			public static StringDictionary ParseCommandXML(string InputXML)
-			{
-				StringDictionary returnDict = new StringDictionary();
 
+		/*
+		 * Unused function
+		 * 
+		/// <summary>
+		/// Converts command XML string into a dictionary of strings (future)
+		/// </summary>
+		/// <param name="InputXML">XML string to parse</param>
+		/// <returns>String dictionary of command sections</returns>
+		[Obsolete("Function not used")]
+		public static System.Collections.Specialized.StringDictionary ParseCommandXML(string InputXML)
+		{
+			var returnDict = new System.Collections.Specialized.StringDictionary();
+
+			XmlDocument doc = new XmlDocument();
+			doc.LoadXml(InputXML);
+
+			try
+			{
+				returnDict.Add("package", doc.SelectSingleNode("//package").InnerText);
+				returnDict.Add("local", doc.SelectSingleNode("//local").InnerText);
+				returnDict.Add("share", doc.SelectSingleNode("//share").InnerText);
+				returnDict.Add("year", doc.SelectSingleNode("//year").InnerText);
+				returnDict.Add("team", doc.SelectSingleNode("//team").InnerText);
+				returnDict.Add("folder", doc.SelectSingleNode("//folder").InnerText);
+				returnDict.Add("cmd", doc.SelectSingleNode("//cmd").InnerText);
+
+				return returnDict;
+			}
+			catch (Exception Ex)
+			{
+				throw new Exception("", Ex);	// Message parameter left blank because it is handled at higher level
+			}
+		}	// End sub
+		*/
+
+		/// <summary>
+		/// Converts broadcast XML string into a dictionary of strings
+		/// </summary>
+		/// <param name="InputXML">XML string to parse</param>
+		/// <returns>String dictionary of broadcast sections</returns>
+		public static clsBroadcastCmd ParseBroadcastXML(string InputXML)
+		{
+			clsBroadcastCmd returnedData = new clsBroadcastCmd();
+
+			try
+			{
 				XmlDocument doc = new XmlDocument();
 				doc.LoadXml(InputXML);
 
-				try
+				// Get list of managers this command applies to
+				foreach (XmlNode xn in doc.SelectNodes("//Managers/*"))
 				{
-					returnDict.Add("package", doc.SelectSingleNode("//package").InnerText);
-					returnDict.Add("local", doc.SelectSingleNode("//local").InnerText);
-					returnDict.Add("share", doc.SelectSingleNode("//share").InnerText);
-					returnDict.Add("year", doc.SelectSingleNode("//year").InnerText);
-					returnDict.Add("team", doc.SelectSingleNode("//team").InnerText);
-					returnDict.Add("folder", doc.SelectSingleNode("//folder").InnerText);
-					returnDict.Add("cmd", doc.SelectSingleNode("//cmd").InnerText);
-
-					return returnDict;
+					returnedData.MachineList.Add(xn.InnerText);
 				}
-				catch (Exception Ex)
-				{
-					throw new Exception("", Ex);	// Message parameter left blank because it is handled at higher level
-				}
-			}	// End sub
 
-			/// <summary>
-			/// Converts broadcast XML string into a dictionary of strings
-			/// </summary>
-			/// <param name="InputXML">XML string to parse</param>
-			/// <returns>String dictionary of broadcast sections</returns>
-			public static clsBroadcastCmd ParseBroadcastXML(string InputXML)
+				// Get command contained in message
+				returnedData.MachCmd = doc.SelectSingleNode("//Message").InnerText;
+
+				// Return the parsing results
+				return returnedData;
+			}
+			catch (Exception Ex)
 			{
-				clsBroadcastCmd returnedData = new clsBroadcastCmd();
-
-				try
-				{
-					XmlDocument doc = new XmlDocument();
-					doc.LoadXml(InputXML);
-
-					// Get list of managers this command applies to
-					foreach (XmlNode xn in doc.SelectNodes("//Managers/*"))
-					{
-						returnedData.MachineList.Add(xn.InnerText);
-					}
-
-					// Get command contained in message
-					returnedData.MachCmd = doc.SelectSingleNode("//Message").InnerText;
-
-					// Return the parsing results
-					return returnedData;
-				}
-				catch (Exception Ex)
-				{
-					throw new Exception("Exception while parsing broadcast string", Ex);
-				}
-			}	// End sub
+				throw new Exception("Exception while parsing broadcast string", Ex);
+			}
+		}	// End sub
 		#endregion
 	}	// End class
 }	// End namespace

@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
-using System.Collections.Specialized;
 using System.Data;
 
 namespace Space_Manager
@@ -31,9 +30,9 @@ namespace Space_Manager
 			protected IMgrParams m_MgrParams;
 			protected string m_ConnStr;
 			protected string m_BrokerConnStr;
-			protected System.Collections.Generic.List<string> m_ErrorList = new System.Collections.Generic.List<string>();
+			protected List<string> m_ErrorList = new List<string>();
 			protected bool m_TaskWasAssigned = false;
-			protected System.Collections.Generic.Dictionary<string, string> m_JobParams = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			protected Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 		#endregion
 
 		#region "Properties"
@@ -45,7 +44,7 @@ namespace Space_Manager
 				}
 			}
 
-			public System.Collections.Generic.Dictionary<string, string> TaskDictionary 
+			public Dictionary<string, string> TaskDictionary 
 			{	get 
 				{ 
 					return m_JobParams;
