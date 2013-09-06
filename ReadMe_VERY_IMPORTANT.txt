@@ -1,2 +1,6 @@
-Deletion disabled for testing via compilation constants. Enable deletion for deployment compile by changing compilation constant "DoDeleteNot" to "DoDelete" before compiling.
+Deletion disabled for testing via compilation constants. 
+
+The Debug Configuration   has conditional compilation constant DoDeleteNot defined
+The Release Configuration has conditional compilation constant DoDelete    defined
+
 
