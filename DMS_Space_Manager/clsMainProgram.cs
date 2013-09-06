@@ -40,7 +40,7 @@ namespace Space_Manager
 		//    ShutdownCmdReceived
 		//}
 
-		private enum DriveOpStatus
+		protected enum DriveOpStatus
 		{
 			KeepRunning,
 			Exit_Restart_OK,
@@ -61,7 +61,7 @@ namespace Space_Manager
 		private bool m_ConfigChanged = false;
 		private int m_ErrorCount = 0;
 		private IStatusFile m_StatusFile;
-	
+
 		private clsMessageHandler m_MsgHandler;
 		private bool m_MsgQueueInitSuccess = false;
 
@@ -253,44 +253,84 @@ namespace Space_Manager
 		{
 			string msg;
 			bool methodReturnCode = RESTART_NOT_OK;
-			int maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
-			int repCounter = 0;
 
-			// Check if manager has been disabled via manager config db
-			if (m_MgrSettings.GetParam("mgractive").ToLower() != "true")
+			try
 			{
-				// Manager deactivated via manager config db
-				msg = "Manager disabled via config db";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-				msg = "===== Closing Space Manager =====";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-				return RESTART_NOT_OK;
+				int maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
+
+				// Check if manager has been disabled via manager config db
+				if (m_MgrSettings.GetParam("mgractive").ToLower() != "true")
+				{
+					// Manager deactivated via manager config db
+					msg = "Manager disabled via config db";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					msg = "===== Closing Space Manager =====";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					return RESTART_NOT_OK;
+				}
+
+				// Get a list of drives needing space management
+				List<clsDriveData> driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
+				if (driveList == null) return RESTART_NOT_OK;	// Problem with drive spec. Error reporting handled by GetDriveList
+
+				// Set drive operation state to Keep Running
+				DriveOpStatus opStatus = DriveOpStatus.KeepRunning;
+
+				foreach (clsDriveData testDrive in driveList)
+				{
+
+					// Check drive operation state
+					if (opStatus != DriveOpStatus.KeepRunning)
+					{
+						if (opStatus == DriveOpStatus.Exit_No_Restart)
+						{
+							// Something has happened that requires restarting manager
+							methodReturnCode = RESTART_NOT_OK;
+						}
+						else
+						{
+							methodReturnCode = RESTART_OK;	// Something is requiring a manager restart
+						}
+						// Exit the drive test loop
+						break;
+					}
+
+					opStatus = ProcessDrive(maxReps, testDrive);
+
+				}	// End drive loop
+
+				// Set status and exit method
+				if (methodReturnCode == RESTART_NOT_OK)
+				{
+					// Program exit required
+					msg = "===== Closing Space Manager =====";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+				else
+				{
+					// Program restart required
+					msg = "Restarting manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in PerformSpaceManagement", ex);
 			}
 
-			// Get a list of drives needing space management
-			List<clsDriveData> driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
-			if (driveList == null) return RESTART_NOT_OK;	// Problem with drive spec. Error reporting handled by GetDriveList
+			return methodReturnCode;
 
-			// Set drive operation state to Keep Running
+		}	// End sub
+
+		protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
+		{
+			string msg;
 			DriveOpStatus opStatus = DriveOpStatus.KeepRunning;
+			int repCounter = 0;
 
-			foreach (clsDriveData testDrive in driveList)
+			try
 			{
-				// Check drive operation state
-				if (opStatus != DriveOpStatus.KeepRunning)
-				{
-					if (opStatus == DriveOpStatus.Exit_No_Restart)
-					{
-						// Something has happened that requires restarting manager
-						methodReturnCode = RESTART_NOT_OK;
-					}
-					else
-					{
-						methodReturnCode = RESTART_OK;	// Something is requiring a manager restart
-					}
-					// Exit the drive test loop
-					break;
-				}
 
 				// Start a purge loop for the current drive
 				bool purgeRunning = true;
@@ -327,10 +367,12 @@ namespace Space_Manager
 
 					// Check available space on server drive and compare it with min allowed space
 					double driveFreeSpaceGB = 0;
-					SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(m_MgrSettings.GetParam("machname"),
-																					  m_MgrSettings.GetParam("perspective"),
-																					  testDrive,
-																					  out driveFreeSpaceGB);
+					string serverName = m_MgrSettings.GetParam("machname");
+					string perspective = m_MgrSettings.GetParam("perspective");
+					SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
+																						perspective,
+																						testDrive,
+																						out driveFreeSpaceGB);
 
 					if (checkResult == SpaceCheckResults.Above_Threshold)
 					{
@@ -425,28 +467,19 @@ namespace Space_Manager
 						msg = "Drive not found; moving on to next drive";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 						break;
-					}					
+					}
 
-				}	// End purge loop for current drive
+				}
 
-			}	// End drive loop
-
-			// Set status and exit method
-			if (methodReturnCode == RESTART_NOT_OK)
-			{
-				// Program exit required
-				msg = "===== Closing Space Manager =====";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
-			else
+			catch (Exception ex)
 			{
-				// Program restart required
-				msg = "Restarting manager";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ProcessDrive", ex);
 			}
 
-			return methodReturnCode;
-		}	// End sub
+			return opStatus;
+
+		}
 
 		/// <summary>
 		/// Checks for excessive errors

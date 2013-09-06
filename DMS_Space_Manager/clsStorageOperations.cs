@@ -444,18 +444,7 @@ namespace Space_Manager
 
 			// First look for this dataset's files in MyEMSL
 			// Next append any files visible using Samba (at \\a2.emsl.pnl.gov\dmsarch\)
-
-
-			var reader = new MyEMSLReader.Reader();
-			reader.IncludeAllRevisions = false;
-
-			// Attach events
-			reader.ErrorEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_ErrorEvent);
-			reader.MessageEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_MessageEvent);
-			reader.ProgressEvent += new MyEMSLReader.MyEMSLBase.ProgressEventHandler(reader_ProgressEvent);
-
-			string subDir = string.Empty;
-			var lstFilesInMyEMSL = reader.FindFilesByDatasetName(udtDatasetInfo.DatasetName, subDir);
+			var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName);
 
 			if (lstFilesInMyEMSL.Count == 0)
 			{
@@ -498,7 +487,18 @@ namespace Space_Manager
 				// First check MyEMSL
 				bool fileInMyEMSL = false;
 				if (lstFilesInMyEMSL.Count > 0)
-					comparisonResult = CompareFileUsingMyEMSLInfo(sServerFilePath, udtDatasetInfo, lstFilesInMyEMSL, out fileInMyEMSL);
+				{
+					// Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
+					// File paths are not case sensitive
+					var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+					foreach (var item in lstFilesInMyEMSL)
+					{
+						dctFilesInMyEMSL.Add(item.RelativePathWindows, item.Sha1Hash);
+					}
+
+					comparisonResult = CompareFileUsingMyEMSLInfo(sServerFilePath, udtDatasetInfo, dctFilesInMyEMSL, out fileInMyEMSL);
+				}
 
 				if (!fileInMyEMSL)
 				{
@@ -558,8 +558,35 @@ namespace Space_Manager
 
 		}	// End sub
 
+		protected List<ArchivedFileInfo> FindFilesInMyEMSL(string datasetName)
+		{
 
-		protected ArchiveCompareResults CompareFileUsingMyEMSLInfo(string sServerFilePath, udtDatasetInfoType udtDatasetInfo, List<ArchivedFileInfo> lstFilesInMyEMSL, out bool fileInMyEMSL)
+			try
+			{
+				var reader = new MyEMSLReader.Reader();
+				reader.IncludeAllRevisions = false;
+
+				// Attach events
+				reader.ErrorEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_ErrorEvent);
+				reader.MessageEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_MessageEvent);
+				reader.ProgressEvent += new MyEMSLReader.MyEMSLBase.ProgressEventHandler(reader_ProgressEvent);
+
+				string subDir = string.Empty;
+				var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName, subDir);
+
+				return lstFilesInMyEMSL;
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindFilesInMyEMSL", ex);
+			}
+
+			return new List<ArchivedFileInfo>();
+		}
+
+
+		protected ArchiveCompareResults CompareFileUsingMyEMSLInfo(string sServerFilePath, udtDatasetInfoType udtDatasetInfo, Dictionary<string, string> dctFilesInMyEMSL, out bool fileInMyEMSL)
 		{
 			ArchiveCompareResults comparisonResult = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
 
@@ -567,6 +594,8 @@ namespace Space_Manager
 
 			// Convert the file name on the storage server to its equivalent relative path
 			string relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, sServerFilePath);
+			relativeFilePath = relativeFilePath.TrimStart('\\');
+
 			if (relativeFilePath.Length == 0)
 			{
 				string msg = "File name not returned when converting from server path to relative path for file" + sServerFilePath;
@@ -579,17 +608,15 @@ namespace Space_Manager
 				return ArchiveCompareResults.Compare_Error;
 			}
 
-			// Look for this file in lstFilesInMyEMSL
-			var lstMatches = (from item in lstFilesInMyEMSL where string.Equals(item.RelativePathWindows, relativeFilePath) select item).ToList();
-
-			if (lstMatches.Count > 0)
+			// Look for this file in dctFilesInMyEMSL
+			string archiveFileHash;
+			if (dctFilesInMyEMSL.TryGetValue(relativeFilePath, out archiveFileHash))
 			{
-				var archiveFile = lstMatches.First();
 
-				string hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
+				string serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
 
 				// Compute the sha-1 hash value of the file
-				if (string.Equals(hashValue, archiveFile.Sha1Hash))
+				if (string.Equals(serverFileHash, archiveFileHash))
 				{
 					comparisonResult = ArchiveCompareResults.Compare_Equal;
 				}
@@ -721,33 +748,32 @@ namespace Space_Manager
 		/// <param name="datasetPathArch">Dataset path on archive</param>
 		/// <param name="inpFileName">Name of the file whose path is being converted</param>
 		/// <returns>Full archive path to file</returns>
-		private string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
+		protected string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
 		{
 			string msg;
 
 			// Convert by replacing storage server path with archive path
 			try
 			{
-				if (!inpFileName.Contains(datasetPathSvr))
+				if (inpFileName.Contains(datasetPathSvr))
+					return inpFileName.Replace(datasetPathSvr, datasetPathArch);
+				
+				var charIndex = inpFileName.ToLower().IndexOf(datasetPathSvr.ToLower());
+
+				if (charIndex >= 0)
 				{
-					var charIndex = inpFileName.ToLower().IndexOf(datasetPathSvr.ToLower());
+					string newPath = string.Empty;
+					if (charIndex > 0)
+						newPath = inpFileName.Substring(0, charIndex);
 
-					if (charIndex >= 0)
-					{
-						string newPath = string.Empty;
-						if (charIndex > 0)
-							newPath = inpFileName.Substring(0, charIndex);
-
-						newPath += datasetPathArch + inpFileName.Substring(charIndex + datasetPathSvr.Length);
-						return newPath;
-					}
-
-					msg = "Error in ConvertServerPathToArchivePath: File path '" + inpFileName + "' does not contain dataset path '" + datasetPathSvr + "'";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					return PATH_CONVERSION_ERROR;
+					newPath += datasetPathArch + inpFileName.Substring(charIndex + datasetPathSvr.Length);
+					return newPath;
 				}
 
-				return inpFileName.Replace(datasetPathSvr, datasetPathArch);
+				msg = "Error in ConvertServerPathToArchivePath: File path '" + inpFileName + "' does not contain dataset path '" + datasetPathSvr + "'";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return PATH_CONVERSION_ERROR;				
+				
 			}
 			catch (Exception ex)
 			{
@@ -758,12 +784,12 @@ namespace Space_Manager
 		}	// End sub
 
 		/// <summary>
-		/// Compares two files via SHA hash
+		/// Compares two files via MD5 hash
 		/// </summary>
 		/// <param name="inpFile1">First file to compare</param>
 		/// <param name="inpFile2">Second file to compare</param>
 		/// <returns>Enum containing compare results</returns>
-		private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
+		protected ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
 		{
 			string msg;
 
@@ -834,7 +860,7 @@ namespace Space_Manager
 		/// </summary>
 		/// <param name="serverFolder"></param>
 		/// <param name="iFoldersDeleted"></param>
-		private void DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
+		protected void DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
 		{
 
 			DirectoryInfo diFolder = new DirectoryInfo(serverFolder);
@@ -859,7 +885,7 @@ namespace Space_Manager
 		/// </summary>
 		/// <param name="sFolderPath"></param>
 		/// <returns></returns>
-		private bool DeleteFolderRecurse(string sFolderPath)
+		protected bool DeleteFolderRecurse(string sFolderPath)
 		{
 			DirectoryInfo diFolder;
 
@@ -902,7 +928,7 @@ namespace Space_Manager
 		/// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
 		/// </summary>
 		/// <param name="diFolder"></param>
-		private void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
+		protected void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
 		{
 			foreach (FileInfo fiFile in diFolder.GetFiles("*", SearchOption.AllDirectories))
 			{
@@ -913,7 +939,7 @@ namespace Space_Manager
 			}
 		}
 
-		private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
+		protected string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
 		{
 			string hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
 
@@ -933,7 +959,7 @@ namespace Space_Manager
 		/// <param name="fileNamePath">File on storage server to find a matching archive hatch for</param>
 		/// <param name="datasetName">Name of dataset being purged</param>
 		/// <returns>MD5 or Sha-1 Hash value for success; Empty string otherwise</returns>
-		private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
+		protected string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
 		{
 			// Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
 			// will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
@@ -1218,7 +1244,7 @@ namespace Space_Manager
 		/// </summary>
 		/// <param name="InpFileNamePath">Full path to file</param>
 		/// <returns>String representation of hash</returns>
-		private string GenerateMD5HashFromFile(string inpFileNamePath)
+		protected string GenerateMD5HashFromFile(string inpFileNamePath)
 		{
 			string msg = null;
 			byte[] byteHash = null;
@@ -1270,7 +1296,7 @@ namespace Space_Manager
 			return hashStrBld.ToString();
 		}	// End sub
 
-		private string GenerateSha1HashFromFile(string inpFileNamePath)
+		protected string GenerateSha1HashFromFile(string inpFileNamePath)
 		{
 			string msg = null;
 
@@ -1372,7 +1398,7 @@ namespace Space_Manager
 		/// <param name="sFileNamePath"></param>
 		/// <param name="sSubfolderTofind"></param>
 		/// <returns></returns>
-		private string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
+		protected string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
 		{
 			int iStartIndex = 0;
 
@@ -1402,7 +1428,7 @@ namespace Space_Manager
 		/// </summary>
 		/// <param name="dsName">Dataset name</param>
 		/// <returns>TRUE for success; FALSE otherwise</returns>
-		private bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
+		protected bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
 		{
 			string msg;
 			string sCurrentStep = "Start";
