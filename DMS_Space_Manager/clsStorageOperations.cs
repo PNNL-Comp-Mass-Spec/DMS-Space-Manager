@@ -571,8 +571,7 @@ namespace Space_Manager
 				reader.MessageEvent += new MyEMSLReader.MessageEventHandler(reader_MessageEvent);
 				reader.ProgressEvent += new MyEMSLReader.ProgressEventHandler(reader_ProgressEvent);
 
-				string subDir = string.Empty;
-				var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName, subDir);
+				var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName);
 
 				return lstFilesInMyEMSL;
 
