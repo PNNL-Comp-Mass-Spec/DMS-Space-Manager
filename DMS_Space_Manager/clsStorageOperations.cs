@@ -567,9 +567,9 @@ namespace Space_Manager
 				reader.IncludeAllRevisions = false;
 
 				// Attach events
-				reader.ErrorEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_ErrorEvent);
-				reader.MessageEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_MessageEvent);
-				reader.ProgressEvent += new MyEMSLReader.MyEMSLBase.ProgressEventHandler(reader_ProgressEvent);
+				reader.ErrorEvent += new MyEMSLReader.MessageEventHandler(reader_ErrorEvent);
+				reader.MessageEvent += new MyEMSLReader.MessageEventHandler(reader_MessageEvent);
+				reader.ProgressEvent += new MyEMSLReader.ProgressEventHandler(reader_ProgressEvent);
 
 				string subDir = string.Empty;
 				var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName, subDir);
