@@ -476,6 +476,15 @@ namespace Space_Manager
 
 			string sMismatchMessage = string.Empty;
 
+			// Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
+			// File paths are not case sensitive
+			var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+			foreach (var item in lstFilesInMyEMSL)
+			{
+				dctFilesInMyEMSL.Add(item.RelativePathWindows, item.Sha1Hash);
+			}
+
 			// Loop through the file list, checking for archive copies and comparing if archive copy present
 			// We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mismatch is present
 			foreach (string sServerFilePath in lstServerFilesToPurge)
@@ -486,17 +495,8 @@ namespace Space_Manager
 
 				// First check MyEMSL
 				bool fileInMyEMSL = false;
-				if (lstFilesInMyEMSL.Count > 0)
-				{
-					// Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
-					// File paths are not case sensitive
-					var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-					foreach (var item in lstFilesInMyEMSL)
-					{
-						dctFilesInMyEMSL.Add(item.RelativePathWindows, item.Sha1Hash);
-					}
-
+				if (dctFilesInMyEMSL.Count > 0)
+				{					
 					comparisonResult = CompareFileUsingMyEMSLInfo(sServerFilePath, udtDatasetInfo, dctFilesInMyEMSL, out fileInMyEMSL);
 				}
 
@@ -611,7 +611,7 @@ namespace Space_Manager
 			string archiveFileHash;
 			if (dctFilesInMyEMSL.TryGetValue(relativeFilePath, out archiveFileHash))
 			{
-
+				fileInMyEMSL = true;
 				string serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
 
 				// Compute the sha-1 hash value of the file
