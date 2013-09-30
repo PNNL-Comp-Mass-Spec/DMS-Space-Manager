@@ -254,11 +254,22 @@ namespace Space_Manager
 						}
 						catch
 						{
-							// Check the ReadOnly flag then retry the deletion
+							// Update the ReadOnly flag, then try again
 							if ((fiFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
 								fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly;
 
-							fiFile.Delete();
+							try
+							{
+								fiFile.Delete();
+							}
+							catch
+							{
+								// Perform garbage collection, then try again
+								PRISM.Processes.clsProgRunner.GarbageCollectNow();
+
+								fiFile.Delete();
+							}
+							
 						}
 #endif
 						iFilesDeleted += 1;

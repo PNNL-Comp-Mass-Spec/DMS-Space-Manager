@@ -64,11 +64,16 @@ namespace Space_Manager
 			private string AppendColonToDriveLetter(string inpDrive)
 			{
 				if (!inpDrive.Contains(":"))
-				{
 					return inpDrive + ":";
-				}
-				else return inpDrive;
-			}	// End sub
+				else 
+					return inpDrive;
+			}
+
+			public override string ToString()
+			{
+				return this.DriveLetter;
+			}
 		#endregion
+
 	}	// End class
 }	// End namespace
