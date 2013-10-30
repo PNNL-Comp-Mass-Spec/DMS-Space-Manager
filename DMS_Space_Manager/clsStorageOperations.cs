@@ -493,6 +493,10 @@ namespace Space_Manager
 
 			foreach (var item in lstFilesInMyEMSL)
 			{
+				if (dctFilesInMyEMSL.ContainsKey(item.RelativePathWindows))
+				{
+					throw new Exception("lstFilesInMyEMSL has duplicate entries for " + item.RelativePathWindows + "; this indicates a bug in MyEMSLReader");
+				}
 				dctFilesInMyEMSL.Add(item.RelativePathWindows, item.Sha1Hash);
 			}
 
@@ -596,7 +600,10 @@ namespace Space_Manager
 		}
 
 
-		protected ArchiveCompareResults CompareFileUsingMyEMSLInfo(string sServerFilePath, udtDatasetInfoType udtDatasetInfo, Dictionary<string, string> dctFilesInMyEMSL, out bool fileInMyEMSL)
+		protected ArchiveCompareResults CompareFileUsingMyEMSLInfo(
+			string sServerFilePath, 
+			udtDatasetInfoType udtDatasetInfo,
+			Dictionary<string, string> dctFilesInMyEMSL, out bool fileInMyEMSL)
 		{
 			ArchiveCompareResults comparisonResult = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
 
@@ -622,6 +629,7 @@ namespace Space_Manager
 			string archiveFileHash;
 			if (dctFilesInMyEMSL.TryGetValue(relativeFilePath, out archiveFileHash))
 			{
+
 				fileInMyEMSL = true;
 				string serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
 
