@@ -8,8 +8,6 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace Space_Manager
@@ -58,16 +56,16 @@ namespace Space_Manager
 		private clsMgrSettings m_MgrSettings;
 		private clsSpaceMgrTask m_Task;
 		private FileSystemWatcher m_FileWatcher;
-		private bool m_ConfigChanged = false;
-		private int m_ErrorCount = 0;
+		private bool m_ConfigChanged;
+		private int m_ErrorCount;
 		private IStatusFile m_StatusFile;
 
 		private clsMessageHandler m_MsgHandler;
-		private bool m_MsgQueueInitSuccess = false;
+		private bool m_MsgQueueInitSuccess;
 
 		private string m_MgrName = "Unknown";
 		private System.Timers.Timer m_StatusTimer;
-		private DateTime m_DurationStart = DateTime.UtcNow;
+		private readonly DateTime m_DurationStart = DateTime.UtcNow;
 		private clsStorageOperations m_StorageOps;
 		#endregion
 
@@ -88,8 +86,6 @@ namespace Space_Manager
 		/// <returns>TRUE for success; FALSE otherwise</returns>
 		public bool InitMgr()
 		{
-			string msg;
-
 			// Get the manager settings
 			try
 			{
@@ -113,7 +109,7 @@ namespace Space_Manager
 			clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
 
 			// Make initial log entry
-			msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
+			string msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Setup the message queue
@@ -132,12 +128,12 @@ namespace Space_Manager
 			if (m_MsgQueueInitSuccess)
 			{
 				//Connect message handler events
-				m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
-				m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
+				m_MsgHandler.CommandReceived += OnCommandReceived;
+				m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
 			}
 
 			// Setup a file watcher for the config file
-			FileInfo fInfo = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+			var fInfo = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
 			m_FileWatcher = new FileSystemWatcher();
 			m_FileWatcher.BeginInit();
 			m_FileWatcher.Path = fInfo.DirectoryName;
@@ -148,19 +144,21 @@ namespace Space_Manager
 			m_FileWatcher.EnableRaisingEvents = true;
 
 			// Subscribe to the file watcher Changed event
-			m_FileWatcher.Changed += new FileSystemEventHandler(FileWatcherChanged);
+			m_FileWatcher.Changed += FileWatcherChanged;
 
 			// Set up the tool for getting tasks
 			m_Task = new clsSpaceMgrTask(m_MgrSettings);
 
 			// Set up the status file class
 			string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
-			m_StatusFile = new clsStatusFile(statusFileNameLoc);
-			//TODO: Might want to put this back in someday
-			//m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
-			m_StatusFile.LogToMsgQueue = bool.Parse(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
-			m_StatusFile.MgrName = m_MgrName;
-			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
+			m_StatusFile = new clsStatusFile(statusFileNameLoc)
+			{
+				//Note: Might want to put this back in someday
+				//MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
+				LogToMsgQueue = bool.Parse(m_MgrSettings.GetParam("LogStatusToMessageQueue")),
+				MgrName = m_MgrName,
+				MgrStatus = EnumMgrStatus.Running
+			};
 			m_StatusFile.WriteStatusFile();
 
 			// Set up the status reporting time
@@ -169,7 +167,7 @@ namespace Space_Manager
 			m_StatusTimer.Enabled = false;
 			m_StatusTimer.Interval = 60000;	// 1 minute
 			m_StatusTimer.EndInit();
-			m_StatusTimer.Elapsed += new System.Timers.ElapsedEventHandler(m_StatusTimer_Elapsed);
+			m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
 			// Get the most recent job history
 			string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
@@ -179,7 +177,7 @@ namespace Space_Manager
 				{
 					// Create an instance of StreamReader to read from a file.
 					// The using statement also closes the StreamReader.
-					using (StreamReader sr = new StreamReader(historyFile))
+					using (var sr = new StreamReader(historyFile))
 					{
 						String line;
 						// Read and display lines from the file until the end of 
@@ -209,10 +207,10 @@ namespace Space_Manager
 			return true;
 		}	// End sub
 
-		private bool InitializeMessageQueue()
+		private void InitializeMessageQueue()
 		{
 
-			System.Threading.Thread worker = new System.Threading.Thread(InitializeMessageQueueWork);
+			var worker = new System.Threading.Thread(InitializeMessageQueueWork);
 			worker.Start();
 
 			// Wait a maximum of 15 seconds
@@ -223,7 +221,6 @@ namespace Space_Manager
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to initialize the message queue (timeout after 15 seconds)");
 			}
 
-			return m_MsgQueueInitSuccess;
 		}
 
 		private void InitializeMessageQueueWork()
@@ -241,7 +238,6 @@ namespace Space_Manager
 				m_MsgQueueInitSuccess = true;
 			}
 
-			return;
 		}
 
 
@@ -251,7 +247,6 @@ namespace Space_Manager
 		/// <returns>Exit code specifying manager stop or restart</returns>
 		public bool PerformSpaceManagement()
 		{
-			string msg;
 			bool methodReturnCode = RESTART_NOT_OK;
 
 			try
@@ -259,6 +254,7 @@ namespace Space_Manager
 				int maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
 
 				// Check if manager has been disabled via manager config db
+				string msg;
 				if (m_MgrSettings.GetParam("mgractive").ToLower() != "true")
 				{
 					// Manager deactivated via manager config db
@@ -274,7 +270,7 @@ namespace Space_Manager
 				if (driveList == null) return RESTART_NOT_OK;	// Problem with drive spec. Error reporting handled by GetDriveList
 
 				// Set drive operation state to Keep Running
-				DriveOpStatus opStatus = DriveOpStatus.KeepRunning;
+				var opStatus = DriveOpStatus.KeepRunning;
 
 				foreach (clsDriveData testDrive in driveList)
 				{
@@ -325,19 +321,18 @@ namespace Space_Manager
 
 		protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
 		{
-			string msg;
-			DriveOpStatus opStatus = DriveOpStatus.KeepRunning;
+			var opStatus = DriveOpStatus.KeepRunning;
 			int repCounter = 0;
 
 			try
 			{
 
 				// Start a purge loop for the current drive
-				bool purgeRunning = true;
 				bool bDriveInfoLogged = false;
-				while (purgeRunning)
+				while (true)
 				{
 					// Check for configuration changes
+					string msg;
 					if (m_ConfigChanged)
 					{
 						// Local config has changed, so exit loop and reload settings
@@ -351,7 +346,7 @@ namespace Space_Manager
 					if (repCounter >= maxReps)
 					{
 						// Exceeded max number of repetitions for this run, so exit
-						msg = "Reached maximum repetition count of " + maxReps.ToString() + "; Program exiting";
+						msg = "Reached maximum repetition count of " + maxReps + "; Program exiting";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 						opStatus = DriveOpStatus.Exit_No_Restart;
 						break;
@@ -366,7 +361,7 @@ namespace Space_Manager
 					}
 
 					// Check available space on server drive and compare it with min allowed space
-					double driveFreeSpaceGB = 0;
+					double driveFreeSpaceGB;
 					string serverName = m_MgrSettings.GetParam("machname");
 					string perspective = m_MgrSettings.GetParam("perspective");
 					SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
@@ -377,9 +372,8 @@ namespace Space_Manager
 					if (checkResult == SpaceCheckResults.Above_Threshold)
 					{
 						// Drive doesn't need purging, so continue to next drive
-						msg = "No purge required, drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0).ToString() + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0).ToString() + " GB threshold";
+						msg = "No purge required, drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						repCounter++;
 						break;
 					}
 
@@ -387,7 +381,6 @@ namespace Space_Manager
 					{
 						// There was an error getting the free space for this drive. Logging handled by IsPurgeRequired
 						m_ErrorCount++;
-						repCounter++;
 						break;
 					}
 
@@ -395,7 +388,7 @@ namespace Space_Manager
 					{
 						bDriveInfoLogged = true;
 						// Note: there are extra spaces after "required" so the log message lines up with the "No purge required" message
-						msg = "Purge required   , drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0).ToString() + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0).ToString() + " GB threshold";
+						msg = "Purge required   , drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					}
 
@@ -425,7 +418,6 @@ namespace Space_Manager
 						// No purge task assigned. This is a problem because the drive is low on space
 						msg = "Drive purge required, but no purge task assigned";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						repCounter++;
 						break;
 					}
 
@@ -487,12 +479,10 @@ namespace Space_Manager
 		/// <returns>TRUE if error count less than max allowed; FALSE otherwise</returns>
 		private bool TestErrorCount()
 		{
-			string msg;
-
 			if (m_ErrorCount > MAX_ERROR_COUNT)
 			{
 				// Too many errors - something must be seriously wrong. Human intervention may be required
-				msg = "Excessive errors. Error count = " + m_ErrorCount.ToString() + ". Manager is being disabled";
+				string msg = "Excessive errors. Error count = " + m_ErrorCount + ". Manager is being disabled";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
 				{
@@ -501,8 +491,9 @@ namespace Space_Manager
 				}
 				return false;
 			}
-			else return true;
-		}	// End sub
+			
+			return true;
+		}
 		#endregion
 
 		#region "Event handlers"
@@ -513,7 +504,7 @@ namespace Space_Manager
 		/// <param name="e"></param>
 		private void FileWatcherChanged(object sender, FileSystemEventArgs e)
 		{
-			string msg = "clsMainProgram.FileWatcherChanged event received";
+			const string msg = "clsMainProgram.FileWatcherChanged event received";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			m_ConfigChanged = true;

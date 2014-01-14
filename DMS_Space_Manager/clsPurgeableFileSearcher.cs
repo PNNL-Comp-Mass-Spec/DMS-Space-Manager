@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Space_Manager
 {
@@ -18,8 +17,8 @@ namespace Space_Manager
 		/// <param name="lstServerFilesToPurge"></param>
 		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, ref SortedSet<string> lstServerFilesToPurge)
 		{
-			int minSizeKB = 0;
-			bool recurse = false;
+			const int minSizeKB = 0;
+			const bool recurse = false;
 			return AddFilesToPurge(diFolder, sFilterSpec, minSizeKB, recurse, ref lstServerFilesToPurge);
 		}
 
@@ -79,15 +78,14 @@ namespace Space_Manager
 		/// <returns>True if the files were all older than the threshold, otherwise false</returns>
 		protected bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, ref SortedSet<string> lstServerFilesToPurge)
 		{
-			List<string> lstFiles;
-			System.DateTime dtMostRecentUpdate;
+			DateTime dtMostRecentUpdate;
 
-			lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
+			List<string> lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
 
 			if (iAgeThresholdDays < 1)
 				iAgeThresholdDays = 1;
 
-			if (System.DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > iAgeThresholdDays)
+			if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > iAgeThresholdDays)
 			{
 				foreach (string sFile in lstFiles)
 				{
@@ -97,8 +95,8 @@ namespace Space_Manager
 				}
 				return true;
 			}
-			else
-				return false;
+			
+			return false;
 
 		}
 
@@ -106,7 +104,7 @@ namespace Space_Manager
 		/// <summary>
 		/// Examine each file in serverFiles and decide which is safe to delete based on the purge policy
 		/// </summary>
-		/// <param name="serverFiles">Files that were found for this dataset on the server</param>
+		/// <param name="diDatasetFolder">Dataset folder to process</param>
 		/// <param name="udtDatasetInfo">Dataset info</param>
 		/// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
 		/// <returns>List of files that are safe to delete</returns>
@@ -145,10 +143,10 @@ namespace Space_Manager
 
 		}
 
-		private List<string> FindFilesAndNewestDate(DirectoryInfo diFolder, out System.DateTime dtMostRecentUpdate)
+		private List<string> FindFilesAndNewestDate(DirectoryInfo diFolder, out DateTime dtMostRecentUpdate)
 		{
-			List<string> lstFiles = new List<string>();
-			dtMostRecentUpdate = System.DateTime.MinValue;
+			var lstFiles = new List<string>();
+			dtMostRecentUpdate = DateTime.MinValue;
 
 			// Find files in diFolder
 			foreach (FileInfo fiFile in diFolder.GetFiles("*.*", SearchOption.AllDirectories))
@@ -169,7 +167,6 @@ namespace Space_Manager
 		/// Examine the files that exist below a dataset folder
 		/// Auto-determine the ones that should be purged
 		/// </summary>
-		/// <param name="serverFiles">Files that were found for this dataset on the server</param>
 		/// <param name="udtDatasetInfo">Dataset info</param>
 		/// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
 		/// <returns>List of files that are safe to delete</returns>
@@ -179,10 +176,9 @@ namespace Space_Manager
 			var lstServerFilesToPurge = new SortedSet<string>();
 			lstJobsToPurge = new List<int>();
 
-			System.Text.RegularExpressions.Regex reJobFolder = new System.Text.RegularExpressions.Regex(@"_Auto(\d+)$", System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-			System.Text.RegularExpressions.Match reMatch;
+			var reJobFolder = new Regex(@"_Auto(\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-			DirectoryInfo diDatasetFolder = new DirectoryInfo(udtDatasetInfo.ServerFolderPath);
+			var diDatasetFolder = new DirectoryInfo(udtDatasetInfo.ServerFolderPath);
 
 			// Process files in the dataset folder
 
@@ -229,13 +225,12 @@ namespace Space_Manager
 			foreach (DirectoryInfo diSubDir in diDatasetFolder.GetDirectories())
 			{
 				string subDirNameUpper = diSubDir.Name.ToUpper();
-				bool subDirProcessed = false;
 
 				if (diSubDir.Name == "QC")
 					// Do not purge the QC folder
-					subDirProcessed = true;
+					continue;
 
-				if (!subDirProcessed && subDirNameUpper.EndsWith(".D"))
+				if (subDirNameUpper.EndsWith(".D"))
 				{
 					// Instrument data folder
 					AddFilesToPurge(diSubDir, "*.yep", 0, true, ref lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
@@ -247,95 +242,85 @@ namespace Space_Manager
 
 					// Purge all files over 2 MB in size
 					AddFilesToPurge(diSubDir, "*.*", 2048, true, ref lstServerFilesToPurge);
-					subDirProcessed = true;
+					continue;
 				}
 
-				if (!subDirProcessed && subDirNameUpper.EndsWith(".RAW"))
+				if (subDirNameUpper.EndsWith(".RAW"))
 				{
 					AddFilesToPurge(diSubDir, "*.raw", 0, true, ref lstServerFilesToPurge);
 
 					// Purge all files over 2 MB in size
 					AddFilesToPurge(diSubDir, "*.*", 2048, true, ref lstServerFilesToPurge);
-					subDirProcessed = true;
+					continue;
 				}
 
-				if (!subDirProcessed && subDirNameUpper.StartsWith("MSXML_GEN"))
+				if (subDirNameUpper.StartsWith("MSXML_GEN"))
 				{
 					AddFilesToPurgeDateThreshold(diSubDir, 90, ref lstServerFilesToPurge);
-					subDirProcessed = true;
+					continue;
 				}
 
-				if (!subDirProcessed && subDirNameUpper.StartsWith("DTA_GEN") || subDirNameUpper.StartsWith("DTA_REF"))
+				if (subDirNameUpper.StartsWith("DTA_GEN") || subDirNameUpper.StartsWith("DTA_REF"))
 				{
 					// Purge after 1.5 years
 					AddFilesToPurgeDateThreshold(diSubDir, 548, ref lstServerFilesToPurge);
-					subDirProcessed = true;
+					continue;
 				}
-
-				if (!subDirProcessed)
+				
+				var reMatch = reJobFolder.Match(diSubDir.Name);
+				if (reMatch.Success)
 				{
-					reMatch = reJobFolder.Match(diSubDir.Name);
-					if (reMatch.Success)
+					// This is an analysis job folder
+					if (diSubDir.Name.StartsWith("SIC"))
 					{
-						// This is an analysis job folder
-						if (diSubDir.Name.StartsWith("SIC"))
+						// This is a MASIC folder
+						AddFilesToPurge(diSubDir, "*.zip", ref lstServerFilesToPurge);
+
+						// Purge all files over 15 MB in size
+						AddFilesToPurge(diSubDir, "*.*", 15 * 1024, true, ref lstServerFilesToPurge);
+					}
+					else
+					{
+						// Other analysis job folders
+						// Purge the entire folder if all files are over 3 years old
+						bool bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, ref lstServerFilesToPurge);
+
+						if (!bSubDirPurged)
 						{
-							// This is a MASIC folder
-							AddFilesToPurge(diSubDir, "*.zip", ref lstServerFilesToPurge);
+							// Files are not yet 3 years old
+							// If all of the files are 1 year old, then purge files over 50 MB
 
-							// Purge all files over 15 MB in size
-							AddFilesToPurge(diSubDir, "*.*", 15 * 1024, true, ref lstServerFilesToPurge);
-						}
-						else
-						{
-							// Other analysis job folders
-							// Purge the entire folder if all files are over 3 years old
-							bool bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, ref lstServerFilesToPurge);
+							DateTime dtMostRecentUpdate;
 
-							if (!bSubDirPurged)
+							var lstFiles = FindFilesAndNewestDate(diSubDir, out dtMostRecentUpdate);
+
+							if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
 							{
-								// Files are not yet 3 years old
-								// If all of the files are 1 year old, then purge files over 50 MB
+								// Purge all files over 50 MB in size
+								int iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, ref lstServerFilesToPurge);
 
-								List<string> lstFiles;
-								System.DateTime dtMostRecentUpdate;
-								int iFilesMatched;
-
-								lstFiles = FindFilesAndNewestDate(diSubDir, out dtMostRecentUpdate);
-
-								if (System.DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
-								{
-									// Purge all files over 50 MB in size
-									iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, ref lstServerFilesToPurge);
-
-									if (iFilesMatched == lstFiles.Count)
-										bSubDirPurged = true;
-								}
+								if (iFilesMatched == lstFiles.Count)
+									bSubDirPurged = true;
 							}
-
-							if (bSubDirPurged)
-							{
-								if (reMatch.Groups.Count > 0)
-								{
-									int jobNum;
-									if (int.TryParse(reMatch.Groups[1].Value, out jobNum))
-										lstJobsToPurge.Add(jobNum);
-								}
-							}
-
 						}
 
-						subDirProcessed = true;
+						if (bSubDirPurged)
+						{
+							if (reMatch.Groups.Count > 0)
+							{
+								int jobNum;
+								if (int.TryParse(reMatch.Groups[1].Value, out jobNum))
+									lstJobsToPurge.Add(jobNum);
+							}
+						}
+
 					}
 
+					continue;
 				}
 
-				if (!subDirProcessed)
-				{
-					// Use a threshold of 9 months for all other subfolders
-					AddFilesToPurgeDateThreshold(diSubDir, 270, ref lstServerFilesToPurge);
-					subDirProcessed = true;
-				}
+				// Use a threshold of 9 months for all other subfolders
+				AddFilesToPurgeDateThreshold(diSubDir, 270, ref lstServerFilesToPurge);
 
 			}
 
