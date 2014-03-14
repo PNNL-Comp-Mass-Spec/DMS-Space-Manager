@@ -10,7 +10,6 @@
 using System;
 using System.Data.SqlClient;
 using System.Data;
-using System.Windows.Forms;
 
 namespace Space_Manager
 {
@@ -31,6 +30,7 @@ namespace Space_Manager
 		#endregion
 
 		#region "Constructors"
+
 		/// <summary>
 		/// Class constructor
 		/// </summary>
@@ -39,10 +39,12 @@ namespace Space_Manager
 			: base(mgrParams)
 		{
 			m_JobParams.Clear();
-		}	// End sub
+		}
+
 		#endregion
 
 		#region "Methods"
+
 		/// <summary>
 		/// Gets a stored parameter
 		/// </summary>
@@ -55,11 +57,10 @@ namespace Space_Manager
 			{
 				return value;
 			}
-			else
-			{
-				return string.Empty;
-			}
-		}	// End sub
+
+			return string.Empty;
+
+		}
 
 		/// <summary>
 		/// Adds a parameter
@@ -68,7 +69,7 @@ namespace Space_Manager
 		/// <param name="paramValue">Value for parameter</param>
 		/// <returns>TRUE for success, FALSE for error</returns>
 		public bool AddAdditionalParameter(string paramName, string paramValue)
-		{			
+		{
 			try
 			{
 				SetParam(paramName, paramValue);
@@ -80,7 +81,7 @@ namespace Space_Manager
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Stores a parameter
@@ -99,7 +100,7 @@ namespace Space_Manager
 			else
 				m_JobParams.Add(keyName, value);
 
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Wrapper for requesting a task from the database
@@ -107,9 +108,7 @@ namespace Space_Manager
 		/// <returns>num indicating if task was found</returns>
 		public override EnumRequestTaskResult RequestTask(string driveLetter)
 		{
-			EnumRequestTaskResult retVal;
-
-			retVal = RequestTaskDetailed(driveLetter);
+			EnumRequestTaskResult retVal = RequestTaskDetailed(driveLetter);
 			switch (retVal)
 			{
 				case EnumRequestTaskResult.TaskFound:
@@ -124,7 +123,7 @@ namespace Space_Manager
 			}
 
 			return retVal;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Detailed step request
@@ -132,11 +131,10 @@ namespace Space_Manager
 		/// <returns>RequestTaskResult enum</returns>
 		private EnumRequestTaskResult RequestTaskDetailed(string driveLetter)
 		{
-			string msg;
-			SqlCommand myCmd = new SqlCommand();
-			EnumRequestTaskResult outcome = EnumRequestTaskResult.NoTaskFound;
-			int retVal = 0;
-			DataTable dt = new DataTable();
+			var myCmd = new SqlCommand();
+			EnumRequestTaskResult outcome;
+			var dt = new DataTable();
+
 			//string strProductVersion = Application.ProductVersion;
 			//if (strProductVersion == null) strProductVersion = "??";
 
@@ -175,14 +173,14 @@ namespace Space_Manager
 					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 1;
 				}
 
-				msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
+				string msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				PrintCommandParams(myCmd);
 
 				//Execute the SP
-				retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
+				int retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
 
 				switch (retVal)
 				{
@@ -205,25 +203,26 @@ namespace Space_Manager
 						break;
 					default:
 						//There was an SP error
-						msg = "clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal.ToString();
+						msg = "clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal;
 						msg += "; Msg text = " + (string)myCmd.Parameters["@message"].Value;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						outcome = EnumRequestTaskResult.ResultError;
 						break;
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " + ex.Message);
 				outcome = EnumRequestTaskResult.ResultError;
 			}
+
 			return outcome;
-		}	// End sub
+		}
 
 		public override void CloseTask(EnumCloseOutType taskResult)
 		{
 			string msg;
-			int completionCode = (int)taskResult;
+			var completionCode = (int)taskResult;
 
 			if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, completionCode, m_JobParams["dataset"]))
 			{
@@ -235,23 +234,21 @@ namespace Space_Manager
 				msg = "Successfully set task complete in database, dataset " + m_JobParams["dataset"];
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Database calls to set a capture task complete
 		/// </summary>
-		/// <param name="SpName">Name of SetComplete stored procedure</param>
-		/// <param name="CompletionCode">Integer representation of completion code</param>
-		/// <param name="ConnStr">Db connection string</param>
+		/// <param name="spName">Name of SetComplete stored procedure</param>
+		/// <param name="connStr">Db connection string</param>
+		/// <param name="completionCode">Integer representation of completion code</param>
+		/// <param name="datasetName">Dataset name</param>
 		/// <returns>TRUE for sucesss; FALSE for failure</returns>
 		public bool SetPurgeTaskComplete(string spName, string connStr, int completionCode, string datasetName)
 		{
-			string msg;
-			bool Outcome = false;
-			int ResCode = 0;
 
 			//Setup for execution of the stored procedure
-			SqlCommand MyCmd = new SqlCommand();
+			var MyCmd = new SqlCommand();
 			{
 				MyCmd.CommandType = CommandType.StoredProcedure;
 				MyCmd.CommandText = spName;
@@ -269,20 +266,17 @@ namespace Space_Manager
 
 			// Execute the SP
 			// Note that stored procedure SetPurgeTaskComplete will call MakeNewArchiveUpdateJob in the DMS_Capture database if the completionCode is ??
-			ResCode = ExecuteSP(MyCmd, connStr);
+			int resCode = ExecuteSP(MyCmd, connStr);
 
-			if (ResCode == 0)
+			if (resCode == 0)
 			{
-				Outcome = true;
+				return true;
 			}
-			else
-			{
-				msg = "Error " + ResCode.ToString() + " setting purge task complete";
-				msg += "; Message = " + (string)MyCmd.Parameters["@message"].Value;
-				Outcome = false;
-			}
-			return Outcome;
-		}	// End sub
+
+			return false;
+
+		}
+
 		#endregion
 	}	// End class
 }	// End namespace
