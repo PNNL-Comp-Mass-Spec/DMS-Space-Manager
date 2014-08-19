@@ -5,12 +5,8 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
-// Last modified 09/09/2010
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
@@ -113,7 +109,7 @@ namespace Space_Manager
 				string msg = "Exception creating broker connection";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Create the message broker communication objects and register the listener function
@@ -150,7 +146,7 @@ namespace Space_Manager
 				DestroyConnection();
 				return false;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Command listener function. Received commands will cause this to be called
@@ -174,7 +170,7 @@ namespace Space_Manager
 				Msg = "clsMessageHandler().OnCommandReceived: No event handlers assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Broadcast listener function. Received Broadcasts will cause this to be called
@@ -198,7 +194,7 @@ namespace Space_Manager
 				Msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Sends a status message
@@ -223,7 +219,7 @@ namespace Space_Manager
 			{
 				throw new ObjectDisposedException(this.GetType().FullName);
 			}
-		}	// End sub
+		}
 		#endregion
 
 		#region "Cleanup"
@@ -239,7 +235,7 @@ namespace Space_Manager
 				string msg = "Message connection closed";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Implements IDisposable interface
@@ -251,7 +247,7 @@ namespace Space_Manager
 				this.DestroyConnection();
 				this.m_IsDisposed = true;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Registers the command and broadcast listeners under control of main program.
@@ -261,7 +257,7 @@ namespace Space_Manager
 		{
 			m_CommandConsumer.Listener += new MessageListener(OnCommandReceived);
 			m_BroadcastConsumer.Listener += new MessageListener(OnBroadcastReceived);
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

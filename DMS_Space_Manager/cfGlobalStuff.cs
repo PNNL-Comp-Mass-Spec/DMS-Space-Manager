@@ -5,7 +5,6 @@
 // Copyright 2011, Battelle Memorial Institute
 // Created 02/01/2011
 //
-// Last modified 02/01/2011
 //*********************************************************************************************************
 namespace Space_Manager
 {

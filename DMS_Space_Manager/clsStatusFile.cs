@@ -5,12 +5,10 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
-// Last modified 09/08/2010
 //*********************************************************************************************************
 using System;
 using System.Xml;
 using System.IO;
-using MessageLogger;
 
 namespace Space_Manager
 {
@@ -31,10 +29,10 @@ namespace Space_Manager
 			private EnumMgrStatus m_MgrStatus = EnumMgrStatus.Stopped;
 
 			//Manager start time
-			private System.DateTime m_MgrStartTime;
+			private DateTime m_MgrStartTime;
 
 			//CPU utilization
-			private int m_CpuUtilization = 0;
+			private int m_CpuUtilization;
 
 			//Analysis Tool
 			private string m_Tool = "";
@@ -43,10 +41,10 @@ namespace Space_Manager
 			private EnumTaskStatus m_TaskStatus = EnumTaskStatus.No_Task;
 
 			//Task duration
-			private float m_Duration = 0;
+			private float m_Duration;
 
 			//Progess (in percent)
-			private float m_Progress = 0;
+			private float m_Progress;
 
 			//Current operation (freeform string)
 			private string m_CurrentOperation = "";
@@ -55,10 +53,10 @@ namespace Space_Manager
 			private EnumTaskStatusDetail m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 			//Job number
-			private int m_JobNumber = 0;
+			private int m_JobNumber;
 
 			//Job step
-			private int m_JobStep = 0;
+			private int m_JobStep;
 
 			//Dataset name
 			private string m_Dataset = "";
@@ -67,7 +65,7 @@ namespace Space_Manager
 			private string m_MostRecentJobInfo = "";
 
 			//Number of spectrum files created
-			private int m_SpectrumCount = 0;
+			private int m_SpectrumCount;
 
 			//Message broker connection string
 			private string m_MessageQueueURI;
@@ -203,7 +201,7 @@ namespace Space_Manager
    			 m_Dataset = "";
    			 m_JobNumber = 0;
    			 m_Tool = "";
-			}	// End sub
+			}
 		#endregion
 
 			#region "Events"
@@ -219,7 +217,7 @@ namespace Space_Manager
 			private string ConvertMgrStatusToString(EnumMgrStatus StatusEnum)
 			{
 				return StatusEnum.ToString("G");
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Converts the task status enum to a string value
@@ -229,7 +227,7 @@ namespace Space_Manager
 			private string ConvertTaskStatusToString(EnumTaskStatus StatusEnum)
 			{
 				return StatusEnum.ToString("G");
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Converts the manager status enum to a string value
@@ -239,109 +237,103 @@ namespace Space_Manager
 			private string ConvertTaskDetailStatusToString(EnumTaskStatusDetail StatusEnum)
 			{
 				return StatusEnum.ToString("G");
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Writes the status file
 			/// </summary>
 			public void WriteStatusFile()
 			{
-				XmlTextWriter XWriter = default(XmlTextWriter);
-
-				MemoryStream MemStream = default(MemoryStream);
-				StreamReader MemStreamReader = default(StreamReader);
-
 				string XMLText = string.Empty;
 
 				//Set up the XML writer
 				try
 				{
 					//Create a memory stream to write the document in
-					MemStream = new MemoryStream();
-					XWriter = new XmlTextWriter(MemStream, System.Text.Encoding.UTF8);
+					var MemStream = new MemoryStream();
+					using (var XWriter = new XmlTextWriter(MemStream, System.Text.Encoding.UTF8))
+					{					
+						XWriter.Formatting = Formatting.Indented;
+						XWriter.Indentation = 2;
 
-					XWriter.Formatting = Formatting.Indented;
-					XWriter.Indentation = 2;
+						//Write the file
+						XWriter.WriteStartDocument(true);
+						//Root level element
+						XWriter.WriteStartElement("Root");
+						XWriter.WriteStartElement("Manager");
+						XWriter.WriteElementString("MgrName", m_MgrName);
+						XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
+						XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString());
+						XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString());
+						XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString());
+						XWriter.WriteElementString("FreeMemoryMB", "0");
+						XWriter.WriteStartElement("RecentErrorMessages");
+						foreach (string ErrMsg in clsStatusData.ErrorQueue)
+						{
+							XWriter.WriteElementString("ErrMsg", ErrMsg);
+						}
+						XWriter.WriteEndElement();
+						//Error messages
+						XWriter.WriteEndElement();
+						//Manager section
 
-					//Write the file
-					XWriter.WriteStartDocument(true);
-					//Root level element
-					XWriter.WriteStartElement("Root");
-					XWriter.WriteStartElement("Manager");
-					XWriter.WriteElementString("MgrName", m_MgrName);
-					XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
-					XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString());
-					XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString());
-					XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString());
-					XWriter.WriteElementString("FreeMemoryMB", "0");
-					XWriter.WriteStartElement("RecentErrorMessages");
-					foreach (string ErrMsg in clsStatusData.ErrorQueue)
-					{
-						XWriter.WriteElementString("ErrMsg", ErrMsg);
+						XWriter.WriteStartElement("Task");
+						XWriter.WriteElementString("Tool", m_Tool);
+						XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus));
+						XWriter.WriteElementString("Duration", m_Duration.ToString("##0.0"));
+						XWriter.WriteElementString("DurationMinutes", (60f * m_Duration).ToString("##0.0"));
+						XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));
+						XWriter.WriteElementString("CurrentOperation", m_CurrentOperation);
+						XWriter.WriteStartElement("TaskDetails");
+						XWriter.WriteElementString("Status", ConvertTaskDetailStatusToString(m_TaskStatusDetail));
+						XWriter.WriteElementString("Job", m_JobNumber.ToString());
+						XWriter.WriteElementString("Step", m_JobStep.ToString());
+						XWriter.WriteElementString("Dataset", m_Dataset);
+						XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
+						XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
+						XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString());
+						XWriter.WriteEndElement();	//Task details section
+						XWriter.WriteEndElement();	//Task section
+						XWriter.WriteEndElement();	//Root section
+
+						//Close the document, but don't close the writer yet
+						XWriter.WriteEndDocument();
+						XWriter.Flush();
+
+						//Use a streamreader to copy the XML text to a string variable
+						MemStream.Seek(0, SeekOrigin.Begin);
+						var MemStreamReader = new StreamReader(MemStream);
+						XMLText = MemStreamReader.ReadToEnd();
+
+						MemStreamReader.Close();
+						MemStream.Close();
+
+						//  Since strXMLText now contains the XML, we can now safely close XWriter
 					}
-					XWriter.WriteEndElement();
-					//Error messages
-					XWriter.WriteEndElement();
-					//Manager section
 
-					XWriter.WriteStartElement("Task");
-					XWriter.WriteElementString("Tool", m_Tool);
-					XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus));
-					XWriter.WriteElementString("Duration", m_Duration.ToString("##0.0"));
-					XWriter.WriteElementString("DurationMinutes", (60f * m_Duration).ToString("##0.0"));
-					XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));
-					XWriter.WriteElementString("CurrentOperation", m_CurrentOperation);
-					XWriter.WriteStartElement("TaskDetails");
-					XWriter.WriteElementString("Status", ConvertTaskDetailStatusToString(m_TaskStatusDetail));
-					XWriter.WriteElementString("Job", m_JobNumber.ToString());
-					XWriter.WriteElementString("Step", m_JobStep.ToString());
-					XWriter.WriteElementString("Dataset", m_Dataset);
-					XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
-					XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
-					XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString());
-					XWriter.WriteEndElement();	//Task details section
-					XWriter.WriteEndElement();	//Task section
-					XWriter.WriteEndElement();	//Root section
-
-					//Close the document, but don't close the writer yet
-					XWriter.WriteEndDocument();
-					XWriter.Flush();
-
-					//Use a streamreader to copy the XML text to a string variable
-					MemStream.Seek(0, SeekOrigin.Begin);
-					MemStreamReader = new StreamReader(MemStream);
-					XMLText = MemStreamReader.ReadToEnd();
-
-					MemStreamReader.Close();
-					MemStream.Close();
-
-					//Since the document is now in a string, we can close the XWriter
-					XWriter.Close();
-					XWriter = null;
 					PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 					//Write the output file
-					StreamWriter OutFile = default(StreamWriter);
 					try
 					{
-						OutFile = new StreamWriter(new FileStream(m_FileNamePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-						OutFile.WriteLine(XMLText);
-						OutFile.Close();
+						using (var OutFile = new StreamWriter(new FileStream(m_FileNamePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+						{
+							OutFile.WriteLine(XMLText);
+						}
 					}
 					catch (Exception ex)
-					{
-						//TODO: Figure out appropriate action
+					{						
 						Console.WriteLine("Error writing status file: " + ex.Message);
 					}
 				}
-				catch
+				catch (Exception)
 				{
-					//TODO: Figure out appropriate action
+					// Ignore errors here
 				}
 
 				//Log to a message queue
 				if (m_LogToMsgQueue) LogStatusToMessageQueue(XMLText);
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Writes the status to the message queue
@@ -351,7 +343,7 @@ namespace Space_Manager
 			{
 				if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
 
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Updates status file
@@ -363,7 +355,7 @@ namespace Space_Manager
 				m_Progress = PercentComplete;
 
 				WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Updates status file
@@ -377,7 +369,7 @@ namespace Space_Manager
 				m_Progress = PercentComplete;
 
 				WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Updates status file
@@ -393,7 +385,7 @@ namespace Space_Manager
 				m_SpectrumCount = DTACount;
 
 				WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Sets status file to show mahager not running
@@ -419,7 +411,7 @@ namespace Space_Manager
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 				WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Updates status file to show manager disabled
@@ -445,7 +437,7 @@ namespace Space_Manager
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 				this.WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Updates status file to show manager in idle state
@@ -463,7 +455,7 @@ namespace Space_Manager
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 				WriteStatusFile();
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Initializes the status from a file, if file exists
@@ -471,9 +463,6 @@ namespace Space_Manager
 			/// 
 			public void InitStatusFromFile()
 			{
-				string XmlStr = "";
-				XmlDocument Doc = null;
-
 				//Verify status file exists
 				if (!File.Exists(m_FileNamePath)) return;
 
@@ -481,10 +470,10 @@ namespace Space_Manager
 				try
 				{
 					// Read the input file
-					XmlStr = File.ReadAllText(m_FileNamePath);
+					string XmlStr = File.ReadAllText(m_FileNamePath);
 
 					// Convert to an XML document
-					Doc = new XmlDocument();
+					var Doc = new XmlDocument();
 					Doc.LoadXml(XmlStr);
 
 					// Get the most recent log message
@@ -502,10 +491,9 @@ namespace Space_Manager
 				catch (Exception ex)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception reading status file", ex);
-					return;
-
 				}
-			}	// End sub
+
+			}
 		#endregion
 	}	// End class
 }	// End namespace

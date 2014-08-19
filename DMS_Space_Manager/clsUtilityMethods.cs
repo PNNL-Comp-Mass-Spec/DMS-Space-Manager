@@ -5,13 +5,10 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/14/2010
 //
-// Last modified 09/14/2010
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Management;
 
 namespace Space_Manager
@@ -45,7 +42,7 @@ namespace Space_Manager
 		/// <remarks>No logging is performed by this procedure</remarks>
 		public static int ExecuteSP(System.Data.SqlClient.SqlCommand SpCmd, string ConnStr, int MaxRetryCount, out string sErrorMessage)
 		{
-			int TimeoutSeconds = 30;
+			const int TimeoutSeconds = 30;
 			return ExecuteSP(SpCmd, ConnStr, MaxRetryCount, TimeoutSeconds, out sErrorMessage);
 		}
 
@@ -83,7 +80,7 @@ namespace Space_Manager
 				blnDeadlockOccurred = false;
 				try
 				{
-					using (System.Data.SqlClient.SqlConnection Cn = new System.Data.SqlClient.SqlConnection(ConnStr))
+					using (var Cn = new System.Data.SqlClient.SqlConnection(ConnStr))
 					{
 
 						Cn.Open();
@@ -100,7 +97,7 @@ namespace Space_Manager
 
 					break;
 				}
-				catch (System.Exception ex)
+				catch (Exception ex)
 				{
 					RetryCount -= 1;
 					sErrorMessage = "clsGlobal.ExecuteSP(), exception calling stored procedure " + SpCmd.CommandText + ", " + ex.Message;
@@ -111,7 +108,8 @@ namespace Space_Manager
 						// Exit out of the while loop
 						break;
 					}
-					else if (ex.Message.Contains("was deadlocked"))
+					
+					if (ex.Message.Contains("was deadlocked"))
 					{
 						blnDeadlockOccurred = true;
 					}
@@ -139,10 +137,8 @@ namespace Space_Manager
 				{
 					return (int)StoredProcedureExecutionResult.Deadlock;
 				}
-				else
-				{
-					return (int)StoredProcedureExecutionResult.Excessive_Retries;
-				}
+				
+				return (int)StoredProcedureExecutionResult.Excessive_Retries;
 			}
 
 			return ResCode;
@@ -155,107 +151,100 @@ namespace Space_Manager
 			/// </summary>
 			/// <param name="inpList">Input string containing drive information</param>
 			/// <returns>List of drives with associated data</returns>
-			public static List<clsDriveData> GetDriveList(string inpList)
+			public static IEnumerable<clsDriveData> GetDriveList(string inpList)
 			{
-				List<clsDriveData> driveList = null;
-				string[] driveArray;
-				string[] driveInfo;
-
-				// Data for drives is separated by semi-colon.
-				driveArray = inpList.Split(new char[] { ';' });
-				if (driveArray == null)
+				if (string.IsNullOrWhiteSpace(inpList))
 				{
 					// There were no drives in string
-					string msg = "No drives found in drive list " + inpList;
+					const string msg = "Drive list provided to GetDriveList is empty";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return null;
 				}
 
-				driveList = new List<clsDriveData>();
+				// Data for drives is separated by semi-colon.
+				string[] driveArray = inpList.Split(new[] { ';' });
+
+				var driveList = new List<clsDriveData>();
 
 				// Data for an individual drive is separated by comma
 				foreach (string drive in driveArray)
 				{
-					driveInfo = drive.Split(new char[] { ',' });
-					if (driveInfo == null)
+					if (string.IsNullOrWhiteSpace(drive))
 					{
-						string msg = "Unable to get drive space from string " + driveInfo;
+						string msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + drive;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
 
+					string[] driveInfo = drive.Split(new[] { ',' });
+					
 					if (driveInfo.Length != 2)
 					{
-						string msg = "Invalid parameter count for drive data string " + driveInfo;
+						string msg = "Invalid parameter count for drive data string " + driveInfo + ", should be something like G:,600";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
 
 					// Add the data for this drive to the return list
-					clsDriveData newDrive = new clsDriveData(driveInfo[0], double.Parse(driveInfo[1]));
+					// Note that driveInfo[0] can be either just a drive letter or a drive letter and a colon; either is supported
+					var newDrive = new clsDriveData(driveInfo[0], double.Parse(driveInfo[1]));
 					driveList.Add(newDrive);
 				}
 
 				return driveList;
-			}	// End sub
+			}
 
-			/// <summary>
-			/// For remote drives, uses WMI to determine if free space on disk is above minimum threshold
-			/// For local drives, uses DriveInfo
-			/// </summary>
-			/// <param name="machine">Name of server to check</param>
-			/// <param name="driveData">Data for drive to be checked</param>
-			/// <param name="perspective">Client/Server setting for manager.  "Client" means checking a remote drive; "Server" means running on a Proto-x server </param>
-			/// <returns>Enum indicating space status</returns>
-            public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
+		/// <summary>
+		/// For remote drives, uses WMI to determine if free space on disk is above minimum threshold
+		/// For local drives, uses DriveInfo
+		/// </summary>
+		/// <param name="machine">Name of server to check</param>
+		/// <param name="driveData">Data for drive to be checked</param>
+		/// <param name="perspective">Client/Server setting for manager.  "Client" means checking a remote drive; "Server" means running on a Proto-x server </param>
+		/// <param name="driveFreeSpaceGB">Actual drive free space in GB</param>
+		/// <returns>Enum indicating space status</returns>
+		public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
 			{
-				double availableSpace = 0;
-				SpaceCheckResults testResult = SpaceCheckResults.Error;
+				var testResult = SpaceCheckResults.Error;
 
 				driveFreeSpaceGB = -1;
                 
 				if (perspective.ToLower().Trim() == "client")
 				{
-                    // Checking a remote drive
+					// Checking a remote drive
                     // Get WMI object representing drive
-                    string requestStr;
-                    requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
+					string requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
 
-                    try
+					try
                     {
-                        ManagementObject disk = new ManagementObject(requestStr);
+                        var disk = new ManagementObject(requestStr);
                         disk.Get();
                         
                         object oFreeSpace = disk["FreeSpace"];
-                        double totalSpace;
-                        if (oFreeSpace == null)
+	                    if (oFreeSpace == null)
                         {
                             string msg = "Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
-                        else
-                        {
-                            availableSpace = System.Convert.ToDouble(oFreeSpace);
-                            totalSpace = System.Convert.ToDouble(disk["Size"]);
-                        }
-                       
-                        if (totalSpace <= 0)
+	                    
+						double availableSpace = Convert.ToDouble(oFreeSpace);
+	                    double totalSpace = Convert.ToDouble(disk["Size"]);
+
+	                    if (totalSpace <= 0)
                         {
                             string msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
-                        else
-                        {
-                            driveFreeSpaceGB = availableSpace / Math.Pow(2D, 30D);	// Convert to GB
-                        }
+	                    
+						driveFreeSpaceGB = availableSpace / Math.Pow(2D, 30D);	// Convert to GB
                     }
                     catch (Exception ex)
                     {
                         string msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
                         
-						if (System.Environment.MachineName.ToLower().StartsWith("monroe"))
+						if (Environment.MachineName.ToLower().StartsWith("monroe"))
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						else
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
@@ -263,11 +252,11 @@ namespace Space_Manager
                         testResult = SpaceCheckResults.Error;
                         if (driveFreeSpaceGB > 0)
                             driveFreeSpaceGB = -driveFreeSpaceGB;
-                        if (driveFreeSpaceGB == 0)
+                        
+						if (Math.Abs(driveFreeSpaceGB) < Single.Epsilon)
                             driveFreeSpaceGB = -1;
                     }
-
-                }
+				}
 				else
 				{
                     // Analyzing a drive local to this manager
@@ -276,7 +265,7 @@ namespace Space_Manager
                     {
                         // Note: WMI string would be: "win32_logicaldisk.deviceid=\"" + driveData.DriveLetter + "\"";
                         // Instantiate a new drive info object
-                        DriveInfo diDrive = new DriveInfo(driveData.DriveLetter);
+                        var diDrive = new DriveInfo(driveData.DriveLetter);
 
                         if (!diDrive.IsReady)
                         {
@@ -284,20 +273,15 @@ namespace Space_Manager
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
-                        else
-                        {
-                            if (diDrive.TotalSize <= 0)
-                            {
-                                string msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                                return SpaceCheckResults.Error;
-                            }
-                            else
-                            {
-                                driveFreeSpaceGB = diDrive.TotalFreeSpace / Math.Pow(2D, 30D);	// Convert to GB
-                            }
-                        }
-
+	                    
+						if (diDrive.TotalSize <= 0)
+	                    {
+		                    string msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready";
+		                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+		                    return SpaceCheckResults.Error;
+	                    }
+	                    
+						driveFreeSpaceGB = diDrive.TotalFreeSpace / Math.Pow(2D, 30D);	// Convert to GB
                     }
                     catch (Exception ex)
                     {
@@ -306,7 +290,7 @@ namespace Space_Manager
                         testResult = SpaceCheckResults.Error;
                         if (driveFreeSpaceGB > 0)
                             driveFreeSpaceGB = -driveFreeSpaceGB;
-                        if (driveFreeSpaceGB == 0)
+                        if (Math.Abs(driveFreeSpaceGB) < Single.Epsilon)
                             driveFreeSpaceGB = -1;
                     }
 
@@ -317,7 +301,7 @@ namespace Space_Manager
                     testResult = SpaceCheckResults.Error;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() + ", Drive not found";
+                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
                 }
                 else
@@ -328,13 +312,13 @@ namespace Space_Manager
                         testResult = SpaceCheckResults.Below_Threshold;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace.ToString() + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
+                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
 
                 }
 
 				return testResult;
-			}	// End sub
+			}
 		#endregion
 	}	// End class
 }	// End namespace

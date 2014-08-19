@@ -4,11 +4,9 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
-// Last modified 09/09/2010
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data;
@@ -27,12 +25,12 @@ namespace Space_Manager
 		#endregion
 
 		#region "Class variables"
-			protected IMgrParams m_MgrParams;
-			protected string m_ConnStr;
-			protected string m_BrokerConnStr;
-			protected List<string> m_ErrorList = new List<string>();
-			protected bool m_TaskWasAssigned = false;
-			protected Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			protected readonly IMgrParams m_MgrParams;
+			protected readonly string m_ConnStr;
+			protected readonly string m_BrokerConnStr;
+			protected readonly List<string> m_ErrorList = new List<string>();
+			protected bool m_TaskWasAssigned;
+			protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 		#endregion
 
 		#region "Properties"
@@ -58,7 +56,7 @@ namespace Space_Manager
 				m_MgrParams = MgrParams;
 				m_ConnStr = m_MgrParams.GetParam("ConnectionString");
 				m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
-			}	// End sub
+			}
 		#endregion
 
 		#region "Methods"
@@ -77,45 +75,45 @@ namespace Space_Manager
 			/// <summary>
 			/// Reports database errors to local log
 			/// </summary>
-			protected virtual void LogErrorEvents()
+			protected void LogErrorEvents()
 			{
 				if (m_ErrorList.Count > 0)
 				{
-					string msg = "Warning messages were posted to local log";
+					const string msg = "Warning messages were posted to local log";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.WARN,msg);
 				}
 				foreach (string s in m_ErrorList)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, s);
 				}
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Method for executing a db stored procedure, assuming no data table is returned
 			/// </summary>
-			/// <param name="SpCmd">SQL command object containing stored procedure params</param>
-			/// <param name="ConnStr">Db connection string</param>
+			/// <param name="spCmd">SQL command object containing stored procedure params</param>
+			/// <param name="connStr">Db connection string</param>
 			/// <returns>Result code returned by SP; -1 if unable to execute SP</returns>
-			protected virtual int ExecuteSP(SqlCommand spCmd, string connStr)
+			protected int ExecuteSP(SqlCommand spCmd, string connStr)
 			{
 				DataTable dummyTable = null;
 				return ExecuteSP(spCmd, ref dummyTable, connStr);
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Method for executing a db stored procedure if a data table is to be returned
 			/// </summary>
-			/// <param name="SpCmd">SQL command object containing stored procedure params</param>
-			/// <param name="OutTable">NOTHING when called; if SP successful, contains data table on return</param>
-			/// <param name="ConnStr">Db connection string</param>
+			/// <param name="spCmd">SQL command object containing stored procedure params</param>
+			/// <param name="outTable">NOTHING when called; if SP successful, contains data table on return</param>
+			/// <param name="connStr">Db connection string</param>
 			/// <returns>Result code returned by SP; -1 if unable to execute SP</returns>
-			protected virtual int ExecuteSP(SqlCommand spCmd, ref DataTable outTable, string connStr)
+			protected int ExecuteSP(SqlCommand spCmd, ref DataTable outTable, string connStr)
 			{
 				//If this value is in error msg, then exception occurred before ResCode was set
 				int resCode = -9999;
 				
-				string msg = null;
-				System.Diagnostics.Stopwatch myTimer = new System.Diagnostics.Stopwatch();
+				string msg;
+				var myTimer = new System.Diagnostics.Stopwatch();
 				int retryCount = 3;
 
 				m_ErrorList.Clear();
@@ -124,12 +122,12 @@ namespace Space_Manager
 					//Multiple retry loop for handling SP execution failures
 					try
 					{
-						using (SqlConnection cn = new SqlConnection(connStr))
+						using (var cn = new SqlConnection(connStr))
 						{
-							cn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);
-							using (SqlDataAdapter da = new SqlDataAdapter())
+							cn.InfoMessage += OnInfoMessage;
+							using (var da = new SqlDataAdapter())
 							{
-								using (DataSet ds = new DataSet())
+								using (var ds = new DataSet())
 								{
 									//NOTE: The connection has to be added here because it didn't exist at the time the command object was created
 									spCmd.Connection = cn;
@@ -148,18 +146,18 @@ namespace Space_Manager
 						LogErrorEvents();
 						break;
 					}
-					catch (System.Exception ex)
+					catch (Exception ex)
 					{
 						myTimer.Stop();
 						retryCount -= 1;
 						msg = "clsDBTask.ExecuteSP(), exception filling data adapter, " + ex.Message;
-						msg += ". ResCode = " + resCode.ToString() + ". Retry count = " + retryCount.ToString();
+						msg += ". ResCode = " + resCode + ". Retry count = " + retryCount;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					}
 					finally
 					{
 						//Log debugging info
-						msg = "SP execution time: " + ((double)myTimer.ElapsedMilliseconds / 1000.0).ToString("##0.000") + " seconds ";
+						msg = "SP execution time: " + (myTimer.ElapsedMilliseconds / 1000.0).ToString("##0.000") + " seconds ";
 						msg += "for SP " + spCmd.CommandText;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
@@ -179,13 +177,13 @@ namespace Space_Manager
 				}
 
 				return resCode;
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Debugging routine for printing SP calling params
 			/// </summary>
-			/// <param name="InpCmd">SQL command object containing params</param>
-			protected virtual void PrintCommandParams(SqlCommand inpCmd)
+			/// <param name="inpCmd">SQL command object containing params</param>
+			protected void PrintCommandParams(SqlCommand inpCmd)
 			{
 				//Verify there really are command paramters
 				if (inpCmd == null) return;
@@ -200,9 +198,9 @@ namespace Space_Manager
 				}
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + myMsg);
-			}	// End sub
+			}
 
-			protected virtual bool FillParamDict(DataTable dt)
+			protected bool FillParamDict(DataTable dt)
 			{
 				string msg;
 
@@ -242,9 +240,13 @@ namespace Space_Manager
 				{
 					foreach (DataRow currRow in dt.Rows)
 					{
-						string myKey = currRow[dt.Columns["Parameter"]] as string;
-						string myVal = currRow[dt.Columns["Value"]] as string;
-						m_JobParams.Add(myKey, myVal);
+						var myKey = currRow[dt.Columns["Parameter"]] as string;
+						var myVal = currRow[dt.Columns["Value"]] as string;
+						
+						if (myKey != null)
+						{
+							m_JobParams.Add(myKey, myVal);
+						}
 					}
 					return true;
 				}
@@ -254,7 +256,7 @@ namespace Space_Manager
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 					return false;
 				}
-			}	// End sub
+			}
 
 			protected string DbCStr(object InpObj)
 			{
@@ -267,7 +269,7 @@ namespace Space_Manager
 				{
 					return InpObj.ToString();
 				}
-			}	// End sub
+			}
 
 			protected float DbCSng(object InpObj)
 			{
@@ -280,7 +282,7 @@ namespace Space_Manager
 				{
 					return (float)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected double DbCDbl(object InpObj)
 			{
@@ -293,7 +295,7 @@ namespace Space_Manager
 				{
 					return (double)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected int DbCInt(object InpObj)
 			{
@@ -306,7 +308,7 @@ namespace Space_Manager
 				{
 					return (int)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected long DbCLng(object InpObj)
 			{
@@ -319,7 +321,7 @@ namespace Space_Manager
 				{
 					return (long)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected decimal DbCDec(object InpObj)
 			{
@@ -332,7 +334,7 @@ namespace Space_Manager
 				{
 					return (decimal)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected short DbCShort(object InpObj)
 			{
@@ -345,7 +347,7 @@ namespace Space_Manager
 				{
 					return (short)InpObj;
 				}
-			}	// End sub
+			}
 		#endregion
 
 		#region "Event handlers"
@@ -356,7 +358,7 @@ namespace Space_Manager
 			/// <param name="args"></param>
 			private void OnInfoMessage(object sender, SqlInfoMessageEventArgs args)
 			{
-				StringBuilder errString=new StringBuilder();
+				var errString = new StringBuilder();
 				foreach (SqlError err in args.Errors)
 				{
 					errString.Length = 0;
@@ -370,7 +372,7 @@ namespace Space_Manager
 					errString.Append(", Server: " + err.Server);
 					m_ErrorList.Add(errString.ToString());
 				}
-			}	// End sub
+			}
 		#endregion
 	}	// End class
 }	// End namespace

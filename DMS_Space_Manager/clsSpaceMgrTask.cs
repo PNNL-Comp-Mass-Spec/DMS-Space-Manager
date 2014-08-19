@@ -5,7 +5,6 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
-// Last modified 09/09/2010
 //*********************************************************************************************************
 using System;
 using System.Data.SqlClient;
@@ -20,7 +19,7 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Constants"
-		//TODO: Correct these when SP's are finalized
+		
 		protected const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
 		protected const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
 		#endregion

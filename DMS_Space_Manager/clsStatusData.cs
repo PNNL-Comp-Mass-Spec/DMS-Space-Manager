@@ -4,16 +4,12 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
-// Last modified 09/08/2010
 //*********************************************************************************************************
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Space_Manager
 {
-	class clsStatusData
+	static class clsStatusData
 	{
 		//*********************************************************************************************************
 		//Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
@@ -22,7 +18,7 @@ namespace Space_Manager
 
 		#region "Class variables"
 			private static string m_MostRecentLogMessage;
-			private static Queue<string> m_ErrorQueue = new Queue<string>();
+			private static readonly Queue<string> m_ErrorQueue = new Queue<string>();
 		#endregion
 
 		#region "Properties"
@@ -46,7 +42,7 @@ namespace Space_Manager
 				}
 			}
 
-			public static Queue<string> ErrorQueue
+			public static IEnumerable<string> ErrorQueue
 			{
 				get
 				{
@@ -62,15 +58,14 @@ namespace Space_Manager
 				m_ErrorQueue.Enqueue(ErrMsg);
 
 				//If there are > 4 entries in the queue, then delete the oldest ones
-				string dumStr;
 				if (m_ErrorQueue.Count > 4)
 				{
 					while (m_ErrorQueue.Count > 4)
 					{
-						dumStr = m_ErrorQueue.Dequeue();
+						m_ErrorQueue.Dequeue();
 					}
 				}
-			}	// End sub
+			}
 		#endregion
 	}	// End class
 }	// End namespace

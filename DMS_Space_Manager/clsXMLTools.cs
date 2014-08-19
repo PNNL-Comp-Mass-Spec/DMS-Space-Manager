@@ -4,14 +4,13 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
-// Last modified 09/09/2010
 //*********************************************************************************************************
 using System;
 using System.Xml;
 
 namespace Space_Manager
 {
-	class clsXMLTools
+	static class clsXMLTools
 	{
 		//*********************************************************************************************************
 		// Tools for parsing input XML
@@ -51,7 +50,7 @@ namespace Space_Manager
 			{
 				throw new Exception("", Ex);	// Message parameter left blank because it is handled at higher level
 			}
-		}	// End sub
+		}
 		*/
 
 		/// <summary>
@@ -61,11 +60,11 @@ namespace Space_Manager
 		/// <returns>String dictionary of broadcast sections</returns>
 		public static clsBroadcastCmd ParseBroadcastXML(string InputXML)
 		{
-			clsBroadcastCmd returnedData = new clsBroadcastCmd();
+			var returnedData = new clsBroadcastCmd();
 
 			try
 			{
-				XmlDocument doc = new XmlDocument();
+				var doc = new XmlDocument();
 				doc.LoadXml(InputXML);
 
 				// Get list of managers this command applies to
@@ -84,7 +83,7 @@ namespace Space_Manager
 			{
 				throw new Exception("Exception while parsing broadcast string", Ex);
 			}
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

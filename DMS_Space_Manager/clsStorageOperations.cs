@@ -5,7 +5,6 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/15/2010
 //
-// Last modified 09/15/2010
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -72,7 +71,7 @@ namespace Space_Manager
 		#region "Class variables"
 
 		readonly IMgrParams m_MgrParams;
-		readonly bool m_ClientPerspective = false;
+		readonly bool m_ClientPerspective;
 
 		string m_MD5ResultsFileDatasetName = string.Empty;
 		string m_MD5ResultsFilePath = string.Empty;
@@ -95,8 +94,8 @@ namespace Space_Manager
 		{
 			m_MgrParams = mgrParams;
 
-			m_ClientPerspective = m_MgrParams.GetParam("perspective") == "client" ? true : false;
-		}	// End sub
+			m_ClientPerspective = (m_MgrParams.GetParam("perspective") == "client");
+		}
 		#endregion
 
 		#region "Methods"
@@ -358,7 +357,7 @@ namespace Space_Manager
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-		}	// End Sub
+		}
 
 		/// <summary>
 		/// Returns "s" if the value is 0 or greater than 1
@@ -539,11 +538,6 @@ namespace Space_Manager
 
 				if (comparisonResult == ArchiveCompareResults.Compare_Waiting_For_Hash)
 				{
-					if (eCompResultOverall == ArchiveCompareResults.Compare_Equal)
-					{
-						eCompResultOverall = ArchiveCompareResults.Compare_Waiting_For_Hash;
-						sMismatchMessage = "  Hash code not found for one or more files";
-					}
 					return comparisonResult;
 				}
 
@@ -572,7 +566,7 @@ namespace Space_Manager
 
 			return eCompResultOverall;
 
-		}	// End sub
+		}
 
 		protected List<ArchivedFileInfo> FindFilesInMyEMSL(string datasetName)
 		{
@@ -795,7 +789,7 @@ namespace Space_Manager
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return PATH_CONVERSION_ERROR;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Compares two files via MD5 hash
@@ -865,7 +859,7 @@ namespace Space_Manager
 			//Files not equal
 			return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
 			
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Delete the given folder if it is empty (no files, and all subfolders are empty)
@@ -1038,7 +1032,7 @@ namespace Space_Manager
 
 			return string.Empty;
 
-		}	// End sub
+		}
 
 		protected string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
 		{
@@ -1177,7 +1171,7 @@ namespace Space_Manager
 					//    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic	915648
 
 
-					var lstHashAndPathInfo = sInputLine.Split(new char[] { ' ' }, 2).ToList();
+					var lstHashAndPathInfo = sInputLine.Split(new[] { ' ' }, 2).ToList();
 					if (lstHashAndPathInfo.Count > 1)
 					{
 
@@ -1187,7 +1181,7 @@ namespace Space_Manager
 
 						string hashCode = lstHashAndPathInfo[0];
 
-						var lstPathAndFileID = lstHashAndPathInfo[1].Split(new char[] { '\t' }).ToList();
+						var lstPathAndFileID = lstHashAndPathInfo[1].Split(new[] { '\t' }).ToList();
 
 						string sFileNamePath = lstPathAndFileID[0];
 
@@ -1300,7 +1294,7 @@ namespace Space_Manager
 			}
 
 			return hashStrBld.ToString();
-		}	// End sub
+		}
 
 		protected string GenerateSha1HashFromFile(string inpFileNamePath)
 		{
@@ -1320,7 +1314,7 @@ namespace Space_Manager
 			string hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
 
 			return hashValue;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
@@ -1350,15 +1344,13 @@ namespace Space_Manager
 				const int iMaxRetryCount = 3;
 				string sErrorMessage;
 
-				System.Data.SqlClient.SqlParameter oParam;
-
 				//Setup for execution of the stored procedure
 				var MyCmd = new System.Data.SqlClient.SqlCommand();
 				{
 					MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
 					MyCmd.CommandText = SP_MARK_PURGED_JOBS;
 
-					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+					System.Data.SqlClient.SqlParameter oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
 					oParam.Direction = System.Data.ParameterDirection.ReturnValue;
 
 					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@JobList", System.Data.SqlDbType.VarChar, 4000));
@@ -1451,7 +1443,7 @@ namespace Space_Manager
 				var lstUpdatedMD5Info = new List<string>();
 				bool bWriteUpdatedMD5Info = false;
 
-				var cSplitChars = new char[] { ' ' };
+				var cSplitChars = new[] { ' ' };
 
 				string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
@@ -1463,6 +1455,8 @@ namespace Space_Manager
 				while (srMD5ResultsFileMaster.Peek() > -1)
 				{
 					string sInputLine = srMD5ResultsFileMaster.ReadLine();
+					if (string.IsNullOrWhiteSpace(sInputLine))
+						continue;
 
 					// Extract the MD5 results value from sLineIn
 					// Format is MD5 code, then a space, then a full path to the file
@@ -1558,7 +1552,7 @@ namespace Space_Manager
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Validate that the share for the dataset actually exists

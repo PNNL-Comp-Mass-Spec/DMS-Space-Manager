@@ -4,7 +4,6 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
-// Last modified 09/09/2010
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -76,7 +75,7 @@ namespace Space_Manager
 		public clsMainProgram()
 		{
 			// Does nothing at present
-		}	// End sub
+		}
 		#endregion
 
 		#region "Methods"
@@ -205,7 +204,7 @@ namespace Space_Manager
 
 			// Everything worked!
 			return true;
-		}	// End sub
+		}
 
 		private void InitializeMessageQueue()
 		{
@@ -266,8 +265,13 @@ namespace Space_Manager
 				}
 
 				// Get a list of drives needing space management
-				List<clsDriveData> driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
-				if (driveList == null) return RESTART_NOT_OK;	// Problem with drive spec. Error reporting handled by GetDriveList
+				IEnumerable<clsDriveData> driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
+				if (driveList == null)
+				{
+					// Problem with drive spec. Error reporting handled by GetDriveList
+					return RESTART_NOT_OK;
+				}
+				
 
 				// Set drive operation state to Keep Running
 				var opStatus = DriveOpStatus.KeepRunning;
@@ -317,7 +321,7 @@ namespace Space_Manager
 
 			return methodReturnCode;
 
-		}	// End sub
+		}
 
 		protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
 		{
@@ -509,7 +513,7 @@ namespace Space_Manager
 
 			m_ConfigChanged = true;
 			m_FileWatcher.EnableRaisingEvents = false;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Handles received manager control command
@@ -562,7 +566,7 @@ namespace Space_Manager
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					break;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Handles manager execution command (future)
@@ -571,7 +575,7 @@ namespace Space_Manager
 		private void OnCommandReceived(string cmdText)
 		{
 			//TODO: (Future)
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Updates the status at m_StatusTimer interval
@@ -583,7 +587,7 @@ namespace Space_Manager
 			TimeSpan duration = DateTime.UtcNow - m_DurationStart;
 			m_StatusFile.Duration = (Single)duration.TotalHours;
 			m_StatusFile.WriteStatusFile();
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

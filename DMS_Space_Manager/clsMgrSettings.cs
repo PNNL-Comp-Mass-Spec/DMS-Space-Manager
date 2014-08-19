@@ -4,12 +4,12 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
-// Last modified 09/08/2010
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 using System.Xml;
@@ -26,8 +26,8 @@ namespace Space_Manager
 		//**********************************************************************************************************
 
 		#region "Class variables"
-		Dictionary<string, string> m_ParamDictionary = null;
-		bool m_MCParamsLoaded = false;
+		Dictionary<string, string> m_ParamDictionary;
+		bool m_MCParamsLoaded;
 		#endregion
 
 		#region "Properties"
@@ -41,7 +41,7 @@ namespace Space_Manager
 			{
 				throw new ApplicationException("Unable to initialize manager settings class");
 			}
-		}	// End sub
+		}
 
 		public bool LoadSettings()
 		{
@@ -60,7 +60,7 @@ namespace Space_Manager
 
 			// Get directory for main executable
 			string appPath = Application.ExecutablePath;
-			FileInfo fi = new FileInfo(appPath);
+			var fi = new FileInfo(appPath);
 			m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
 			//Test the settings retrieved from the config file
@@ -90,17 +90,16 @@ namespace Space_Manager
 
 			//No problems found
 			return true;
-		}	// End sub
+		}
 
 		private Dictionary<string, string> LoadMgrSettingsFromFile()
 		{
 			// Load initial settings into string dictionary for return
-			Dictionary<string, string> RetDict = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-			string TempStr;
+			var RetDict = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
 			//				My.Settings.Reload()
 			//Manager config db connection string
-			TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
+			string TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
 			RetDict.Add("MgrCnfgDbConnectStr", TempStr);
 
 			//Manager active flag
@@ -116,11 +115,11 @@ namespace Space_Manager
 			RetDict.Add("UsingDefaults", TempStr);
 
 			return RetDict;
-		}	// End sub
+		}
 
 		private bool CheckInitialSettings(Dictionary<string, string> InpDict)
 		{
-			string MyMsg = null;
+			string MyMsg;
 
 			//Verify manager settings dictionary exists
 			if (InpDict == null)
@@ -140,20 +139,18 @@ namespace Space_Manager
 
 			//No problems found
 			return true;
-		}	// End sub
+		}
 
 		public bool LoadMgrSettingsFromDB()
 		{
 			return LoadMgrSettingsFromDB(ref m_ParamDictionary);
-		}	// End sub
+		}
 
 		public bool LoadMgrSettingsFromDB(ref Dictionary<string, string> MgrSettingsDict)
 		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 			short RetryCount = 3;
-			string MyMsg = null;
-			string ParamKey = null;
-			string ParamVal = null;
+			string MyMsg;
 
 			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + m_ParamDictionary["MgrName"] + "'";
 
@@ -165,27 +162,25 @@ namespace Space_Manager
 			{
 				try
 				{
-					using (SqlConnection Cn = new SqlConnection(MgrSettingsDict["MgrCnfgDbConnectStr"]))
+					using (var Cn = new SqlConnection(MgrSettingsDict["MgrCnfgDbConnectStr"]))
 					{
-						using (SqlDataAdapter Da = new SqlDataAdapter(SqlStr, Cn))
+						using (var Da = new SqlDataAdapter(SqlStr, Cn))
 						{
-							using (DataSet Ds = new DataSet())
+							using (var Ds = new DataSet())
 							{
 								Da.Fill(Ds);
 								Dt = Ds.Tables[0];
-								//Ds
-							}
-							//Da
+							}							
 						}
 					}
-					//Cn
+					
 					break;
 				}
-				catch (System.Exception ex)
+				catch (Exception ex)
 				{
 					RetryCount -= 1;
 					MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
-					MyMsg = MyMsg + ", RetryCount = " + RetryCount.ToString();
+					MyMsg = MyMsg + ", RetryCount = " + RetryCount;
 					WriteErrorMsg(MyMsg);
 					//Delay for 5 seconds before trying again
 					System.Threading.Thread.Sleep(5000);
@@ -197,16 +192,24 @@ namespace Space_Manager
 			{
 				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
 				WriteErrorMsg(MyMsg);
-				Dt.Dispose();
+				if (Dt != null)
+				{
+					Dt.Dispose();
+				}
 				return false;
 			}
 
+			if (Dt == null)
+			{
+				return false;
+			}
+			
 			//Verify at least one row returned
 			if (Dt.Rows.Count < 1)
 			{
 				//Wrong number of rows returned
 				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Invalid row count retrieving manager settings: RowCount = ";
-				MyMsg += Dt.Rows.Count.ToString();
+				MyMsg += Dt.Rows.Count.ToString(CultureInfo.InvariantCulture);
 				WriteErrorMsg(MyMsg);
 				Dt.Dispose();
 				return false;
@@ -218,8 +221,8 @@ namespace Space_Manager
 				foreach (DataRow TestRow in Dt.Rows)
 				{
 					//Add the column heading and value to the dictionary
-					ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
-					ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
+					string ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
+					string ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
 					if (m_ParamDictionary.ContainsKey(ParamKey))
 					{
 						m_ParamDictionary[ParamKey] = ParamVal;
@@ -231,7 +234,7 @@ namespace Space_Manager
 				}
 				return true;
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " + ex.Message;
 				WriteErrorMsg(MyMsg);
@@ -241,15 +244,15 @@ namespace Space_Manager
 			{
 				Dt.Dispose();
 			}
-		}	// End sub
+		}
 
 		public string GetParam(string ItemKey)
 		{
 			string RetStr;
 			if (m_ParamDictionary.TryGetValue(ItemKey, out RetStr))
 				return RetStr;
-			else 
-				return string.Empty;
+			
+			return string.Empty;
 		}
 
 		public void SetParam(string ItemKey, string ItemValue)
@@ -289,7 +292,7 @@ namespace Space_Manager
 			try
 			{
 				//Select the eleement containing the value for the specified key containing the key
-				XmlElement MyElement = (XmlElement)MyNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", Key));
+				var MyElement = (XmlElement)MyNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", Key));
 				if (MyElement != null)
 				{
 					//Set key to specified value
@@ -304,7 +307,7 @@ namespace Space_Manager
 				MyDoc.Save(GetConfigFilePath());
 				return true;
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
 				return false;
@@ -318,20 +321,18 @@ namespace Space_Manager
 		/// <returns>App config file as an XML document if successful; NOTHING on failure</returns>
 		private XmlDocument LoadConfigDocument()
 		{
-			XmlDocument MyDoc = null;
-
 			try
 			{
-				MyDoc = new XmlDocument();
+				var MyDoc = new XmlDocument();
 				MyDoc.Load(GetConfigFilePath());
 				return MyDoc;
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
 				return null;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Specifies the full name and path for the application config file
@@ -340,7 +341,7 @@ namespace Space_Manager
 		private string GetConfigFilePath()
 		{
 			return Application.ExecutablePath + ".config";
-		}	// End sub
+		}
 
 		private string DbCStr(object InpObj)
 		{
@@ -348,21 +349,19 @@ namespace Space_Manager
 			{
 				return "";
 			}
-			else
-			{
-				return InpObj.ToString();
-			}
+			
+			return InpObj.ToString();
 		}
 
-		private void WriteErrorMsg(string ErrMsg)
+		private void WriteErrorMsg(string errMsg)
 		{
 			if (m_MCParamsLoaded)
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
 			}
 			else
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, ErrMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, errMsg);
 			}
 		}
 		#endregion

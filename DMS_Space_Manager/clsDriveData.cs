@@ -5,12 +5,7 @@
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/14/2010
 //
-// Last modified 09/14/2010
 //*********************************************************************************************************
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Space_Manager
 {
@@ -41,7 +36,7 @@ namespace Space_Manager
 			public clsDriveData()
 			{
 				// Default constructor - does nothing
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Constructor that allows setting property values
@@ -52,7 +47,7 @@ namespace Space_Manager
 			{
 				m_DriveLetter = driveLetter;
 				this.MinDriveSpace = driveSpace;
-			}	// End sub
+			}
 		#endregion
 
 		#region "Methods"
