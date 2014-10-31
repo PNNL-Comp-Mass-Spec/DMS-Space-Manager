@@ -486,13 +486,9 @@ namespace Space_Manager
 			if (m_ErrorCount > MAX_ERROR_COUNT)
 			{
 				// Too many errors - something must be seriously wrong. Human intervention may be required
-				string msg = "Excessive errors. Error count = " + m_ErrorCount + ". Manager is being disabled";
+				string msg = "Excessive errors. Error count = " + m_ErrorCount + ". Closing manager";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-				if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
-				{
-					msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				}
+
 				return false;
 			}
 			
