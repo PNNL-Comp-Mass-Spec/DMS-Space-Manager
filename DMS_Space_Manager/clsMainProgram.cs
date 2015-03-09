@@ -212,8 +212,8 @@ namespace Space_Manager
 			var worker = new System.Threading.Thread(InitializeMessageQueueWork);
 			worker.Start();
 
-			// Wait a maximum of 15 seconds
-			if (!worker.Join(15000))
+			// Wait a maximum of 60 seconds
+			if (!worker.Join(60000))
 			{
 				worker.Abort();
 				m_MsgQueueInitSuccess = false;
