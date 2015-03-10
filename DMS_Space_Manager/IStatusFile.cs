@@ -46,7 +46,6 @@ namespace Space_Manager
 			void WriteStatusFile();
 			void UpdateAndWrite(Single PercentComplete);
 			void UpdateAndWrite(EnumTaskStatusDetail Status, Single PercentComplete);
-			void UpdateAndWrite(EnumTaskStatusDetail Status, Single PercentComplete, int DTACount);
 			void UpdateStopped(bool MgrError);
 			void UpdateDisabled(bool Local);
 			void UpdateIdle();

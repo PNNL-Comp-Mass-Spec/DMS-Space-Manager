@@ -208,18 +208,30 @@ namespace Space_Manager
 
 		private void InitializeMessageQueue()
 		{
+            const int MAX_WAIT_TIME_SECONDS = 60;
 
 			var worker = new System.Threading.Thread(InitializeMessageQueueWork);
 			worker.Start();
 
-			// Wait a maximum of 60 seconds
-			if (!worker.Join(60000))
-			{
-				worker.Abort();
-				m_MsgQueueInitSuccess = false;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to initialize the message queue (timeout after 15 seconds)");
-			}
+		    var dtWaitStart = DateTime.UtcNow;
 
+			// Wait a maximum of 60 seconds
+		    if (!worker.Join(MAX_WAIT_TIME_SECONDS * 1000))
+		    {
+		        worker.Abort();
+		        m_MsgQueueInitSuccess = false;
+		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+		                             "Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
+                return;
+		    }
+		    
+            var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
+
+		    if (elaspedTime > 25)
+		    {
+		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+		                             "Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
+		    }
 		}
 
 		private void InitializeMessageQueueWork()

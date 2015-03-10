@@ -288,8 +288,8 @@ namespace Space_Manager
 		/// </summary>
 		public void RegisterListeners()
 		{
-			m_CommandConsumer.Listener += new MessageListener(OnCommandReceived);
-			m_BroadcastConsumer.Listener += new MessageListener(OnBroadcastReceived);
+			m_CommandConsumer.Listener += OnCommandReceived;
+			m_BroadcastConsumer.Listener += OnBroadcastReceived;
 		}
 		#endregion
 	}	// End class
