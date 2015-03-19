@@ -167,20 +167,20 @@ namespace Space_Manager
 				var driveList = new List<clsDriveData>();
 
 				// Data for an individual drive is separated by comma
-				foreach (string drive in driveArray)
+                foreach (string driveSpec in driveArray)
 				{
-					if (string.IsNullOrWhiteSpace(drive))
+                    if (string.IsNullOrWhiteSpace(driveSpec))
 					{
-						string msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + drive;
+                        string msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
 
-					string[] driveInfo = drive.Split(new[] { ',' });
+                    string[] driveInfo = driveSpec.Split(new[] { ',' });
 					
 					if (driveInfo.Length != 2)
 					{
-						string msg = "Invalid parameter count for drive data string " + driveInfo + ", should be something like G:,600";
+                        string msg = "Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
