@@ -28,5 +28,5 @@ namespace Space_Manager
 			bool AddAdditionalParameter(string paramName, string paramValue);
 			void SetParam(string keyName, string value);
 		#endregion
-	}	// End interface
-}	// End namespace
+	}
+}

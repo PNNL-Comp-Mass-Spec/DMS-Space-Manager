@@ -100,15 +100,15 @@ namespace Space_Manager
 			m_MgrName = m_MgrSettings.GetParam("MgrName");
 
 			// Set up the loggers
-			string logFileName = m_MgrSettings.GetParam("logfilename");
-			int debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
+			var logFileName = m_MgrSettings.GetParam("logfilename");
+			var debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
 			clsLogTools.CreateFileLogger(logFileName, debugLevel);
-			string logCnStr = m_MgrSettings.GetParam("connectionstring");
+			var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
 			clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
 
 			// Make initial log entry
-			string msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
+			var msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Setup the message queue
@@ -149,7 +149,7 @@ namespace Space_Manager
 			m_Task = new clsSpaceMgrTask(m_MgrSettings);
 
 			// Set up the status file class
-			string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
+			var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
 			m_StatusFile = new clsStatusFile(statusFileNameLoc)
 			{
 				//Note: Might want to put this back in someday
@@ -169,7 +169,7 @@ namespace Space_Manager
 			m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
 			// Get the most recent job history
-			string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+			var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
 			if (File.Exists(historyFile))
 			{
 				try
@@ -185,7 +185,7 @@ namespace Space_Manager
 						{
 							if (line.Contains("RecentJob: "))
 							{
-								string tmpStr = line.Replace("RecentJob: ", "");
+								var tmpStr = line.Replace("RecentJob: ", "");
 								m_StatusFile.MostRecentJobInfo = tmpStr;
 								break;
 							}
@@ -258,11 +258,11 @@ namespace Space_Manager
 		/// <returns>Exit code specifying manager stop or restart</returns>
 		public bool PerformSpaceManagement()
 		{
-			bool methodReturnCode = RESTART_NOT_OK;
+			var methodReturnCode = RESTART_NOT_OK;
 
 			try
 			{
-				int maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
+				var maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
 
 				// Check if manager has been disabled via manager config db
 				string msg;
@@ -277,7 +277,7 @@ namespace Space_Manager
 				}
 
 				// Get a list of drives needing space management
-				IEnumerable<clsDriveData> driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
+				var driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
 				if (driveList == null)
 				{
 					// Problem with drive spec. Error reporting handled by GetDriveList
@@ -288,7 +288,7 @@ namespace Space_Manager
 				// Set drive operation state to Keep Running
 				var opStatus = DriveOpStatus.KeepRunning;
 
-				foreach (clsDriveData testDrive in driveList)
+				foreach (var testDrive in driveList)
 				{
 
 					// Check drive operation state
@@ -338,13 +338,13 @@ namespace Space_Manager
 		protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
 		{
 			var opStatus = DriveOpStatus.KeepRunning;
-			int repCounter = 0;
+			var repCounter = 0;
 
 			try
 			{
 
 				// Start a purge loop for the current drive
-				bool bDriveInfoLogged = false;
+				var bDriveInfoLogged = false;
 				while (true)
 				{
 					// Check for configuration changes
@@ -378,9 +378,9 @@ namespace Space_Manager
 
 					// Check available space on server drive and compare it with min allowed space
 					double driveFreeSpaceGB;
-					string serverName = m_MgrSettings.GetParam("machname");
-					string perspective = m_MgrSettings.GetParam("perspective");
-					SpaceCheckResults checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
+					var serverName = m_MgrSettings.GetParam("machname");
+					var perspective = m_MgrSettings.GetParam("perspective");
+					var checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
 																						perspective,
 																						testDrive,
 																						out driveFreeSpaceGB);
@@ -409,7 +409,7 @@ namespace Space_Manager
 					}
 
 					// Request a purge task
-					EnumRequestTaskResult requestResult = m_Task.RequestTask(testDrive.DriveLetter);
+					var requestResult = m_Task.RequestTask(testDrive.DriveLetter);
 
 					// Check for an error
 					if (requestResult == EnumRequestTaskResult.ResultError)
@@ -438,7 +438,7 @@ namespace Space_Manager
 					}
 
 					// If we got to here, the drive needs purging and a purge task was assigned. So, perform the purge
-					EnumCloseOutType purgeResult = m_StorageOps.PurgeDataset(m_Task);
+					var purgeResult = m_StorageOps.PurgeDataset(m_Task);
 
 					// Evaluate purge result
 					switch (purgeResult)
@@ -498,7 +498,7 @@ namespace Space_Manager
 			if (m_ErrorCount > MAX_ERROR_COUNT)
 			{
 				// Too many errors - something must be seriously wrong. Human intervention may be required
-				string msg = "Excessive errors. Error count = " + m_ErrorCount + ". Closing manager";
+				var msg = "Excessive errors. Error count = " + m_ErrorCount + ". Closing manager";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
 				return false;
@@ -529,7 +529,7 @@ namespace Space_Manager
 		/// <param name="cmdText"></param>
 		private void OnBroadcastReceived(string cmdText)
 		{
-			string msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
+			var msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			clsBroadcastCmd recvCmd;
@@ -592,10 +592,10 @@ namespace Space_Manager
 		/// <param name="e"></param>
 		void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
-			TimeSpan duration = DateTime.UtcNow - m_DurationStart;
+			var duration = DateTime.UtcNow - m_DurationStart;
 			m_StatusFile.Duration = (Single)duration.TotalHours;
 			m_StatusFile.WriteStatusFile();
 		}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

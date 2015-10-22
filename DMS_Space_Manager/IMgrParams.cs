@@ -18,5 +18,5 @@ namespace Space_Manager
 		string GetParam(string ItemKey);
 		void SetParam(string ItemKey, string ItemValue);
 
-	}	// End interface
-}	// End namespace
+	}
+}

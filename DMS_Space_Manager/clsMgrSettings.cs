@@ -59,7 +59,7 @@ namespace Space_Manager
 			m_ParamDictionary = LoadMgrSettingsFromFile();
 
 			// Get directory for main executable
-			string appPath = Application.ExecutablePath;
+			var appPath = Application.ExecutablePath;
 			var fi = new FileInfo(appPath);
 			m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
@@ -99,7 +99,7 @@ namespace Space_Manager
 
 			//				My.Settings.Reload()
 			//Manager config db connection string
-			string TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
+			var TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
 			RetDict.Add("MgrCnfgDbConnectStr", TempStr);
 
 			//Manager active flag
@@ -152,7 +152,7 @@ namespace Space_Manager
 			short RetryCount = 3;
 			string MyMsg;
 
-			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + m_ParamDictionary["MgrName"] + "'";
+			var SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + m_ParamDictionary["MgrName"] + "'";
 
 			//Get a table containing data for job
 			DataTable Dt = null;
@@ -221,8 +221,8 @@ namespace Space_Manager
 				foreach (DataRow TestRow in Dt.Rows)
 				{
 					//Add the column heading and value to the dictionary
-					string ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
-					string ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
+					var ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
+					var ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
 					if (m_ParamDictionary.ContainsKey(ParamKey))
 					{
 						m_ParamDictionary[ParamKey] = ParamVal;
@@ -273,7 +273,7 @@ namespace Space_Manager
 			ErrMsg = "";
 
 			//Load the config document
-			XmlDocument MyDoc = LoadConfigDocument();
+			var MyDoc = LoadConfigDocument();
 			if (MyDoc == null)
 			{
 				//Error message has already been produced by LoadConfigDocument
@@ -281,7 +281,7 @@ namespace Space_Manager
 			}
 
 			//Retrieve the settings node
-			XmlNode MyNode = MyDoc.SelectSingleNode("//applicationSettings");
+			var MyNode = MyDoc.SelectSingleNode("//applicationSettings");
 
 			if (MyNode == null)
 			{
@@ -365,5 +365,5 @@ namespace Space_Manager
 			}
 		}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

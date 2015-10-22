@@ -76,7 +76,7 @@ namespace Space_Manager
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
+				var msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
@@ -107,7 +107,7 @@ namespace Space_Manager
 		/// <returns>num indicating if task was found</returns>
 		public override EnumRequestTaskResult RequestTask(string driveLetter)
 		{
-			EnumRequestTaskResult retVal = RequestTaskDetailed(driveLetter);
+			var retVal = RequestTaskDetailed(driveLetter);
 			switch (retVal)
 			{
 				case EnumRequestTaskResult.TaskFound:
@@ -172,20 +172,20 @@ namespace Space_Manager
 					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 1;
 				}
 
-				string msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
+				var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				PrintCommandParams(myCmd);
 
 				//Execute the SP
-				int retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
+				var retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
 
 				switch (retVal)
 				{
 					case RET_VAL_OK:
 						//Step task was found; get the data for it
-						bool paramSuccess = FillParamDict(dt);
+						var paramSuccess = FillParamDict(dt);
 						if (paramSuccess)
 						{
 							outcome = EnumRequestTaskResult.TaskFound;
@@ -265,7 +265,7 @@ namespace Space_Manager
 
 			// Execute the SP
 			// Note that stored procedure SetPurgeTaskComplete will call MakeNewArchiveUpdateJob in the DMS_Capture database if the completionCode is ??
-			int resCode = ExecuteSP(MyCmd, connStr);
+			var resCode = ExecuteSP(MyCmd, connStr);
 
 			if (resCode == 0)
 			{
@@ -277,5 +277,5 @@ namespace Space_Manager
 		}
 
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

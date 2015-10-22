@@ -51,5 +51,5 @@ namespace Space_Manager
 			void UpdateIdle();
 			void InitStatusFromFile();
 		#endregion
-	}	// End interface
-}	// End namespace
+	}
+}

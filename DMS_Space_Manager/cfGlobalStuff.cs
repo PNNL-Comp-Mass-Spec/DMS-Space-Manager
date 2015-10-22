@@ -75,4 +75,4 @@ namespace Space_Manager
 	#region "Delegates"
 		public delegate void StatusMonitorUpdateReceived(string msg);
 	#endregion
-}	// End namespace
+}

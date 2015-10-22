@@ -59,9 +59,9 @@ namespace Space_Manager
 		public static int ExecuteSP(System.Data.SqlClient.SqlCommand SpCmd, string ConnStr, int MaxRetryCount, int TimeoutSeconds, out string sErrorMessage)
 		{
 			//If this value is in error msg, then exception occurred before ResCode was set			
-			int ResCode = -9999;			
-			int RetryCount = MaxRetryCount;
-			bool blnDeadlockOccurred = false;
+			var ResCode = -9999;			
+			var RetryCount = MaxRetryCount;
+			var blnDeadlockOccurred = false;
 
 			sErrorMessage = string.Empty;
 			if (RetryCount < 1)
@@ -162,25 +162,25 @@ namespace Space_Manager
 				}
 
 				// Data for drives is separated by semi-colon.
-				string[] driveArray = inpList.Split(new[] { ';' });
+				var driveArray = inpList.Split(';');
 
 				var driveList = new List<clsDriveData>();
 
 				// Data for an individual drive is separated by comma
-                foreach (string driveSpec in driveArray)
+                foreach (var driveSpec in driveArray)
 				{
                     if (string.IsNullOrWhiteSpace(driveSpec))
 					{
-                        string msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec;
+                        var msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
 
-                    string[] driveInfo = driveSpec.Split(new[] { ',' });
+                    var driveInfo = driveSpec.Split(',');
 					
 					if (driveInfo.Length != 2)
 					{
-                        string msg = "Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600";
+                        var msg = "Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return null;
 					}
@@ -205,7 +205,7 @@ namespace Space_Manager
 		/// <returns>Enum indicating space status</returns>
 		public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
 			{
-				var testResult = SpaceCheckResults.Error;
+				SpaceCheckResults testResult;
 
 				driveFreeSpaceGB = -1;
                 
@@ -213,27 +213,27 @@ namespace Space_Manager
 				{
 					// Checking a remote drive
                     // Get WMI object representing drive
-					string requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
+					var requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
 
 					try
                     {
                         var disk = new ManagementObject(requestStr);
                         disk.Get();
                         
-                        object oFreeSpace = disk["FreeSpace"];
+                        var oFreeSpace = disk["FreeSpace"];
 	                    if (oFreeSpace == null)
                         {
-                            string msg = "Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready";
+                            var msg = "Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
 	                    
-						double availableSpace = Convert.ToDouble(oFreeSpace);
-	                    double totalSpace = Convert.ToDouble(disk["Size"]);
+						var availableSpace = Convert.ToDouble(oFreeSpace);
+	                    var totalSpace = Convert.ToDouble(disk["Size"]);
 
 	                    if (totalSpace <= 0)
                         {
-                            string msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready";
+                            var msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
@@ -242,14 +242,13 @@ namespace Space_Manager
                     }
                     catch (Exception ex)
                     {
-                        string msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
+                        var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
                         
 						if (Environment.MachineName.ToLower().StartsWith("monroe"))
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						else
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
-                        testResult = SpaceCheckResults.Error;
                         if (driveFreeSpaceGB > 0)
                             driveFreeSpaceGB = -driveFreeSpaceGB;
                         
@@ -269,14 +268,14 @@ namespace Space_Manager
 
                         if (!diDrive.IsReady)
                         {
-                            string msg = "Drive " + driveData.DriveLetter + " reports Not Ready via DriveInfo object; drive is offline or drive letter is invalid";
+                            var msg = "Drive " + driveData.DriveLetter + " reports Not Ready via DriveInfo object; drive is offline or drive letter is invalid";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                             return SpaceCheckResults.Error;
                         }
 	                    
 						if (diDrive.TotalSize <= 0)
 	                    {
-		                    string msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready";
+		                    var msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready";
 		                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		                    return SpaceCheckResults.Error;
 	                    }
@@ -285,9 +284,9 @@ namespace Space_Manager
                     }
                     catch (Exception ex)
                     {
-                        string msg = "Exception getting free disk space via .NET DriveInfo object, drive " + driveData.DriveLetter + ": " + ex.Message;
+                        var msg = "Exception getting free disk space via .NET DriveInfo object, drive " + driveData.DriveLetter + ": " + ex.Message;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                        testResult = SpaceCheckResults.Error;
+                        
                         if (driveFreeSpaceGB > 0)
                             driveFreeSpaceGB = -driveFreeSpaceGB;
                         if (Math.Abs(driveFreeSpaceGB) < Single.Epsilon)
@@ -301,7 +300,7 @@ namespace Space_Manager
                     testResult = SpaceCheckResults.Error;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found";
+                    var spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
                 }
                 else
@@ -312,7 +311,7 @@ namespace Space_Manager
                         testResult = SpaceCheckResults.Below_Threshold;
 
                     // Log space requirement if debug logging enabled
-                    string spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
+                    var spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
 
                 }
@@ -320,5 +319,5 @@ namespace Space_Manager
 				return testResult;
 			}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

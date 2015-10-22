@@ -35,8 +35,8 @@ namespace Space_Manager
 		/// <returns>The number of files added to lstServerFilesToPurge</returns>
 		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, ref SortedSet<string> lstServerFilesToPurge)
 		{
-			int iFilesMatched = 0;
-			string sRequiredFileSuffix = string.Empty;
+			var iFilesMatched = 0;
+			var sRequiredFileSuffix = string.Empty;
 
 			SearchOption eSearchOption;
 			if (recurse)
@@ -49,7 +49,7 @@ namespace Space_Manager
 			if (sFilterSpec.StartsWith("*.") && char.IsLetterOrDigit(sFilterSpec[sFilterSpec.Length - 1]))
 				sRequiredFileSuffix = sFilterSpec.Substring(1).ToLower();
 
-			foreach (FileInfo fiFile in diFolder.GetFiles(sFilterSpec, eSearchOption))
+			foreach (var fiFile in diFolder.GetFiles(sFilterSpec, eSearchOption))
 			{
 				if (sRequiredFileSuffix.Length == 0 || fiFile.Name.ToLower().EndsWith(sRequiredFileSuffix))
 				{
@@ -80,14 +80,14 @@ namespace Space_Manager
 		{
 			DateTime dtMostRecentUpdate;
 
-			List<string> lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
+			var lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
 
 			if (iAgeThresholdDays < 1)
 				iAgeThresholdDays = 1;
 
 			if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > iAgeThresholdDays)
 			{
-				foreach (string sFile in lstFiles)
+				foreach (var sFile in lstFiles)
 				{
 					if (!lstServerFilesToPurge.Contains(sFile))
 						lstServerFilesToPurge.Add(sFile);
@@ -112,7 +112,7 @@ namespace Space_Manager
 		{
 			SortedSet<string> lstServerFilesToPurge;
 
-			clsStorageOperations.PurgePolicyConstants ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
+			var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
 			if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAll)
 			{
@@ -128,7 +128,7 @@ namespace Space_Manager
 				lstServerFilesToPurge = new SortedSet<string>();
 				AddFilesToPurge(diDatasetFolder, "*.*", 0, false, ref lstServerFilesToPurge);
 
-				foreach (DirectoryInfo diSubFolder in diDatasetFolder.GetDirectories())
+				foreach (var diSubFolder in diDatasetFolder.GetDirectories())
 				{
 					if (diSubFolder.Name != "QC")
 						AddFilesToPurge(diSubFolder, "*.*", 0, true, ref lstServerFilesToPurge);
@@ -149,7 +149,7 @@ namespace Space_Manager
 			dtMostRecentUpdate = DateTime.MinValue;
 
 			// Find files in diFolder
-			foreach (FileInfo fiFile in diFolder.GetFiles("*.*", SearchOption.AllDirectories))
+			foreach (var fiFile in diFolder.GetFiles("*.*", SearchOption.AllDirectories))
 			{
 				if (fiFile.LastWriteTimeUtc > dtMostRecentUpdate)
 				{
@@ -222,9 +222,9 @@ namespace Space_Manager
 			// Process the directories below the dataset folder
 
 			// Construct a list of the folders that exist at the dataset folder level			
-			foreach (DirectoryInfo diSubDir in diDatasetFolder.GetDirectories())
+			foreach (var diSubDir in diDatasetFolder.GetDirectories())
 			{
-				string subDirNameUpper = diSubDir.Name.ToUpper();
+				var subDirNameUpper = diSubDir.Name.ToUpper();
 
 				if (diSubDir.Name == "QC")
 					// Do not purge the QC folder
@@ -283,7 +283,7 @@ namespace Space_Manager
 					{
 						// Other analysis job folders
 						// Purge the entire folder if all files are over 3 years old
-						bool bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, ref lstServerFilesToPurge);
+						var bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, ref lstServerFilesToPurge);
 
 						if (!bSubDirPurged)
 						{
@@ -297,7 +297,7 @@ namespace Space_Manager
 							if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
 							{
 								// Purge all files over 50 MB in size
-								int iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, ref lstServerFilesToPurge);
+								var iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, ref lstServerFilesToPurge);
 
 								if (iFilesMatched == lstFiles.Count)
 									bSubDirPurged = true;

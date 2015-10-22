@@ -265,7 +265,7 @@ namespace Space_Manager
         /// </summary>
         public void WriteStatusFile()
         {
-            string XMLText = string.Empty;
+            var XMLText = string.Empty;
 
             //Set up the XML writer
             try
@@ -289,7 +289,7 @@ namespace Space_Manager
                     XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString());
                     XWriter.WriteElementString("FreeMemoryMB", "0");
                     XWriter.WriteStartElement("RecentErrorMessages");
-                    foreach (string ErrMsg in clsStatusData.ErrorQueue)
+                    foreach (var ErrMsg in clsStatusData.ErrorQueue)
                     {
                         XWriter.WriteElementString("ErrMsg", ErrMsg);
                     }
@@ -465,7 +465,7 @@ namespace Space_Manager
             try
             {
                 // Read the input file
-                string XmlStr = File.ReadAllText(m_FileNamePath);
+                var XmlStr = File.ReadAllText(m_FileNamePath);
 
                 // Convert to an XML document
                 var Doc = new XmlDocument();
@@ -491,5 +491,5 @@ namespace Space_Manager
         }
         #endregion
 
-    }	// End class
-}	// End namespace
+    }
+}

@@ -82,7 +82,7 @@ namespace Space_Manager
 					const string msg = "Warning messages were posted to local log";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.WARN,msg);
 				}
-				foreach (string s in m_ErrorList)
+				foreach (var s in m_ErrorList)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, s);
 				}
@@ -110,11 +110,11 @@ namespace Space_Manager
 			protected int ExecuteSP(SqlCommand spCmd, ref DataTable outTable, string connStr)
 			{
 				//If this value is in error msg, then exception occurred before ResCode was set
-				int resCode = -9999;
+				var resCode = -9999;
 				
 				string msg;
 				var myTimer = new System.Diagnostics.Stopwatch();
-				int retryCount = 3;
+				var retryCount = 3;
 
 				m_ErrorList.Clear();
 				while (retryCount > 0)
@@ -190,7 +190,7 @@ namespace Space_Manager
 
 				if (inpCmd.Parameters.Count < 1) return;
 
-				string myMsg = "";
+				var myMsg = "";
 
 				foreach (SqlParameter myParam in inpCmd.Parameters)
 				{
@@ -374,5 +374,5 @@ namespace Space_Manager
 				}
 			}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

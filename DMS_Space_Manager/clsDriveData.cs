@@ -70,5 +70,5 @@ namespace Space_Manager
 			}
 		#endregion
 
-	}	// End class
-}	// End namespace
+	}
+}

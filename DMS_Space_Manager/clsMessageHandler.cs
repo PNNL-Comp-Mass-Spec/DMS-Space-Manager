@@ -95,7 +95,7 @@ namespace Space_Manager
 		    if (retryCount < 0)
 		        retryCount = 0;
 
-            int retriesRemaining = retryCount;
+            var retriesRemaining = retryCount;
 
 		    if (timeoutSeconds < 5)
 		        timeoutSeconds = 5;
@@ -156,12 +156,12 @@ namespace Space_Manager
 				if (!m_HasConnection) return false;
 
 				// queue for telling manager to perform task (future?)
-				ISession commandSession = m_Connection.CreateSession();
+				var commandSession = m_Connection.CreateSession();
 				m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(this.m_CommandQueueName));
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command listener established");
 
 				// topic for commands broadcast to all capture tool managers
-				ISession broadcastSession = m_Connection.CreateSession();
+				var broadcastSession = m_Connection.CreateSession();
 				m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(this.m_BroadcastTopicName));
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Broadcast listener established");
 
@@ -174,7 +174,7 @@ namespace Space_Manager
 			}
 			catch (Exception Ex)
 			{
-				string msg = "Exception while initializing message sessions";
+				var msg = "Exception while initializing message sessions";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
 				DestroyConnection();
 				return false;
@@ -188,8 +188,8 @@ namespace Space_Manager
 		/// <param name="message">Incoming message</param>
 		private void OnCommandReceived(IMessage message)
 		{
-			ITextMessage textMessage = message as ITextMessage;
-			string Msg = "clsMessageHandler(), Command message received";
+			var textMessage = message as ITextMessage;
+			var Msg = "clsMessageHandler(), Command message received";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			if (this.CommandReceived != null)
 			{
@@ -212,8 +212,8 @@ namespace Space_Manager
 		/// <param name="message">Incoming message</param>
 		private void OnBroadcastReceived(IMessage message)
 		{
-			ITextMessage textMessage = message as ITextMessage;
-			string Msg = "clsMessageHandler(), Broadcast message received";
+			var textMessage = message as ITextMessage;
+			var Msg = "clsMessageHandler(), Broadcast message received";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			if (this.BroadcastReceived != null)
 			{
@@ -237,7 +237,7 @@ namespace Space_Manager
 		{
 			if (!this.m_IsDisposed)
 			{
-				ITextMessage textMessage = this.m_StatusSession.CreateTextMessage(message);
+				var textMessage = this.m_StatusSession.CreateTextMessage(message);
 				textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
 				try
 				{
@@ -265,7 +265,7 @@ namespace Space_Manager
 			{
 				this.m_Connection.Dispose();
 				this.m_HasConnection = false;
-				string msg = "Message connection closed";
+				var msg = "Message connection closed";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 		}
@@ -292,5 +292,5 @@ namespace Space_Manager
 			m_BroadcastConsumer.Listener += OnBroadcastReceived;
 		}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

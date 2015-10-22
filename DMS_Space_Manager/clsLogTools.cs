@@ -78,7 +78,7 @@ namespace Space_Manager
 					case LoggerTypes.LogFile:
 						MyLogger = m_FileLogger;
 						// Check to determine if a new file should be started
-						string TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+						var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
 						if (TestFileDate != m_FileDate)
 						{
 							m_FileDate = TestFileDate;
@@ -141,7 +141,7 @@ namespace Space_Manager
 					case LoggerTypes.LogFile:
 						MyLogger = m_FileLogger;
 						// Check to determine if a new file should be started
-						string TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+						var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
 						if (TestFileDate != m_FileDate)
 						{
 							m_FileDate = TestFileDate;
@@ -191,14 +191,14 @@ namespace Space_Manager
 			public static void ChangeLogFileName()
 			{
 				//Get a list of appenders
-				IEnumerable<IAppender> AppendList = FindAppenders("FileAppender");
+				var AppendList = FindAppenders("FileAppender");
 				if (AppendList == null)
 				{
 					WriteLog(LoggerTypes.LogSystem, LogLevels.WARN, "Unable to change file name. No appender found");
 					return;
 				}
 
-				foreach (log4net.Appender.IAppender SelectedAppender in AppendList)
+				foreach (var SelectedAppender in AppendList)
 				{
 					//Convert the IAppender object to a FileAppender
 					var AppenderToChange = SelectedAppender as log4net.Appender.FileAppender;
@@ -221,14 +221,14 @@ namespace Space_Manager
 			private static IEnumerable<IAppender> FindAppenders(string AppendName)
 			{
 				//Get a list of the current loggers
-				ILog[] LoggerList = LogManager.GetCurrentLoggers();
+				var LoggerList = LogManager.GetCurrentLoggers();
 				if (LoggerList.GetLength(0) < 1) return null;
 
 				//Create a List of appenders matching the criteria for each logger
 				var RetList = new List<IAppender>();
-				foreach (ILog TestLogger in LoggerList)
+				foreach (var TestLogger in LoggerList)
 				{
-					foreach (IAppender TestAppender in TestLogger.Logger.Repository.GetAppenders())
+					foreach (var TestAppender in TestLogger.Logger.Repository.GetAppenders())
 					{
 						if (TestAppender.Name == AppendName) RetList.Add(TestAppender);
 					}
@@ -250,7 +250,7 @@ namespace Space_Manager
 			/// <param name="InpLevel">"InpLevel">Integer corresponding to level (1-5, 5 being most verbose</param>
 			public static void SetFileLogLevel(int InpLevel)
 			{
-				Type LogLevelEnumType = typeof(LogLevels);
+				var LogLevelEnumType = typeof(LogLevels);
 
 				//Verify input level is a valid log level
 				if (!Enum.IsDefined(LogLevelEnumType, InpLevel))
@@ -417,5 +417,5 @@ namespace Space_Manager
 			}
 
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

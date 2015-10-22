@@ -138,12 +138,12 @@ namespace Space_Manager
 				datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetFolderName);
 			}
 
-			string msg = "Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath;
+			var msg = "Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			SortedSet<string> lstServerFilesToPurge;
 			List<int> lstJobsToPurge;
-			ArchiveCompareResults CompRes = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out lstServerFilesToPurge, out lstJobsToPurge);
+			var CompRes = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out lstServerFilesToPurge, out lstJobsToPurge);
 
 			switch (CompRes)
 			{
@@ -228,12 +228,12 @@ namespace Space_Manager
 			// This list keeps track of the folders that we are processing
 			var lstServerFolders = new SortedSet<string>();
 
-			int iFilesDeleted = 0;
-			int iFoldersDeleted = 0;
+			var iFilesDeleted = 0;
+			var iFoldersDeleted = 0;
 
 			// Delete the files listed in lstServerFilesToPurge
 			// If the PurgePolicy is AutoPurge or Delete All Except QC then the files in lstServerFilesToPurge could be a subset of the actual files present
-			foreach (string fileToDelete in lstServerFilesToPurge)
+			foreach (var fileToDelete in lstServerFilesToPurge)
 			{
 				try
 				{
@@ -286,7 +286,7 @@ namespace Space_Manager
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Look for empty folders that can now be deleted
-			foreach (string serverFolder in lstServerFolders)
+			foreach (var serverFolder in lstServerFolders)
 			{
 				try
 				{
@@ -487,7 +487,7 @@ namespace Space_Manager
 			var oPurgeableFileSearcher = new clsPurgeableFileSearcher();
 			lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(diDatasetFolder, udtDatasetInfo, out lstJobsToPurge);
 
-			string sMismatchMessage = string.Empty;
+			var sMismatchMessage = string.Empty;
 
 			// Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
 			// File paths are not case sensitive
@@ -504,14 +504,14 @@ namespace Space_Manager
 
 			// Loop through the file list, checking for archive copies and comparing if archive copy present
 			// We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mismatch is present
-			foreach (string sServerFilePath in lstServerFilesToPurge)
+			foreach (var sServerFilePath in lstServerFilesToPurge)
 			{
 				// Determine if file exists in archive
 
 				var comparisonResult = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
 
 				// First check MyEMSL
-				bool fileInMyEMSL = false;
+				var fileInMyEMSL = false;
 				if (dctFilesInMyEMSL.Count > 0)
 				{					
 					comparisonResult = CompareFileUsingMyEMSLInfo(sServerFilePath, udtDatasetInfo, dctFilesInMyEMSL, out fileInMyEMSL);
@@ -607,12 +607,12 @@ namespace Space_Manager
 			fileInMyEMSL = false;
 
 			// Convert the file name on the storage server to its equivalent relative path
-			string relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, sServerFilePath);
+			var relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, sServerFilePath);
 			relativeFilePath = relativeFilePath.TrimStart('\\');
 
 			if (relativeFilePath.Length == 0)
 			{
-				string msg = "File name not returned when converting from server path to relative path for file" + sServerFilePath;
+				var msg = "File name not returned when converting from server path to relative path for file" + sServerFilePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return ArchiveCompareResults.Compare_Error;
 			}
@@ -629,7 +629,7 @@ namespace Space_Manager
 			{
 
 				fileInMyEMSL = true;
-				string serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
+				var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
 
 				// Compute the sha-1 hash value of the file
 				if (string.Equals(serverFileHash, archiveFileHash))
@@ -646,7 +646,7 @@ namespace Space_Manager
 			string msg;
 
 			// Convert the file name on the storage server to its equivalent in the archive
-			string archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
+			var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
 			if (archFilePath.Length == 0)
 			{
 				msg = "File name not returned when converting from server path to archive path for file" + sServerFilePath;
@@ -690,8 +690,8 @@ namespace Space_Manager
 				const int AGED_FILE_DAYS = 45;
 
 				var fiServerFile = new FileInfo(sServerFilePath);
-				bool bAssumeEqual = false;
-				double dFileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
+				var bAssumeEqual = false;
+				var dFileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
 				if (dFileAgeDays >= AGED_FILE_DAYS ||
 					dFileAgeDays >= 30 && diDatasetFolder.Name.ToLower().StartsWith("blank"))
@@ -770,7 +770,7 @@ namespace Space_Manager
 
 				if (charIndex >= 0)
 				{
-					string newPath = string.Empty;
+					var newPath = string.Empty;
 					if (charIndex > 0)
 						newPath = inpFileName.Substring(0, charIndex);
 
@@ -802,11 +802,11 @@ namespace Space_Manager
 		{
 			string sFilePathInDictionary;
 
-			string msg = "Comparing file " + serverFile + " to file " + archiveFile;
+			var msg = "Comparing file " + serverFile + " to file " + archiveFile;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Get hash for archive file
-			string archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
+			var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
 			if (string.IsNullOrEmpty(archiveFileHash))
 			{
 				//There was a problem. Description has already been logged
@@ -901,7 +901,7 @@ namespace Space_Manager
 
 			if (diFolder.Exists)
 			{
-				foreach (DirectoryInfo diSubFolder in diFolder.GetDirectories())
+				foreach (var diSubFolder in diFolder.GetDirectories())
 				{
 					// Check whether the folder is marked as Read-Only
 					if ((diSubFolder.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
@@ -938,7 +938,7 @@ namespace Space_Manager
 		/// <param name="diFolder"></param>
 		protected void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
 		{
-			foreach (FileInfo fiFile in diFolder.GetFiles("*", SearchOption.AllDirectories))
+			foreach (var fiFile in diFolder.GetFiles("*", SearchOption.AllDirectories))
 			{
 				if ((fiFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
 					fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly;
@@ -949,11 +949,11 @@ namespace Space_Manager
 
 		protected string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
 		{
-			string hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
+			var hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
 
 			// Find out if there's a results file for this dataset
 
-			string sMD5ResultsFilePath = Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
+			var sMD5ResultsFilePath = Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
 			sMD5ResultsFilePath = Path.Combine(sMD5ResultsFilePath, udtDatasetInfo.YearQuarter);
 			sMD5ResultsFilePath = Path.Combine(sMD5ResultsFilePath, RESULT_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
 
@@ -978,7 +978,7 @@ namespace Space_Manager
 
 			sFilePathInDictionary = string.Empty;
 
-			string msg = "Getting archive hash for file " + fileNamePath;
+			var msg = "Getting archive hash for file " + fileNamePath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) && string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName) && m_HashFileContents != null)
@@ -1006,10 +1006,10 @@ namespace Space_Manager
 
 
 			// Search the hash file contents for a file that matches the input file
-			string filePathUnix = fileNamePath.Replace(@"\", @"/");
+			var filePathUnix = fileNamePath.Replace(@"\", @"/");
 
-			string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
-			string sFileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, sSubfolderTofind);
+			var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+			var sFileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, sSubfolderTofind);
 
 			if (string.IsNullOrEmpty(sFileNameTrimmed))
 			{
@@ -1085,7 +1085,7 @@ namespace Space_Manager
 			string msg;
 
 			// Find out if there's an MD5 results file for this dataset
-			string sMD5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
+			var sMD5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
 			bWaitingForHashFile = false;
 			m_MD5ResultsFileDatasetName = string.Empty;
@@ -1106,9 +1106,9 @@ namespace Space_Manager
 						// Check to see if a stagemd5 file exists for this dataset. 
 						// This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
 
-						string hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+						var hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
 
-						string stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
+						var stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
 						if (File.Exists(stagedFileNamePath))
 						{
 							msg = "  Found stagemd5 file: " + stagedFileNamePath;
@@ -1144,9 +1144,9 @@ namespace Space_Manager
 			{
 				m_HashFileContents.Clear();
 
-				string[] sContents = File.ReadAllLines(sMD5ResultsFilePath);
+				var sContents = File.ReadAllLines(sMD5ResultsFilePath);
 
-				foreach (string sInputLine in sContents)
+				foreach (var sInputLine in sContents)
 				{
 
 					// Extract the hash values value from the data line
@@ -1179,19 +1179,19 @@ namespace Space_Manager
 						// "QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15.raw" and "0dcf9d677ac76519ae54c11cc5e10723" or
 						// "SIC201309041722_Auto976603/Default_2008-08-22.xml"    and "796d99bcc6f1824dfe1c36cc9a61636dd1b07625"
 
-						string hashCode = lstHashAndPathInfo[0];
+						var hashCode = lstHashAndPathInfo[0];
 
 						var lstPathAndFileID = lstHashAndPathInfo[1].Split(new[] { '\t' }).ToList();
 
-						string sFileNamePath = lstPathAndFileID[0];
+						var sFileNamePath = lstPathAndFileID[0];
 
-						string myEmslFileID = string.Empty;
+						var myEmslFileID = string.Empty;
 						if (lstPathAndFileID.Count > 1)
 							myEmslFileID = lstPathAndFileID[1];
 
-						string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+						var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
-						string sFileNameTrimmed = TrimPathAfterSubfolder(sFileNamePath, sSubfolderTofind);
+						var sFileNameTrimmed = TrimPathAfterSubfolder(sFileNamePath, sSubfolderTofind);
 
 						if (String.IsNullOrEmpty(sFileNameTrimmed))
 						{
@@ -1260,7 +1260,7 @@ namespace Space_Manager
 			msg = "Generating MD5 hash for file " + inpFileNamePath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			MD5 hashTool = MD5.Create();
+			var hashTool = MD5.Create();
 
 			var fi = new FileInfo(inpFileNamePath);
 			Stream fStream = null;
@@ -1288,7 +1288,7 @@ namespace Space_Manager
 
 			// Convert hash array to hex string
 			var hashStrBld = new StringBuilder();
-			foreach (byte t in byteHash)
+			foreach (var t in byteHash)
 			{
 				hashStrBld.Append(t.ToString("x2"));
 			}
@@ -1311,7 +1311,7 @@ namespace Space_Manager
 			msg = "Generating Sha-1 hash for file " + inpFileNamePath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			string hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
+			var hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
 
 			return hashValue;
 		}
@@ -1327,9 +1327,9 @@ namespace Space_Manager
 			if (lstJobsToPurge.Count > 0)
 			{
 				// Construct a comma-separated list of jobs
-				string sJobs = string.Empty;
+				var sJobs = string.Empty;
 
-				foreach (int job in lstJobsToPurge)
+				foreach (var job in lstJobsToPurge)
 				{
 					if (sJobs.Length > 0)
 						sJobs += "," + job;
@@ -1340,7 +1340,7 @@ namespace Space_Manager
 #if DoDelete
 				// Call stored procedure MarkPurgedJobs
 
-				string connStr = m_MgrParams.GetParam("ConnectionString");
+				var connStr = m_MgrParams.GetParam("ConnectionString");
 				const int iMaxRetryCount = 3;
 				string sErrorMessage;
 
@@ -1350,7 +1350,7 @@ namespace Space_Manager
 					MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
 					MyCmd.CommandText = SP_MARK_PURGED_JOBS;
 
-					System.Data.SqlClient.SqlParameter oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+					var oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
 					oParam.Direction = System.Data.ParameterDirection.ReturnValue;
 
 					oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@JobList", System.Data.SqlDbType.VarChar, 4000));
@@ -1363,7 +1363,7 @@ namespace Space_Manager
 				}
 
 				//Execute the SP
-				int ResCode = clsUtilityMethods.ExecuteSP(MyCmd, connStr, iMaxRetryCount, out sErrorMessage);
+				var ResCode = clsUtilityMethods.ExecuteSP(MyCmd, connStr, iMaxRetryCount, out sErrorMessage);
 				string msg;
 				if (ResCode == 0)
 				{
@@ -1396,7 +1396,7 @@ namespace Space_Manager
 		/// <returns></returns>
 		protected string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
 		{
-			int iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind);
+			var iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind);
 
 			if (iStartIndex < 0)
 			{
@@ -1423,10 +1423,10 @@ namespace Space_Manager
 		protected bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
 		{
 			string msg;
-			string sCurrentStep = "Start";
+			var sCurrentStep = "Start";
 
 			// Find out if there's a master MD5 results file for this dataset
-			string sMD5ResultsFileMaster = GenerateMD5ResultsFilePath(udtDatasetInfo);
+			var sMD5ResultsFileMaster = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
 			if (!File.Exists(sMD5ResultsFileMaster))
 			{
@@ -1441,11 +1441,11 @@ namespace Space_Manager
 			try
 			{
 				var lstUpdatedMD5Info = new List<string>();
-				bool bWriteUpdatedMD5Info = false;
+				var bWriteUpdatedMD5Info = false;
 
 				var cSplitChars = new[] { ' ' };
 
-				string sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+				var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
 				sCurrentStep = "Read master MD5 results file";
 
@@ -1454,7 +1454,7 @@ namespace Space_Manager
 
 				while (srMD5ResultsFileMaster.Peek() > -1)
 				{
-					string sInputLine = srMD5ResultsFileMaster.ReadLine();
+					var sInputLine = srMD5ResultsFileMaster.ReadLine();
 					if (string.IsNullOrWhiteSpace(sInputLine))
 						continue;
 
@@ -1463,12 +1463,12 @@ namespace Space_Manager
 					// Example:
 					// 2036b65346acd59f3dd044b6a97bf44a /archive/dmsarch/LTQ_Orb_1/2008_1/EIF_Plasma_C_18_10Jan08_Draco_07-12-24/Seq200901221155_Auto362389/EIF_Plasma_C_18_10Jan08_Draco_07-12-24_out.zip
 
-					string[] lineParts = sInputLine.Split(cSplitChars, 2);
+					var lineParts = sInputLine.Split(cSplitChars, 2);
 					if (lineParts.Length > 1)
 					{
 						// Look for the unix file path in m_HashFileContents
 
-						string sFileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], sSubfolderTofind);
+						var sFileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], sSubfolderTofind);
 
 						if (string.IsNullOrEmpty(sFileNameTrimmed))
 						{
@@ -1514,12 +1514,12 @@ namespace Space_Manager
 
 				if (bWriteUpdatedMD5Info)
 				{
-					string sMD5ResultsFilePathTemp = sMD5ResultsFileMaster + ".updated";
+					var sMD5ResultsFilePathTemp = sMD5ResultsFileMaster + ".updated";
 
 					sCurrentStep = "Create " + sMD5ResultsFilePathTemp;
 					var swUpdatedMD5Results = new StreamWriter(new FileStream(sMD5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-					foreach (string sOutputLine in lstUpdatedMD5Info)
+					foreach (var sOutputLine in lstUpdatedMD5Info)
 					{
 						swUpdatedMD5Results.WriteLine(sOutputLine);
 					}
@@ -1582,7 +1582,7 @@ namespace Space_Manager
 				if (maxParentDepth == 0)
 					return false;
 
-				int parentDepth = 0;
+				var parentDepth = 0;
 
 				while (diDatasetFolder.Parent != null)
 				{
@@ -1599,7 +1599,7 @@ namespace Space_Manager
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception validating that folder " + sDatasetFolderPath + " exists: " + ex.Message;
+				var msg = "Exception validating that folder " + sDatasetFolderPath + " exists: " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
 			}
@@ -1620,7 +1620,7 @@ namespace Space_Manager
 
 		void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
 		{
-			string msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+			var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
 
 			/*
 			 * Logging of percent progress is disabled since we're only using the Reader to query for file information and not to download files from MyEMSL
@@ -1639,5 +1639,5 @@ namespace Space_Manager
 
 		#endregion
 
-	}	// End class
-}	// End namespace
+	}
+}
