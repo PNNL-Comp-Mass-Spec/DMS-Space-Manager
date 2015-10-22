@@ -381,9 +381,9 @@ namespace Space_Manager
 					var serverName = m_MgrSettings.GetParam("machname");
 					var perspective = m_MgrSettings.GetParam("perspective");
 					var checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
-																						perspective,
-																						testDrive,
-																						out driveFreeSpaceGB);
+																		perspective,
+																		testDrive,
+																		out driveFreeSpaceGB);
 
 					if (checkResult == SpaceCheckResults.Above_Threshold)
 					{
@@ -393,7 +393,15 @@ namespace Space_Manager
 						break;
 					}
 
-					if (checkResult == SpaceCheckResults.Error)
+				    string pendingWindowsUpdateMessage;
+				    if (PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
+				    {
+                        msg = "Exiting: " + pendingWindowsUpdateMessage;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				        break;
+				    }
+
+				    if (checkResult == SpaceCheckResults.Error)
 					{
 						// There was an error getting the free space for this drive. Logging handled by IsPurgeRequired
 						m_ErrorCount++;
