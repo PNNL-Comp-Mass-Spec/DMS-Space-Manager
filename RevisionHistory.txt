@@ -1,0 +1,44 @@
+Space Manager Change Log
+
+Version 2.0.5787; November 5, 2015
+	- Exiting program if the archive and MyEMSL folder cannot be found for 50 datasets
+
+Version 2.0.5772; October 21, 2015
+	- Now aborting if ServerUpdatesArePending() reports true
+
+Version 2.0.5416; October 30, 2014
+	- No longer disabling the manager when too many errors occur
+
+Version 2.0.5186; March 14, 2014
+	- Changing the dataset purge policy to PurgeAll if it is PurgeAuto yet the dataset folder is now empty after a purge
+
+Version 2.0.4996; September 5, 2013
+	- Updated to use MyEMSLReader and to properly handle MD5 results files with MyEMSL File IDs
+
+Version 2.0.4974; August 14, 2013
+	- Scheduling an archive update job if a dataset folder is not found via Samba, yet the parent folder exists in the archive.
+
+Version 2.0.4548; June 14, 2012
+	- Purging files based on the Purge Policy for a given dataset
+		- PurgePolicy 0 = AutoPurge
+		- PurgePolicy 2 = Purge all data except QC folder
+		- PurgePolicy 3 = Purge All
+
+Version 2.0.4539; June 5, 2012
+	- Changed the threshold for aged, non-critical files from 240 to 45
+
+Version 2.0.4400; January 18, 2012
+	- Updated to use MD5 Result files at \\proto-7\MD5Results instead of reading the files from \\a1.emsl.pnl.gov\dmsmd5
+
+Version 2.0.4224; July 26, 2011
+	- Caching contents of the MD5 results file in memory for a given dataset
+	- Showing free space and threshold with "No purge required" message
+
+Version 2.0.4049; February 1, 2011
+	- Complete rewrite in C#
+
+Version 1.0.3996; December 10, 2010
+	- Add DLL to determine if archived data has been moved to tape, which causes timeout errors
+
+Version 1.0.2397; July 25, 2016
+	- Initial release

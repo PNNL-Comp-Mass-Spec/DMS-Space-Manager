@@ -179,6 +179,7 @@ namespace Space_Manager
 
 				case ArchiveCompareResults.Compare_Archive_Samba_Share_Missing:
 					// Archive share is missing
+                    // Newer instruments will not have folders on the Samba share because all of their data is in MyEMSL
 					return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
 
 				case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:

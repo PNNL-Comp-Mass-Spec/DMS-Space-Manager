@@ -337,8 +337,11 @@ namespace Space_Manager
 
 		protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
 		{
+            const int MAX_MISSING_FOLDERS = 50;
+
 			var opStatus = DriveOpStatus.KeepRunning;
 			var repCounter = 0;
+		    var folderMissingCount = 0;
 
 			try
 			{
@@ -368,7 +371,16 @@ namespace Space_Manager
 						break;
 					}
 
-					// Check error count
+				    if (folderMissingCount >= MAX_MISSING_FOLDERS)
+				    {
+                        // Too many missing folders; MyEMSL or the archive could be offline
+                        msg = "Too many missing folders: MyEMSL or the archive could be offline; Program exiting";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        opStatus = DriveOpStatus.Exit_No_Restart;
+                        break;
+				    }
+
+				    // Check error count
 					if (!TestErrorCount())
 					{
 						// Excessive errors. Program exit required. Logging handled by TestErrorCount
@@ -472,6 +484,7 @@ namespace Space_Manager
 						case EnumCloseOutType.CLOSEOUT_DRIVE_MISSING:
 						case EnumCloseOutType.CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE:
 							repCounter++;
+					        folderMissingCount++;
 							break;
 					}
 
