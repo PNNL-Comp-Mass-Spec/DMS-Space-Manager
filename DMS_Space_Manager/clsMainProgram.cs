@@ -266,7 +266,7 @@ namespace Space_Manager
 
 				// Check if manager has been disabled via manager config db
 				string msg;
-				if (m_MgrSettings.GetParam("mgractive").ToLower() != "true")
+				if (!string.Equals(m_MgrSettings.GetParam("mgractive"), "true", StringComparison.InvariantCultureIgnoreCase))
 				{
 					// Manager deactivated via manager config db
 					msg = "Manager disabled via config db";
@@ -477,10 +477,11 @@ namespace Space_Manager
 							m_ErrorCount++;
 							repCounter++;
 							break;
-						case EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE:
-							repCounter++;
-							m_ErrorCount = 0;
-							break;
+                        // Obsolete: 
+						//case EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE:
+						//	repCounter++;
+						//	m_ErrorCount = 0;
+						//	break;
 						case EnumCloseOutType.CLOSEOUT_DRIVE_MISSING:
 						case EnumCloseOutType.CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE:
 							repCounter++;

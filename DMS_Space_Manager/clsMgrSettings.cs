@@ -79,7 +79,7 @@ namespace Space_Manager
 			}
 
 			//Get remaining settings from database
-			if (!LoadMgrSettingsFromDB(ref m_ParamDictionary))
+			if (!LoadMgrSettingsFromDB(m_ParamDictionary))
 			{
 				//Error logging handled by LoadMgrSettingsFromDB
 				return false;
@@ -143,16 +143,16 @@ namespace Space_Manager
 
 		public bool LoadMgrSettingsFromDB()
 		{
-			return LoadMgrSettingsFromDB(ref m_ParamDictionary);
+			return LoadMgrSettingsFromDB(m_ParamDictionary);
 		}
 
-		public bool LoadMgrSettingsFromDB(ref Dictionary<string, string> MgrSettingsDict)
+		public bool LoadMgrSettingsFromDB(Dictionary<string, string> mgrSettingsDict)
 		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 			short RetryCount = 3;
 			string MyMsg;
 
-			var SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + m_ParamDictionary["MgrName"] + "'";
+            var SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + mgrSettingsDict["MgrName"] + "'";
 
 			//Get a table containing data for job
 			DataTable Dt = null;
@@ -162,7 +162,7 @@ namespace Space_Manager
 			{
 				try
 				{
-					using (var Cn = new SqlConnection(MgrSettingsDict["MgrCnfgDbConnectStr"]))
+                    using (var Cn = new SqlConnection(mgrSettingsDict["MgrCnfgDbConnectStr"]))
 					{
 						using (var Da = new SqlDataAdapter(SqlStr, Cn))
 						{
@@ -223,13 +223,13 @@ namespace Space_Manager
 					//Add the column heading and value to the dictionary
 					var ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
 					var ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
-					if (m_ParamDictionary.ContainsKey(ParamKey))
+                    if (mgrSettingsDict.ContainsKey(ParamKey))
 					{
-						m_ParamDictionary[ParamKey] = ParamVal;
+                        mgrSettingsDict[ParamKey] = ParamVal;
 					}
 					else
 					{
-						m_ParamDictionary.Add(ParamKey, ParamVal);
+                        mgrSettingsDict.Add(ParamKey, ParamVal);
 					}
 				}
 				return true;

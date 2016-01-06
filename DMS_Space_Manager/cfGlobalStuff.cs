@@ -49,7 +49,7 @@ namespace Space_Manager
 			CLOSEOUT_SUCCESS = 0,					// Purged all data; PurgePolicy=2
 			CLOSEOUT_FAILED = 1,
 			CLOSEOUT_UPDATE_REQUIRED = 2,			// This completion code will cause SetPurgeTaskComplete to auto-call MakeNewArchiveUpdateJob in the DMS_Capture database
-			CLOSEOUT_WAITING_HASH_FILE = 3,
+			// Obsolete: CLOSEOUT_WAITING_HASH_FILE = 3,
 			CLOSEOUT_DRIVE_MISSING = 4,
 			CLOSEOUT_PURGE_AUTO = 5,				// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
 			CLOSEOUT_PURGE_ALL_EXCEPT_QC = 6,		// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0

@@ -15,11 +15,11 @@ namespace Space_Manager
 		/// <param name="diFolder"></param>
 		/// <param name="sFilterSpec"></param>
 		/// <param name="lstServerFilesToPurge"></param>
-		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, ref SortedSet<string> lstServerFilesToPurge)
+		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, SortedSet<string> lstServerFilesToPurge)
 		{
 			const int minSizeKB = 0;
 			const bool recurse = false;
-			return AddFilesToPurge(diFolder, sFilterSpec, minSizeKB, recurse, ref lstServerFilesToPurge);
+			return AddFilesToPurge(diFolder, sFilterSpec, minSizeKB, recurse, lstServerFilesToPurge);
 		}
 
 		/// <summary>
@@ -33,7 +33,7 @@ namespace Space_Manager
 		/// <param name="recurse"></param>
 		/// <param name="lstServerFilesToPurge"></param>
 		/// <returns>The number of files added to lstServerFilesToPurge</returns>
-		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, ref SortedSet<string> lstServerFilesToPurge)
+		protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, SortedSet<string> lstServerFilesToPurge)
 		{
 			var iFilesMatched = 0;
 			var sRequiredFileSuffix = string.Empty;
@@ -47,11 +47,11 @@ namespace Space_Manager
 			// If sFilterSpec is "*.baf" then .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
 			// We instead want the beahvior to be like DOS, in that "*.baf" should only match analysis.baf
 			if (sFilterSpec.StartsWith("*.") && char.IsLetterOrDigit(sFilterSpec[sFilterSpec.Length - 1]))
-				sRequiredFileSuffix = sFilterSpec.Substring(1).ToLower();
+				sRequiredFileSuffix = sFilterSpec.Substring(1);
 
 			foreach (var fiFile in diFolder.GetFiles(sFilterSpec, eSearchOption))
 			{
-				if (sRequiredFileSuffix.Length == 0 || fiFile.Name.ToLower().EndsWith(sRequiredFileSuffix))
+                if (sRequiredFileSuffix.Length == 0 || fiFile.Name.EndsWith(sRequiredFileSuffix, StringComparison.InvariantCultureIgnoreCase))
 				{
 					if (minSizeKB <= 0 || (fiFile.Length / 1024.0) >= minSizeKB)
 					{
@@ -76,7 +76,7 @@ namespace Space_Manager
 		/// <param name="iAgeThresholdDays"></param>
 		/// <param name="lstServerFilesToPurge"></param>
 		/// <returns>True if the files were all older than the threshold, otherwise false</returns>
-		protected bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, ref SortedSet<string> lstServerFilesToPurge)
+		protected bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, SortedSet<string> lstServerFilesToPurge)
 		{
 			DateTime dtMostRecentUpdate;
 
@@ -100,7 +100,6 @@ namespace Space_Manager
 
 		}
 
-
 		/// <summary>
 		/// Examine each file in serverFiles and decide which is safe to delete based on the purge policy
 		/// </summary>
@@ -108,16 +107,18 @@ namespace Space_Manager
 		/// <param name="udtDatasetInfo">Dataset info</param>
 		/// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
 		/// <returns>List of files that are safe to delete</returns>
-		public SortedSet<string> FindDatasetFilesToPurge(DirectoryInfo diDatasetFolder, clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
+		public SortedSet<string> FindDatasetFilesToPurge(
+            DirectoryInfo diDatasetFolder, 
+            clsStorageOperations.udtDatasetInfoType udtDatasetInfo, 
+            out List<int> lstJobsToPurge)
 		{
-			SortedSet<string> lstServerFilesToPurge;
 
 			var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
 			if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAll)
 			{
-				lstServerFilesToPurge = new SortedSet<string>();
-				AddFilesToPurge(diDatasetFolder, "*.*", 0, true, ref lstServerFilesToPurge);
+				var lstServerFilesToPurge = new SortedSet<string>();
+				AddFilesToPurge(diDatasetFolder, "*.*", 0, true, lstServerFilesToPurge);
 
 				lstJobsToPurge = new List<int>();
 				return lstServerFilesToPurge;
@@ -125,13 +126,13 @@ namespace Space_Manager
 
 			if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
 			{
-				lstServerFilesToPurge = new SortedSet<string>();
-				AddFilesToPurge(diDatasetFolder, "*.*", 0, false, ref lstServerFilesToPurge);
+				var lstServerFilesToPurge = new SortedSet<string>();
+				AddFilesToPurge(diDatasetFolder, "*.*", 0, false, lstServerFilesToPurge);
 
 				foreach (var diSubFolder in diDatasetFolder.GetDirectories())
 				{
 					if (diSubFolder.Name != "QC")
-						AddFilesToPurge(diSubFolder, "*.*", 0, true, ref lstServerFilesToPurge);
+						AddFilesToPurge(diSubFolder, "*.*", 0, true, lstServerFilesToPurge);
 				}
 
 				lstJobsToPurge = new List<int>();
@@ -185,39 +186,39 @@ namespace Space_Manager
 			switch (udtDatasetInfo.RawDataType)
 			{
 				case "dot_raw_files":
-					AddFilesToPurge(diDatasetFolder, "*.raw", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.raw", lstServerFilesToPurge);
 					break;
 
 				case "dot_wiff_files":
 				case "sciex_wiff_files":
-					AddFilesToPurge(diDatasetFolder, "*.wiff", ref lstServerFilesToPurge);
-					AddFilesToPurge(diDatasetFolder, "*.wiff.scan", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.wiff", lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.wiff.scan", lstServerFilesToPurge);
 					break;
 
 				case "dot_mzml_files":
-					AddFilesToPurge(diDatasetFolder, "*.mzML", ref lstServerFilesToPurge);
-					AddFilesToPurge(diDatasetFolder, "*.mzXML", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.mzML", lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.mzXML", lstServerFilesToPurge);
 					break;
 
 				case "dot_uimf_files":
-					AddFilesToPurge(diDatasetFolder, "*.uimf", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.uimf", lstServerFilesToPurge);
 					break;
 
 				case "bruker_maldi_imaging":
-					AddFilesToPurge(diDatasetFolder, "*.zip", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.zip", lstServerFilesToPurge);
 					break;
 
 				case "zipped_s_folders":
-					AddFilesToPurge(diDatasetFolder, "*.zip", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.zip", lstServerFilesToPurge);
 					break;
 
 				case "bruker_maldi_spot":
-					AddFilesToPurge(diDatasetFolder, "*.*", ref lstServerFilesToPurge);
+					AddFilesToPurge(diDatasetFolder, "*.*", lstServerFilesToPurge);
 					break;
 			}
 
 			// Purge all files over 2 MB in size
-			AddFilesToPurge(diDatasetFolder, "*.*", 2048, false, ref lstServerFilesToPurge);
+			AddFilesToPurge(diDatasetFolder, "*.*", 2048, false, lstServerFilesToPurge);
 
 			// Process the directories below the dataset folder
 
@@ -233,37 +234,39 @@ namespace Space_Manager
 				if (subDirNameUpper.EndsWith(".D"))
 				{
 					// Instrument data folder
-					AddFilesToPurge(diSubDir, "*.yep", 0, true, ref lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
-					AddFilesToPurge(diSubDir, "*.baf", 0, true, ref lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
-					AddFilesToPurge(diSubDir, "ser", 0, true, ref lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
-					AddFilesToPurge(diSubDir, "fid", 0, true, ref lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
-					AddFilesToPurge(diSubDir, "DATA.MS", 0, true, ref lstServerFilesToPurge);			// Agilent_GC_MS_01
-					AddFilesToPurge(diSubDir, "MSProfile.bin", 0, true, ref lstServerFilesToPurge);		// Agilent_QTof
+					AddFilesToPurge(diSubDir, "*.yep", 0, true, lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
+					AddFilesToPurge(diSubDir, "*.baf", 0, true, lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
+					AddFilesToPurge(diSubDir, "ser", 0, true, lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
+					AddFilesToPurge(diSubDir, "fid", 0, true, lstServerFilesToPurge);				// bruker_ft and bruker_tof_baf
+					AddFilesToPurge(diSubDir, "DATA.MS", 0, true, lstServerFilesToPurge);			// Agilent_GC_MS_01
+					AddFilesToPurge(diSubDir, "MSProfile.bin", 0, true, lstServerFilesToPurge);		// Agilent_QTof
+                    AddFilesToPurge(diSubDir, "MSPeak.bin", 250, true, lstServerFilesToPurge);		// Agilent_QQQ		
+                    AddFilesToPurge(diSubDir, "MSScan.bin", 1000, true, lstServerFilesToPurge);		// Agilent_QQQ
 
 					// Purge all files over 2 MB in size
-					AddFilesToPurge(diSubDir, "*.*", 2048, true, ref lstServerFilesToPurge);
+					AddFilesToPurge(diSubDir, "*.*", 2048, true, lstServerFilesToPurge);
 					continue;
 				}
 
 				if (subDirNameUpper.EndsWith(".RAW"))
 				{
-					AddFilesToPurge(diSubDir, "*.raw", 0, true, ref lstServerFilesToPurge);
+					AddFilesToPurge(diSubDir, "*.raw", 0, true, lstServerFilesToPurge);
 
 					// Purge all files over 2 MB in size
-					AddFilesToPurge(diSubDir, "*.*", 2048, true, ref lstServerFilesToPurge);
+					AddFilesToPurge(diSubDir, "*.*", 2048, true, lstServerFilesToPurge);
 					continue;
 				}
 
 				if (subDirNameUpper.StartsWith("MSXML_GEN"))
 				{
-					AddFilesToPurgeDateThreshold(diSubDir, 90, ref lstServerFilesToPurge);
+					AddFilesToPurgeDateThreshold(diSubDir, 90, lstServerFilesToPurge);
 					continue;
 				}
 
 				if (subDirNameUpper.StartsWith("DTA_GEN") || subDirNameUpper.StartsWith("DTA_REF"))
 				{
 					// Purge after 1.5 years
-					AddFilesToPurgeDateThreshold(diSubDir, 548, ref lstServerFilesToPurge);
+					AddFilesToPurgeDateThreshold(diSubDir, 548, lstServerFilesToPurge);
 					continue;
 				}
 				
@@ -274,16 +277,16 @@ namespace Space_Manager
 					if (diSubDir.Name.StartsWith("SIC"))
 					{
 						// This is a MASIC folder
-						AddFilesToPurge(diSubDir, "*.zip", ref lstServerFilesToPurge);
+						AddFilesToPurge(diSubDir, "*.zip", lstServerFilesToPurge);
 
 						// Purge all files over 15 MB in size
-						AddFilesToPurge(diSubDir, "*.*", 15 * 1024, true, ref lstServerFilesToPurge);
+						AddFilesToPurge(diSubDir, "*.*", 15 * 1024, true, lstServerFilesToPurge);
 					}
 					else
 					{
 						// Other analysis job folders
 						// Purge the entire folder if all files are over 3 years old
-						var bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, ref lstServerFilesToPurge);
+						var bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, lstServerFilesToPurge);
 
 						if (!bSubDirPurged)
 						{
@@ -297,7 +300,7 @@ namespace Space_Manager
 							if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
 							{
 								// Purge all files over 50 MB in size
-								var iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, ref lstServerFilesToPurge);
+								var iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, lstServerFilesToPurge);
 
 								if (iFilesMatched == lstFiles.Count)
 									bSubDirPurged = true;
@@ -320,7 +323,7 @@ namespace Space_Manager
 				}
 
 				// Use a threshold of 9 months for all other subfolders
-				AddFilesToPurgeDateThreshold(diSubDir, 270, ref lstServerFilesToPurge);
+				AddFilesToPurgeDateThreshold(diSubDir, 270, lstServerFilesToPurge);
 
 			}
 

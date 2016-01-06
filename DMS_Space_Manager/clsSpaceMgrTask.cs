@@ -25,7 +25,7 @@ namespace Space_Manager
 		#endregion
 
 		#region "Class variables"
-		//			int m_JobID = 0;
+
 		#endregion
 
 		#region "Constructors"
@@ -132,7 +132,6 @@ namespace Space_Manager
 		{
 			var myCmd = new SqlCommand();
 			EnumRequestTaskResult outcome;
-			var dt = new DataTable();
 
 			//string strProductVersion = Application.ProductVersion;
 			//if (strProductVersion == null) strProductVersion = "??";
@@ -172,14 +171,17 @@ namespace Space_Manager
 					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 1;
 				}
 
-				var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
+                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBConnectionString;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
 				msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				PrintCommandParams(myCmd);
 
 				//Execute the SP
-				var retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
+			    DataTable dt;
+
+                var retVal = DMSProcedureExecutor.ExecuteSP(myCmd, out dt);
 
 				switch (retVal)
 				{
@@ -223,7 +225,7 @@ namespace Space_Manager
 			string msg;
 			var completionCode = (int)taskResult;
 
-			if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, completionCode, m_JobParams["dataset"]))
+			if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, completionCode, m_JobParams["dataset"]))
 			{
 				msg = "Error setting task complete in database, dataset " + m_JobParams["dataset"];
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
@@ -239,11 +241,10 @@ namespace Space_Manager
 		/// Database calls to set a capture task complete
 		/// </summary>
 		/// <param name="spName">Name of SetComplete stored procedure</param>
-		/// <param name="connStr">Db connection string</param>
 		/// <param name="completionCode">Integer representation of completion code</param>
 		/// <param name="datasetName">Dataset name</param>
 		/// <returns>TRUE for sucesss; FALSE for failure</returns>
-		public bool SetPurgeTaskComplete(string spName, string connStr, int completionCode, string datasetName)
+		public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
 		{
 
 			//Setup for execution of the stored procedure
@@ -264,8 +265,9 @@ namespace Space_Manager
 			}
 
 			// Execute the SP
-			// Note that stored procedure SetPurgeTaskComplete will call MakeNewArchiveUpdateJob in the DMS_Capture database if the completionCode is ??
-			var resCode = ExecuteSP(MyCmd, connStr);
+            // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call 
+            // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
+            var resCode = DMSProcedureExecutor.ExecuteSP(MyCmd);
 
 			if (resCode == 0)
 			{
