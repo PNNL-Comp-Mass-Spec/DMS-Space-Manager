@@ -1,5 +1,10 @@
 Space Manager Change Log
 
+Version 2.0.5848; January 5, 2016
+	- No longer looking for stagemd5 files
+		- Removed enums CLOSEOUT_WAITING_HASH_FILE and Compare_Waiting_For_Hash
+	- Now using PRISM.DataBase.clsExecuteDatabaseSP
+
 Version 2.0.5787; November 5, 2015
 	- Exiting program if the archive and MyEMSL folder cannot be found for 50 datasets
 

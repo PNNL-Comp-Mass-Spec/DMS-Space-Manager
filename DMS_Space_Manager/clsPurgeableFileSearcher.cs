@@ -286,9 +286,9 @@ namespace Space_Manager
 					{
 						// Other analysis job folders
 						// Purge the entire folder if all files are over 3 years old
-						var bSubDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, lstServerFilesToPurge);
+						var subDirPurged = AddFilesToPurgeDateThreshold(diSubDir, 3 * 365, lstServerFilesToPurge);
 
-						if (!bSubDirPurged)
+						if (!subDirPurged)
 						{
 							// Files are not yet 3 years old
 							// If all of the files are 1 year old, then purge files over 50 MB
@@ -303,11 +303,11 @@ namespace Space_Manager
 								var iFilesMatched = AddFilesToPurge(diSubDir, "*.*", 50 * 1024, true, lstServerFilesToPurge);
 
 								if (iFilesMatched == lstFiles.Count)
-									bSubDirPurged = true;
+									subDirPurged = true;
 							}
 						}
 
-						if (bSubDirPurged)
+						if (subDirPurged)
 						{
 							if (reMatch.Groups.Count > 0)
 							{

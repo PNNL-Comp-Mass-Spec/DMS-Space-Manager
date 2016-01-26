@@ -195,7 +195,7 @@ namespace Space_Manager
 				catch (Exception ex)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-													"Exception readining status history file", ex);
+													"Exception reading status history file", ex);
 				}
 			}
 
@@ -357,6 +357,7 @@ namespace Space_Manager
 						// Local config has changed, so exit loop and reload settings
 						msg = "Local config changed. Reloading configuration";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 						opStatus = DriveOpStatus.Exit_Restart_OK;
 						break;
 					}
@@ -367,6 +368,7 @@ namespace Space_Manager
 						// Exceeded max number of repetitions for this run, so exit
 						msg = "Reached maximum repetition count of " + maxReps + "; Program exiting";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 						opStatus = DriveOpStatus.Exit_No_Restart;
 						break;
 					}
@@ -376,6 +378,7 @@ namespace Space_Manager
                         // Too many missing folders; MyEMSL or the archive could be offline
                         msg = "Too many missing folders: MyEMSL or the archive could be offline; Program exiting";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        Console.WriteLine(msg);
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
 				    }
@@ -400,8 +403,9 @@ namespace Space_Manager
 					if (checkResult == SpaceCheckResults.Above_Threshold)
 					{
 						// Drive doesn't need purging, so continue to next drive
-						msg = "No purge required, drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
+						msg = "No purge required, drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 						break;
 					}
 
@@ -410,6 +414,7 @@ namespace Space_Manager
 				    {
                         msg = "Exiting: " + pendingWindowsUpdateMessage;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 				        break;
 				    }
 
@@ -424,8 +429,9 @@ namespace Space_Manager
 					{
 						bDriveInfoLogged = true;
 						// Note: there are extra spaces after "required" so the log message lines up with the "No purge required" message
-						msg = "Purge required   , drive " + testDrive.DriveLetter + "; " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
+						msg = "Purge required   , drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 					}
 
 					// Request a purge task
@@ -454,6 +460,7 @@ namespace Space_Manager
 						// No purge task assigned. This is a problem because the drive is low on space
 						msg = "Drive purge required, but no purge task assigned";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        Console.WriteLine(msg);
 						break;
 					}
 
@@ -496,6 +503,7 @@ namespace Space_Manager
 					{
 						msg = "Drive not found; moving on to next drive";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        Console.WriteLine(msg);
 						break;
 					}
 

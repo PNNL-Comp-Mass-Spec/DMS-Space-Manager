@@ -199,6 +199,7 @@ namespace Space_Manager
 
             var msg = "Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            Console.WriteLine(msg);
 
             SortedSet<string> lstServerFilesToPurge;
             List<int> lstJobsToPurge;
@@ -250,6 +251,7 @@ namespace Space_Manager
             {
                 // Nothing was found to purge.
                 msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
+                Console.WriteLine(msg);
 
                 switch (udtDatasetInfo.PurgePolicy)
                 {
@@ -273,11 +275,14 @@ namespace Space_Manager
             }
 
 
+            msg = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) + " for dataset " + udtDatasetInfo.ServerFolderPath;
+
 #if DoDelete
-            //Purge the dataset folder by deleting contents
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Purging dataset " + udtDatasetInfo.ServerFolderPath);
+            // Purge the dataset folder by deleting contents            
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            Console.WriteLine(msg);
 #else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: Purging dataset " + udtDatasetInfo.ServerFolderPath);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: " + msg);
 #endif
 
             // This list keeps track of the folders that we are processing
@@ -287,7 +292,7 @@ namespace Space_Manager
             var iFoldersDeleted = 0;
 
             // Delete the files listed in lstServerFilesToPurge
-            // If the PurgePolicy is AutoPurge or Delete All Except QC then the files in lstServerFilesToPurge could be a subset of the actual files present
+            // If the PurgePolicy is AutoPurge or Delete All Except QC, the files in lstServerFilesToPurge could be a subset of the actual files present
             foreach (var fileToDelete in lstServerFilesToPurge)
             {
                 try
@@ -333,6 +338,7 @@ namespace Space_Manager
                 {
                     msg = "Exception deleting file " + fileToDelete + "; " + ex.Message;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    Console.WriteLine(msg);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -340,6 +346,7 @@ namespace Space_Manager
             // Log debug message
             msg = "Deleted " + iFilesDeleted + " file" + CheckPlural(iFilesDeleted);
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            Console.WriteLine(msg);
 
             // Look for empty folders that can now be deleted
             foreach (var serverFolder in lstServerFolders)
@@ -354,6 +361,7 @@ namespace Space_Manager
                 {
                     msg = "Exception deleting folder " + serverFolder + "; " + ex.Message;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    Console.WriteLine(msg);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -361,6 +369,7 @@ namespace Space_Manager
             // Log debug message
             msg = "Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted);
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            Console.WriteLine(msg);
 
             // Delete the dataset folder if it is empty
             bool datasetFolderDeleted;
@@ -373,12 +382,14 @@ namespace Space_Manager
             {
                 msg = "Exception deleting dataset folder " + udtDatasetInfo.ServerFolderPath + "; " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                Console.WriteLine(msg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Log debug message
             msg = "Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            Console.WriteLine(msg);
 
             // Mark the jobs in lstJobsToPurge as purged
             MarkPurgedJobs(lstJobsToPurge);
@@ -396,6 +407,7 @@ namespace Space_Manager
 #endif
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            Console.WriteLine(msg);
 
             switch (udtDatasetInfo.PurgePolicy)
             {
@@ -448,6 +460,8 @@ namespace Space_Manager
             {
                 msg = "  Archive not found via samba path: " + sambaDatasetNamePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
+
                 return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
             }
 
@@ -466,18 +480,21 @@ namespace Space_Manager
             {
                 msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
             catch (UnauthorizedAccessException)
             {
                 msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
             catch (Exception ex)
             {
                 msg = "  Exception examining Dataset folder in archive (" + sambaDatasetNamePath + "): " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
 
@@ -487,11 +504,13 @@ namespace Space_Manager
 
                 msg = "  Update required. Server file not found in archive: " + sServerFilePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
             msg = "  Dataset folder in archive is empty (either a permissions error or the dataset is only in MyEMSL): " + sambaDatasetNamePath;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+            Console.WriteLine(msg);
             return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
         }
 
@@ -521,6 +540,7 @@ namespace Space_Manager
             {
                 msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " not found; either the folder was manually purged or Access is Denied";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
             }
 
@@ -535,6 +555,7 @@ namespace Space_Manager
                 {
                     msg = "clsUpdateOps.CompareDatasetFolders, dataset not in MyEMSL and folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    Console.WriteLine(msg);
 
                     // Check whether the parent folder exists
                     if (ValidateDatasetShareExists(sambaDatasetNamePath, 2))
@@ -549,6 +570,7 @@ namespace Space_Manager
             {
                 msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " is empty; assuming manually purged";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                Console.WriteLine(msg);
                 return ArchiveCompareResults.Compare_Equal;
             }
 
@@ -772,7 +794,7 @@ namespace Space_Manager
                 if (bAssumeEqual)
                 {
                     msg = "    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
                     return ArchiveCompareResults.Compare_Equal;
                 }
 
@@ -1152,8 +1174,9 @@ namespace Space_Manager
                         // Warning not yet posted
                         m_LastMD5WarnDataset = string.Copy(udtDatasetInfo.DatasetName);
 
-                        msg = "  MD5 results file not found";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        msg = "  MD5 results file not found: " + sMD5ResultsFilePath;                        
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        Console.WriteLine(msg);
 
                         // We stopped creating stage stagemd5 files in January 2016
                         // Thus, the following logic is now disabled
@@ -1424,6 +1447,7 @@ namespace Space_Manager
                 {
                     msg = "Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    Console.WriteLine(msg);
                 }
                 else
                 {
@@ -1432,6 +1456,7 @@ namespace Space_Manager
                         msg += ": " + sErrorMessage;
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    Console.WriteLine(msg);
                 }
 #else
 				var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
@@ -1592,6 +1617,7 @@ namespace Space_Manager
 
                     msg = "  Updated MD5 results file " + sMD5ResultsFileMaster;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    Console.WriteLine(msg);
 
                 }
                 else
