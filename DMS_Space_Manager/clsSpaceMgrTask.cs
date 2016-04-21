@@ -166,9 +166,11 @@ namespace Space_Manager
 					myCmd.Parameters["@infoOnly"].Direction = ParameterDirection.Input;
 					myCmd.Parameters["@infoOnly"].Value = 0;
 
+                    // We stopped creating stagemd5 files in January 2016
+                    // Thus, pass 0 for this parameter instead of 1
 					myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt));
 					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Direction = ParameterDirection.Input;
-					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 1;
+					myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 0;
 				}
 
                 var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBConnectionString;
