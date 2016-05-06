@@ -1,5 +1,8 @@
 Space Manager Change Log
 
+Version 2.0.5959; April 25, 2016
+	- Update to .NET 4.5.1
+
 Version 2.0.5848; January 5, 2016
 	- No longer looking for stagemd5 files
 		- Removed enums CLOSEOUT_WAITING_HASH_FILE and Compare_Waiting_For_Hash
