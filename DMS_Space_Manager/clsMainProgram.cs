@@ -507,6 +507,16 @@ namespace Space_Manager
 						break;
 					}
 
+                    if (purgeResult == EnumCloseOutType.CLOSEOUT_AURORA_OFFLINE)
+					{
+						msg = "Aurora is offline; closing the manager";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        Console.WriteLine(msg);
+                        opStatus = DriveOpStatus.Exit_No_Restart;
+						break;
+					}
+                    
+
 				}
 
 			}

@@ -65,12 +65,12 @@ namespace Space_Manager
             Hash_Not_Found_For_File,
 
             /// <summary>
-            /// Folder not found: \\a2.emsl.pnl.gov\dmsarch
+            /// Folder not found: \\aurora.emsl.pnl.gov\archive\dmsarch
             /// </summary>
             Compare_Archive_Samba_Share_Missing,
 
             /// <summary>
-            /// \\a2.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
+            /// \\aurora.emsl.pnl.gov\archive\dmsarch exists but the dataset does not have a folder in the archive
             /// </summary>
             Compare_Archive_Samba_DatasetFolder_Missing
         }
@@ -107,6 +107,7 @@ namespace Space_Manager
             /// Folder path of this dataset on the storage server
             /// </summary>
             public string ServerFolderPath;
+
             public PurgePolicyConstants PurgePolicy;
             public string RawDataType;
         }
@@ -212,14 +213,14 @@ namespace Space_Manager
                     break;
 
                 case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
-                    // Confirm that the share for the dataset actual exists
+                    // Confirm that the share for the dataset actual exists on the storage server
                     if (ValidateDatasetShareExists(udtDatasetInfo.ServerFolderPath))
                     {
                         // Share exists; return Failed since we likely need to update the database
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    // Share is missing
+                    // Share is missing on the storage server
                     return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
 
                 case ArchiveCompareResults.Compare_Error:
@@ -235,7 +236,7 @@ namespace Space_Manager
                 case ArchiveCompareResults.Compare_Archive_Samba_Share_Missing:
                     // Archive share is missing
                     // Newer instruments will not have folders on the Samba share because all of their data is in MyEMSL
-                    return EnumCloseOutType.CLOSEOUT_DRIVE_MISSING;
+                    return EnumCloseOutType.CLOSEOUT_AURORA_OFFLINE;
 
                 case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:
                     // Dataset folder not found in the archive
@@ -451,10 +452,10 @@ namespace Space_Manager
         {
             string msg;
 
-            // Look for \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
-            //       or \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
-            //       or \\a2.emsl.pnl.gov\dmsarch\LTQ_Orb_3\
-            //       or \\a2.emsl.pnl.gov\dmsarch\
+            // Look for \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2013_2\DatasetName
+            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2013_2\
+            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\
+            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\
 
             if (!ValidateDatasetShareExists(sambaDatasetNamePath))
             {
@@ -545,7 +546,7 @@ namespace Space_Manager
             }
 
             // First look for this dataset's files in MyEMSL
-            // Next append any files visible using Samba (at \\a2.emsl.pnl.gov\dmsarch\)
+            // Next append any files visible using Samba (at \\aurora.emsl.pnl.gov\archive\dmsarch\)
             var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName);
 
             if (lstFilesInMyEMSL.Count == 0)

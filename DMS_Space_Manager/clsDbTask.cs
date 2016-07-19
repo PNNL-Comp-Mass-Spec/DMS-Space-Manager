@@ -128,7 +128,7 @@ namespace Space_Manager
             // storagePath: VOrbiETD02\2011_3\
             // StorageVolExternal: \\proto-9\
             // RawDataType: dot_raw_files
-            // SambaStoragePath: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD02\2011_3
+            // SambaStoragePath: \\aurora.emsl.pnl.gov\archive\dmsarch\VOrbiETD02\2011_3
             // Instrument: VOrbiETD02
             // DatasetCreated: 2011-08-29 13:42:05
             // DatasetYearQuarter: 2011_3
