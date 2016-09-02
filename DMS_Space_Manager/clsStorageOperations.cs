@@ -65,12 +65,12 @@ namespace Space_Manager
             Hash_Not_Found_For_File,
 
             /// <summary>
-            /// Folder not found: \\aurora.emsl.pnl.gov\archive\dmsarch
+            /// Folder not found: \\adms.emsl.pnl.gov\dmsarch
             /// </summary>
             Compare_Archive_Samba_Share_Missing,
 
             /// <summary>
-            /// \\aurora.emsl.pnl.gov\archive\dmsarch exists but the dataset does not have a folder in the archive
+            /// \\adms.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
             /// </summary>
             Compare_Archive_Samba_DatasetFolder_Missing
         }
@@ -452,10 +452,10 @@ namespace Space_Manager
         {
             string msg;
 
-            // Look for \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2013_2\DatasetName
-            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\2013_2\
-            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\LTQ_Orb_3\
-            //       or \\aurora.emsl.pnl.gov\archive\dmsarch\
+            // Look for \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
+            //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
+            //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\
+            //       or \\adms.emsl.pnl.gov\dmsarch\
 
             if (!ValidateDatasetShareExists(sambaDatasetNamePath))
             {
@@ -546,7 +546,7 @@ namespace Space_Manager
             }
 
             // First look for this dataset's files in MyEMSL
-            // Next append any files visible using Samba (at \\aurora.emsl.pnl.gov\archive\dmsarch\)
+            // Next append any files visible using Samba (at \\adms.emsl.pnl.gov\dmsarch\)
             var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName);
 
             if (lstFilesInMyEMSL.Count == 0)

@@ -1,5 +1,12 @@
 Space Manager Change Log
 
+Version 2.0.6089; September 2, 2016
+	- Changed archive path from \\aurora.emsl.pnl.gov\archive\dmsarch\ to \\adms.emsl.pnl.gov\dmsarch\
+
+Version 2.0.6044; July 19, 2016
+	- Add Closeout Type CLOSEOUT_AURORA_OFFLINE
+	- Changed archive path from \\a2.emsl.pnl.gov\dmsarch to \\aurora.emsl.pnl.gov\archive\dmsarch (only used in code comments)
+
 Version 2.0.5959; April 25, 2016
 	- Update to .NET 4.5.1
 
