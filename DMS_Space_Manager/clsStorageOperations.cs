@@ -283,7 +283,7 @@ namespace Space_Manager
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
             Console.WriteLine(msg);
 #else
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: " + msg);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: " + msg);
 #endif
 
             // This list keeps track of the folders that we are processing
@@ -404,7 +404,7 @@ namespace Space_Manager
             }
 
 #if !DoDelete
-			msg = "SIMULATE: " + msg;
+            msg = "SIMULATE: " + msg;
 #endif
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -1460,8 +1460,8 @@ namespace Space_Manager
                     Console.WriteLine(msg);
                 }
 #else
-				var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 #endif
 
             }
