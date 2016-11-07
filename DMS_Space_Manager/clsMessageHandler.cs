@@ -88,7 +88,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="retryCount">Number of times to try the connection</param>
         /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
-        protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
+        private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (m_HasConnection) return;
             
@@ -259,7 +259,7 @@ namespace Space_Manager
         /// <summary>
         /// Cleans up a connection after error or when closing
         /// </summary>
-        protected void DestroyConnection()
+        private void DestroyConnection()
         {
             if (m_HasConnection)
             {

@@ -37,7 +37,7 @@ namespace Space_Manager
         //    ShutdownCmdReceived
         //}
 
-        protected enum DriveOpStatus
+        private enum DriveOpStatus
         {
             KeepRunning,
             Exit_Restart_OK,
@@ -335,7 +335,7 @@ namespace Space_Manager
 
         }
 
-        protected DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
+        private DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
         {
             const int MAX_MISSING_FOLDERS = 50;
 

@@ -137,7 +137,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        protected PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
+        private PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
 
         #endregion
 
@@ -434,7 +434,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="iValue"></param>
         /// <returns></returns>
-        protected string CheckPlural(int iValue)
+        private string CheckPlural(int iValue)
         {
             if (iValue == 1)
                 return string.Empty;
@@ -448,7 +448,7 @@ namespace Space_Manager
         /// <param name="sambaDatasetNamePath">Samba path for the dataset</param>
         /// <param name="sServerFilePath">File path that was not found (included in a log message)</param>
         /// <returns></returns>
-        protected ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string sServerFilePath)
+        private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string sServerFilePath)
         {
             string msg;
 
@@ -651,8 +651,10 @@ namespace Space_Manager
 
         }
 
-        protected List<ArchivedFileInfo> FindFilesInMyEMSL(string datasetName)
+        private List<ArchivedFileInfo> FindFilesInMyEMSL(string datasetName, out bool queryException)
         {
+
+            queryException = false;
 
             try
             {
@@ -680,7 +682,7 @@ namespace Space_Manager
         }
 
 
-        protected ArchiveCompareResults CompareFileUsingMyEMSLInfo(
+        private ArchiveCompareResults CompareFileUsingMyEMSLInfo(
             string sServerFilePath,
             udtDatasetInfoType udtDatasetInfo,
             Dictionary<string, string> dctFilesInMyEMSL,
@@ -725,7 +727,7 @@ namespace Space_Manager
             return comparisonResult;
         }
 
-        protected ArchiveCompareResults CompareFileUsingSamba(
+        private ArchiveCompareResults CompareFileUsingSamba(
             string sambaDatasetNamePath,
             string sServerFilePath,
             udtDatasetInfoType udtDatasetInfo,
@@ -822,7 +824,7 @@ namespace Space_Manager
         /// <param name="datasetPathArch">Dataset path on archive</param>
         /// <param name="inpFileName">Name of the file whose path is being converted</param>
         /// <returns>Full archive path to file</returns>
-        protected string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
+        private string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
         {
             string msg;
 
@@ -864,7 +866,7 @@ namespace Space_Manager
         /// <param name="archiveFile">Second file to compare</param>
         /// <param name="udtDatasetInfo">Dataset Info</param>
         /// <returns>Enum containing compare results</returns>
-        protected ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
+        private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
         {
             string sFilePathInDictionary;
 
@@ -934,7 +936,7 @@ namespace Space_Manager
         /// <param name="serverFolder"></param>
         /// <param name="iFoldersDeleted"></param>
         /// <returns>True if the folder was empty and was deleted; otherwise false</returns>
-        protected bool DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
+        private bool DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
         {
 
             var diFolder = new DirectoryInfo(serverFolder);
@@ -964,7 +966,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="sFolderPath"></param>
         /// <returns></returns>
-        protected bool DeleteFolderRecurse(string sFolderPath)
+        private bool DeleteFolderRecurse(string sFolderPath)
         {
             var diFolder = new DirectoryInfo(sFolderPath);
 
@@ -1005,7 +1007,7 @@ namespace Space_Manager
         /// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
         /// </summary>
         /// <param name="diFolder"></param>
-        protected void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
+        private void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
         {
             foreach (var fiFile in diFolder.GetFiles("*", SearchOption.AllDirectories))
             {
@@ -1025,7 +1027,7 @@ namespace Space_Manager
         /// <returns>
         /// Full path to an MD5 results file, for example
         /// \\proto-7\MD5Results\VOrbiETD04\2015_4\results.QC_Shew_15_02_500ng_CID-1_4Nov15_Samwise_15-07-19</returns>
-        protected string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
+        private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
         {
             var hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
 
@@ -1043,7 +1045,7 @@ namespace Space_Manager
         /// <param name="udtDatasetInfo">Dataset being purged</param>
         /// <param name="sFilePathInDictionary"></param>
         /// <returns>MD5 or Sha-1 Hash value for success; otherwise return (HASH) or an empty string</returns>
-        protected string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
+        private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
         {
             // Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
             // will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
@@ -1109,7 +1111,7 @@ namespace Space_Manager
 
         }
 
-        protected string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
+        private string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
         {
             switch (ePurgePolicy)
             {
@@ -1125,7 +1127,7 @@ namespace Space_Manager
             }
         }
 
-        protected PurgePolicyConstants GetPurgePolicyEnum(string sPurgePolicy)
+        private PurgePolicyConstants GetPurgePolicyEnum(string sPurgePolicy)
         {
             int iPurgePolicy;
 
@@ -1154,7 +1156,7 @@ namespace Space_Manager
         /// <param name="udtDatasetInfo">Dataset info</param>
         /// <param name="bWaitingForMD5File">Output parameter: true if an MD5 has file was not found</param>
         /// <returns></returns>
-        protected bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool bWaitingForMD5File)
+        private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool bWaitingForMD5File)
         {
 
             string msg;
@@ -1323,7 +1325,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="inpFileNamePath">Full path to file</param>
         /// <returns>String representation of hash</returns>
-        protected string GenerateMD5HashFromFile(string inpFileNamePath)
+        private string GenerateMD5HashFromFile(string inpFileNamePath)
         {
             string msg;
             byte[] byteHash;
@@ -1375,7 +1377,7 @@ namespace Space_Manager
             return hashStrBld.ToString();
         }
 
-        protected string GenerateSha1HashFromFile(string inpFileNamePath)
+        private string GenerateSha1HashFromFile(string inpFileNamePath)
         {
             string msg;
 
@@ -1399,7 +1401,7 @@ namespace Space_Manager
         /// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
         /// </summary>
         /// <param name="lstJobsToPurge"></param>
-        protected void MarkPurgedJobs(List<int> lstJobsToPurge)
+        private void MarkPurgedJobs(List<int> lstJobsToPurge)
         {
             const string SP_MARK_PURGED_JOBS = "MarkPurgedJobs";
 
@@ -1475,7 +1477,7 @@ namespace Space_Manager
         /// <param name="sFileNamePath"></param>
         /// <param name="sSubfolderTofind"></param>
         /// <returns></returns>
-        protected string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
+        private string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
         {
             var iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind, StringComparison.InvariantCultureIgnoreCase);
 
@@ -1501,7 +1503,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset Info</param>
         /// <returns>TRUE for success; FALSE otherwise</returns>
-        protected bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
+        private bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
         {
             string msg;
             var sCurrentStep = "Start";
@@ -1642,7 +1644,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="sDatasetFolderPath"></param>
         /// <returns></returns>
-        protected bool ValidateDatasetShareExists(string sDatasetFolderPath)
+        private bool ValidateDatasetShareExists(string sDatasetFolderPath)
         {
             return ValidateDatasetShareExists(sDatasetFolderPath, -1);
         }
@@ -1653,7 +1655,7 @@ namespace Space_Manager
         /// <param name="sDatasetFolderPath"></param>
         /// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; -1 means parse all parent folders until a valid one is found</param>
         /// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
-        protected bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth)
+        private bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth)
         {
             try
             {

@@ -19,9 +19,9 @@ namespace Space_Manager
         //**********************************************************************************************************
 
         #region "Constants"
-        
-        protected const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
-        protected const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
+
+        private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
+        private const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
         #endregion
 
         #region "Class variables"

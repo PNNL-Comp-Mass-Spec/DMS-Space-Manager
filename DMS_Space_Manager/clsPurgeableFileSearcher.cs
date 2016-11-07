@@ -15,7 +15,7 @@ namespace Space_Manager
         /// <param name="diFolder"></param>
         /// <param name="sFilterSpec"></param>
         /// <param name="lstServerFilesToPurge"></param>
-        protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, SortedSet<string> lstServerFilesToPurge)
+        private int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, SortedSet<string> lstServerFilesToPurge)
         {
             const int minSizeKB = 0;
             const bool recurse = false;
@@ -33,7 +33,7 @@ namespace Space_Manager
         /// <param name="recurse"></param>
         /// <param name="lstServerFilesToPurge"></param>
         /// <returns>The number of files added to lstServerFilesToPurge</returns>
-        protected int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, SortedSet<string> lstServerFilesToPurge)
+        private int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, int minSizeKB, bool recurse, SortedSet<string> lstServerFilesToPurge)
         {
             var iFilesMatched = 0;
             var sRequiredFileSuffix = string.Empty;
@@ -76,7 +76,7 @@ namespace Space_Manager
         /// <param name="iAgeThresholdDays"></param>
         /// <param name="lstServerFilesToPurge"></param>
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
-        protected bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, SortedSet<string> lstServerFilesToPurge)
+        private bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, SortedSet<string> lstServerFilesToPurge)
         {
             DateTime dtMostRecentUpdate;
 

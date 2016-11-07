@@ -360,7 +360,7 @@ namespace Space_Manager
         /// Writes the status to the message queue
         /// </summary>
         /// <param name="strStatusXML">A string contiaining the XML to write</param>
-        protected void LogStatusToMessageQueue(string strStatusXML)
+        private void LogStatusToMessageQueue(string strStatusXML)
         {
             if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
 

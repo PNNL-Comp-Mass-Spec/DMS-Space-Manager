@@ -156,7 +156,7 @@ namespace Space_Manager
             }
         }
 
-        protected string DbCStr(object InpObj)
+        private string DbCStr(object InpObj)
         {
             //If input object is DbNull, returns "", otherwise returns String representation of object
             if ((InpObj == null) || (object.ReferenceEquals(InpObj, DBNull.Value)))

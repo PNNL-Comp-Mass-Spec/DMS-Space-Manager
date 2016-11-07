@@ -3,8 +3,8 @@ namespace Space_Manager
 {
 	public class clsHashInfo
 	{
-		protected string mHashCode;
-		protected string mMyEMSLFileID;
+		private string mHashCode;
+        private string mMyEMSLFileID;
 
 		/// <summary>
 		/// MD5 or Sha-1 Hash
