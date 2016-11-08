@@ -6,12 +6,11 @@
 //
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Space_Manager
 {
-    class clsMainProgram
+    class clsMainProgram : clsLoggerBase
     {
         //*********************************************************************************************************
         // Main program execution loop for application
@@ -101,6 +100,8 @@ namespace Space_Manager
 
             // Set up the loggers
             var logFileName = m_MgrSettings.GetParam("logfilename");
+
+            // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             var debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
             clsLogTools.CreateFileLogger(logFileName, debugLevel);
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
@@ -194,8 +195,7 @@ namespace Space_Manager
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                    "Exception reading status history file", ex);
+                    LogError("Exception reading status history file", ex);
                 }
             }
 
@@ -220,8 +220,7 @@ namespace Space_Manager
             {
                 worker.Abort();
                 m_MsgQueueInitSuccess = false;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                     "Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
+                LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
                 return;
             }
             
@@ -229,8 +228,7 @@ namespace Space_Manager
 
             if (elaspedTime > 25)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                     "Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
+                ReportStatus("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
             }
         }
 
@@ -240,12 +238,12 @@ namespace Space_Manager
             if (!m_MsgHandler.Init())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
+                ReportStatus("Message handler init error", true);
                 m_MsgQueueInitSuccess = false;
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
+                ReportStatus("Message handler initialized", true);
                 m_MsgQueueInitSuccess = true;
             }
 
@@ -265,14 +263,11 @@ namespace Space_Manager
                 var maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
 
                 // Check if manager has been disabled via manager config db
-                string msg;
                 if (!string.Equals(m_MgrSettings.GetParam("mgractive"), "true", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Manager deactivated via manager config db
-                    msg = "Manager disabled via config db";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    msg = "===== Closing Space Manager =====";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus("Manager disabled via config db");                    
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Space Manager =====");
                     return RESTART_NOT_OK;
                 }
 
@@ -315,20 +310,18 @@ namespace Space_Manager
                 if (methodReturnCode == RESTART_NOT_OK)
                 {
                     // Program exit required
-                    msg = "===== Closing Space Manager =====";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Space Manager =====");
                 }
                 else
                 {
                     // Program restart required
-                    msg = "Restarting manager";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Restarting manager");
                 }
 
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in PerformSpaceManagement", ex);
+                LogError("Exception in PerformSpaceManagement", ex);
             }
 
             return methodReturnCode;
@@ -351,13 +344,10 @@ namespace Space_Manager
                 while (true)
                 {
                     // Check for configuration changes
-                    string msg;
                     if (m_ConfigChanged)
                     {
                         // Local config has changed, so exit loop and reload settings
-                        msg = "Local config changed. Reloading configuration";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("Local config changed. Reloading configuration");
                         opStatus = DriveOpStatus.Exit_Restart_OK;
                         break;
                     }
@@ -366,9 +356,7 @@ namespace Space_Manager
                     if (repCounter >= maxReps)
                     {
                         // Exceeded max number of repetitions for this run, so exit
-                        msg = "Reached maximum repetition count of " + maxReps + "; Program exiting";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("Reached maximum repetition count of " + maxReps + "; Program exiting");
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
@@ -376,9 +364,7 @@ namespace Space_Manager
                     if (folderMissingCount >= MAX_MISSING_FOLDERS)
                     {
                         // Too many missing folders; MyEMSL or the archive could be offline
-                        msg = "Too many missing folders: MyEMSL or the archive could be offline; Program exiting";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                        Console.WriteLine(msg);
+                        LogError("Too many missing folders: MyEMSL or the archive could be offline; Program exiting");
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
@@ -403,18 +389,14 @@ namespace Space_Manager
                     if (checkResult == SpaceCheckResults.Above_Threshold)
                     {
                         // Drive doesn't need purging, so continue to next drive
-                        msg = "No purge required, drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("No purge required, drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold");
                         break;
                     }
 
                     string pendingWindowsUpdateMessage;
                     if (PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
                     {
-                        msg = "Exiting: " + pendingWindowsUpdateMessage;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("Exiting: " + pendingWindowsUpdateMessage);
                         break;
                     }
 
@@ -429,9 +411,7 @@ namespace Space_Manager
                     {
                         bDriveInfoLogged = true;
                         // Note: there are extra spaces after "required" so the log message lines up with the "No purge required" message
-                        msg = "Purge required   , drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("Purge required   , drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold");
                     }
 
                     // Request a purge task
@@ -458,9 +438,7 @@ namespace Space_Manager
                     if (requestResult == EnumRequestTaskResult.NoTaskFound)
                     {
                         // No purge task assigned. This is a problem because the drive is low on space
-                        msg = "Drive purge required, but no purge task assigned";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                        Console.WriteLine(msg);
+                        LogWarning("Drive purge required, but no purge task assigned");
                         break;
                     }
 
@@ -501,17 +479,13 @@ namespace Space_Manager
 
                     if (purgeResult == EnumCloseOutType.CLOSEOUT_DRIVE_MISSING)
                     {
-                        msg = "Drive not found; moving on to next drive";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                        Console.WriteLine(msg);
+                        LogWarning("Drive not found; moving on to next drive");
                         break;
                     }
 
                     if (purgeResult == EnumCloseOutType.CLOSEOUT_AURORA_OFFLINE)
                     {
-                        msg = "Aurora is offline; closing the manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                        Console.WriteLine(msg);
+                        LogWarning("Aurora is offline; closing the manager");
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
@@ -522,7 +496,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ProcessDrive", ex);
+                LogError("Exception in ProcessDrive", ex);
             }
 
             return opStatus;
@@ -538,8 +512,7 @@ namespace Space_Manager
             if (m_ErrorCount > MAX_ERROR_COUNT)
             {
                 // Too many errors - something must be seriously wrong. Human intervention may be required
-                var msg = "Excessive errors. Error count = " + m_ErrorCount + ". Closing manager";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Excessive errors. Error count = " + m_ErrorCount + ". Closing manager");
 
                 return false;
             }
@@ -556,8 +529,7 @@ namespace Space_Manager
         /// <param name="e"></param>
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            const string msg = "clsMainProgram.FileWatcherChanged event received";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("clsMainProgram.FileWatcherChanged event received", true);
 
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
@@ -569,8 +541,7 @@ namespace Space_Manager
         /// <param name="cmdText"></param>
         private void OnBroadcastReceived(string cmdText)
         {
-            var msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText, true);
 
             clsBroadcastCmd recvCmd;
 
@@ -579,10 +550,9 @@ namespace Space_Manager
             {
                 recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
-                msg = "Exception while parsing broadcast data";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
+                LogError("Exception while parsing broadcast data", ex);
                 return;
             }
 
@@ -590,8 +560,7 @@ namespace Space_Manager
             if (!recvCmd.MachineList.Contains(m_MgrName))
             {
                 // Received command doesn't apply to this manager
-                msg = "Received command not applicable to this manager instance";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Received command not applicable to this manager instance", true);
                 return;
             }
 
@@ -603,15 +572,13 @@ namespace Space_Manager
                     //	   m_Running = false;
                     break;
                 case "readconfig":
-                    msg = "Reload config message received";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus("Reload config message received");
                     m_ConfigChanged = true;
                     //	   m_Running = false;
                     break;
                 default:
                     // Invalid command received; do nothing except log it
-                    msg = "Invalid broadcast command received: " + cmdText;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                    LogWarning("Invalid broadcast command received: " + cmdText);
                     break;
             }
         }

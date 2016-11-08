@@ -90,6 +90,7 @@
     <Compile Include="clsBroadcastCmd.cs" />
     <Compile Include="clsDriveData.cs" />
     <Compile Include="clsHashInfo.cs" />
+    <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsPurgeableFileSearcher.cs" />
     <Compile Include="clsSpaceMgrTask.cs" />
     <Compile Include="clsDbTask.cs" />

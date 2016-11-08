@@ -76,8 +76,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                var msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception adding parameter: " + paramName + ", Value: " + paramValue, ex);
                 return false;
             }
         }
@@ -205,17 +204,16 @@ namespace Space_Manager
                         outcome = EnumRequestTaskResult.NoTaskFound;
                         break;
                     default:
-                        //There was an SP error
-                        msg = "clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal;
-                        msg += "; Msg text = " + (string)myCmd.Parameters["@message"].Value;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        // There was an SP error
+                        LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal + 
+                            "; Msg text = " + (string)myCmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " + ex.Message);
+                LogError("Exception requesting analysis job", ex);
                 outcome = EnumRequestTaskResult.ResultError;
             }
 
@@ -224,18 +222,15 @@ namespace Space_Manager
 
         public override void CloseTask(EnumCloseOutType taskResult)
         {
-            string msg;
             var completionCode = (int)taskResult;
 
             if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, completionCode, m_JobParams["dataset"]))
             {
-                msg = "Error setting task complete in database, dataset " + m_JobParams["dataset"];
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Error setting task complete in database, dataset " + m_JobParams["dataset"]);
             }
             else
             {
-                msg = "Successfully set task complete in database, dataset " + m_JobParams["dataset"];
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Successfully set task complete in database, dataset " + m_JobParams["dataset"], true);
             }
         }
 

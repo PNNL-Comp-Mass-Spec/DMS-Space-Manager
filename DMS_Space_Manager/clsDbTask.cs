@@ -13,7 +13,7 @@ using System.Data;
 
 namespace Space_Manager
 {
-    abstract class clsDbTask
+    abstract class clsDbTask : clsLoggerBase
     {
         //*********************************************************************************************************
         // Base class for handling task-related data
@@ -29,7 +29,7 @@ namespace Space_Manager
         protected bool m_TaskWasAssigned;
         protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-        protected PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
+        protected readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
 
         #endregion
 
@@ -100,21 +100,17 @@ namespace Space_Manager
 
         protected bool FillParamDict(DataTable dt)
         {
-            string msg;
-
             // Verify valid datatable
             if (dt == null)
             {
-                msg = "clsDbTask.FillParamDict(): No parameter table";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsDbTask.FillParamDict(): No parameter table");
                 return false;
             }
 
             // Verify at least one row present
             if (dt.Rows.Count < 1)
             {
-                msg = "clsDbTask.FillParamDict(): No parameters returned by request SP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
             }
 
@@ -150,8 +146,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                msg = "clsDbTask.FillParamDict(): Exception reading task parameters";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("clsDbTask.FillParamDict(): Exception reading task parameters", ex);
                 return false;
             }
         }

@@ -17,7 +17,7 @@ using MyEMSLReader;
 
 namespace Space_Manager
 {
-    public class clsStorageOperations
+    public class clsStorageOperations : clsLoggerBase
     {
         //*********************************************************************************************************
         // Class to perform a purge task and all associated operations
@@ -198,9 +198,7 @@ namespace Space_Manager
                 datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetFolderName);
             }
 
-            var msg = "Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-            Console.WriteLine(msg);
+            ReportStatus("Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath);
 
             SortedSet<string> lstServerFilesToPurge;
             List<int> lstJobsToPurge;
@@ -251,39 +249,38 @@ namespace Space_Manager
             if ((lstServerFilesToPurge.Count == 0))
             {
                 // Nothing was found to purge.
-                msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
-                Console.WriteLine(msg);
+                var msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName + 
+                    ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
 
                 switch (udtDatasetInfo.PurgePolicy)
                 {
                     case PurgePolicyConstants.Auto:
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        ReportStatus(msg);
                         return EnumCloseOutType.CLOSEOUT_PURGE_AUTO;
 
                     case PurgePolicyConstants.PurgeAllExceptQC:
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        ReportStatus(msg);
                         return EnumCloseOutType.CLOSEOUT_PURGE_ALL_EXCEPT_QC;
 
                     case PurgePolicyConstants.PurgeAll:
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
 
                     default:
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
             }
 
-
-            msg = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) + " for dataset " + udtDatasetInfo.ServerFolderPath;
+            var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) + 
+                " for dataset " + udtDatasetInfo.ServerFolderPath;
 
 #if DoDelete
             // Purge the dataset folder by deleting contents            
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-            Console.WriteLine(msg);
+            ReportStatus(purgeMessage);
 #else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "SIMULATE: " + msg);
+            ReportStatus("SIMULATE: " + purgeMessage);
 #endif
 
             // This list keeps track of the folders that we are processing
@@ -337,17 +334,13 @@ namespace Space_Manager
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception deleting file " + fileToDelete + "; " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    Console.WriteLine(msg);
+                    LogError("Exception deleting file " + fileToDelete, ex);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             // Log debug message
-            msg = "Deleted " + iFilesDeleted + " file" + CheckPlural(iFilesDeleted);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-            Console.WriteLine(msg);
+            ReportStatus("Deleted " + iFilesDeleted + " file" + CheckPlural(iFilesDeleted), true);
 
             // Look for empty folders that can now be deleted
             foreach (var serverFolder in lstServerFolders)
@@ -360,17 +353,13 @@ namespace Space_Manager
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception deleting folder " + serverFolder + "; " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    Console.WriteLine(msg);
+                    LogError("Exception deleting folder " + serverFolder, ex);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             // Log debug message
-            msg = "Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-            Console.WriteLine(msg);
+            ReportStatus("Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted), true);
 
             // Delete the dataset folder if it is empty
             bool datasetFolderDeleted;
@@ -381,34 +370,29 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                msg = "Exception deleting dataset folder " + udtDatasetInfo.ServerFolderPath + "; " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                Console.WriteLine(msg);
+                LogError("Exception deleting dataset folder " + udtDatasetInfo.ServerFolderPath, ex);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Log debug message
-            msg = "Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-            Console.WriteLine(msg);
+            ReportStatus("Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath, true);
 
             // Mark the jobs in lstJobsToPurge as purged
             MarkPurgedJobs(lstJobsToPurge);
 
             // If we got to here, then log success and exit
-            msg = "Purged dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
+            purgeMessage = "Purged dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
             if (datasetFolderDeleted)
             {
-                msg += ", Dataset folder deleted since now empty";
+                purgeMessage += ", Dataset folder deleted since now empty";
                 udtDatasetInfo.PurgePolicy = PurgePolicyConstants.PurgeAll;
             }
 
 #if !DoDelete
-            msg = "SIMULATE: " + msg;
+            purgeMessage = "SIMULATE: " + purgeMessage;
 #endif
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-            Console.WriteLine(msg);
+            ReportStatus(purgeMessage);
 
             switch (udtDatasetInfo.PurgePolicy)
             {
@@ -422,7 +406,7 @@ namespace Space_Manager
                     return EnumCloseOutType.CLOSEOUT_SUCCESS;
 
                 default:
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unrecognized purge policy");
+                    LogError("Unrecognized purge policy");
                     return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -447,11 +431,9 @@ namespace Space_Manager
         /// </summary>
         /// <param name="sambaDatasetNamePath">Samba path for the dataset</param>
         /// <param name="sServerFilePath">File path that was not found (included in a log message)</param>
-        /// <returns></returns>
+        /// <returns>Comparison result</returns>
         private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string sServerFilePath)
         {
-            string msg;
-
             // Look for \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
             //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
             //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\
@@ -459,10 +441,7 @@ namespace Space_Manager
 
             if (!ValidateDatasetShareExists(sambaDatasetNamePath))
             {
-                msg = "  Archive not found via samba path: " + sambaDatasetNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
-
+                LogWarning("  Archive not found via samba path: " + sambaDatasetNamePath);
                 return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
             }
 
@@ -479,23 +458,17 @@ namespace Space_Manager
             }
             catch (AccessViolationException)
             {
-                msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
+                LogWarning("  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
             catch (UnauthorizedAccessException)
             {
-                msg = "  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
+                LogWarning("  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
             catch (Exception ex)
             {
-                msg = "  Exception examining Dataset folder in archive (" + sambaDatasetNamePath + "): " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
+                LogWarning("  Exception examining Dataset folder in archive (" + sambaDatasetNamePath + "): " + ex.Message);
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
 
@@ -503,15 +476,11 @@ namespace Space_Manager
             {
                 // The folder exists in the aurora archive, but the file in question was not there 
 
-                msg = "  Update required. Server file not found in archive: " + sServerFilePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
+                LogWarning("  Update required. Server file not found in archive: " + sServerFilePath);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
-            msg = "  Dataset folder in archive is empty (either a permissions error or the dataset is only in MyEMSL): " + sambaDatasetNamePath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-            Console.WriteLine(msg);
+            LogWarning("  Dataset folder in archive is empty (either a permissions error or the dataset is only in MyEMSL): " + sambaDatasetNamePath);
             return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
         }
 
@@ -530,8 +499,6 @@ namespace Space_Manager
             lstServerFilesToPurge = new SortedSet<string>();
             lstJobsToPurge = new List<int>();
 
-            string msg;
-
             // Set this to true for now
             var eCompResultOverall = ArchiveCompareResults.Compare_Equal;
 
@@ -539,9 +506,8 @@ namespace Space_Manager
             var diDatasetFolder = new DirectoryInfo(udtDatasetInfo.ServerFolderPath);
             if (!diDatasetFolder.Exists)
             {
-                msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " not found; either the folder was manually purged or Access is Denied";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                Console.WriteLine(msg);
+                LogError("Folder " + udtDatasetInfo.ServerFolderPath + " not found; " +
+                         "either the folder was manually purged or Access is Denied");
                 return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
             }
 
@@ -569,9 +535,7 @@ namespace Space_Manager
             // If the dataset folder is empty yet the parent folder exists, then assume it was manually purged; just update the database
             if (diDatasetFolder.GetFileSystemInfos().Length == 0 && diDatasetFolder.Parent != null && diDatasetFolder.Parent.Exists)
             {
-                msg = "clsUpdateOps.CompareDatasetFolders, folder " + udtDatasetInfo.ServerFolderPath + " is empty; assuming manually purged";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                Console.WriteLine(msg);
+                LogWarning("Folder " + udtDatasetInfo.ServerFolderPath + " is empty; assuming manually purged");
                 return ArchiveCompareResults.Compare_Equal;
             }
 
@@ -642,7 +606,7 @@ namespace Space_Manager
                     break;
 
                 case ArchiveCompareResults.Compare_Not_Equal_or_Missing:
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, sMismatchMessage);
+                    LogWarning(sMismatchMessage);
                     break;
 
             }
@@ -675,7 +639,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindFilesInMyEMSL", ex);
+                LogError("Exception in FindFilesInMyEMSL", ex);
             }
 
             return new List<ArchivedFileInfo>();
@@ -698,8 +662,7 @@ namespace Space_Manager
 
             if (relativeFilePath.Length == 0)
             {
-                var msg = "File name not returned when converting from server path to relative path for file" + sServerFilePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("File name not returned when converting from server path to relative path for file" + sServerFilePath);
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -733,14 +696,11 @@ namespace Space_Manager
             udtDatasetInfoType udtDatasetInfo,
             DirectoryInfo diDatasetFolder)
         {
-            string msg;
-
             // Convert the file name on the storage server to its equivalent in the archive
             var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
             if (archFilePath.Length == 0)
             {
-                msg = "File name not returned when converting from server path to archive path for file" + sServerFilePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("File name not returned when converting from server path to archive path for file" + sServerFilePath);
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -796,8 +756,7 @@ namespace Space_Manager
 
                 if (bAssumeEqual)
                 {
-                    msg = "    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    ReportStatus("    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1), true);
                     return ArchiveCompareResults.Compare_Equal;
                 }
 
@@ -808,8 +767,7 @@ namespace Space_Manager
                 }
 
                 // This code should never be reached
-                msg = "Logic bug, CompRes = " + comparisonResult + " but should be ArchiveCompareResults.Hash_Not_Found_For_File";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Logic bug, CompRes = " + comparisonResult + " but should be ArchiveCompareResults.Hash_Not_Found_For_File");
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -826,8 +784,6 @@ namespace Space_Manager
         /// <returns>Full archive path to file</returns>
         private string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
         {
-            string msg;
-
             // Convert by replacing storage server path with archive path
             try
             {
@@ -846,15 +802,13 @@ namespace Space_Manager
                     return newPath;
                 }
 
-                msg = "Error in ConvertServerPathToArchivePath: File path '" + inpFileName + "' does not contain dataset path '" + datasetPathSvr + "'";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Error in ConvertServerPathToArchivePath: File path '" + inpFileName + "' does not contain dataset path '" + datasetPathSvr + "'");
                 return PATH_CONVERSION_ERROR;
 
             }
             catch (Exception ex)
             {
-                msg = "Exception converting server path to archive path for file " + datasetPathSvr + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Exception converting server path to archive path for file " + datasetPathSvr, ex);
                 return PATH_CONVERSION_ERROR;
             }
         }
@@ -870,8 +824,7 @@ namespace Space_Manager
         {
             string sFilePathInDictionary;
 
-            var msg = "Comparing file " + serverFile + " to file " + archiveFile;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Comparing file " + serverFile + " to file " + archiveFile, true);
 
             // Get hash for archive file
             var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
@@ -906,7 +859,8 @@ namespace Space_Manager
             {
                 // This file is in MyEMSL
                 // We should have already examined this file in function CompareFileUsingMyEMSLInfo
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "File '" + serverFile + "' has MyEMSL info in the MD5 results file, but was not found using the MyEMSLReader; this likely indicates a problem with Elastic Search");
+                LogError("File '" + serverFile + "' has MyEMSL info in the MD5 results file, but was not found using the MyEMSLReader; " +
+                         "this likely indicates a problem with Elastic Search");
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -1052,17 +1006,15 @@ namespace Space_Manager
             // and extract the file hash if found. If the hash file is not found, return an empty string,
             // telling the manager to request result file creation
 
-            bool bHashFileLoaded;
-
             sFilePathInDictionary = string.Empty;
 
-            var msg = "Getting archive hash for file " + fileNamePath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Getting archive hash for file " + fileNamePath, true);
 
-            if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) && string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName) && m_HashFileContents != null)
+            if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) && 
+                string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) && 
+                m_HashFileContents != null)
             {
                 // Hash file has already been loaded into memory; no need to re-load it
-                bHashFileLoaded = true;
             }
             else
             {
@@ -1070,7 +1022,7 @@ namespace Space_Manager
 
                 m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
-                bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out bWaitingForMD5File);
+                var bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out bWaitingForMD5File);
 
                 if (!bHashFileLoaded)
                 {
@@ -1090,16 +1042,14 @@ namespace Space_Manager
 
             if (string.IsNullOrEmpty(sFileNameTrimmed))
             {
-                msg = "  Did not find " + sSubfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning("  Did not find " + sSubfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")");
             }
             else
             {
                 clsHashInfo hashInfo;
                 if (!m_HashFileContents.TryGetValue(sFileNameTrimmed, out hashInfo))
                 {
-                    msg = "  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    ReportStatus("  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath, true);
                     return HASH_NOT_FOUND;
                 }
 
@@ -1155,11 +1105,9 @@ namespace Space_Manager
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
         /// <param name="bWaitingForMD5File">Output parameter: true if an MD5 has file was not found</param>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
         private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool bWaitingForMD5File)
         {
-
-            string msg;
 
             // Find out if there's an MD5 results file for this dataset
             var sMD5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
@@ -1177,9 +1125,7 @@ namespace Space_Manager
                         // Warning not yet posted
                         m_LastMD5WarnDataset = string.Copy(udtDatasetInfo.DatasetName);
 
-                        msg = "  MD5 results file not found: " + sMD5ResultsFilePath;                        
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        Console.WriteLine(msg);
+                        ReportStatus("  MD5 results file not found: " + sMD5ResultsFilePath);
 
                         // We stopped creating stage stagemd5 files in January 2016
                         // Thus, the following logic is now disabled
@@ -1192,16 +1138,14 @@ namespace Space_Manager
                         //var stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
                         //if (File.Exists(stagedFileNamePath))
                         //{
-                        //    msg = "  Found stagemd5 file: " + stagedFileNamePath;
-                        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        //    ReportStatus("  Found stagemd5 file: " + stagedFileNamePath);
                         //}
                         //else
                         //{
                         //    // DatasetPurgeArchiveHelper needs to create a stagemd5 file for this datatset
                         //    // Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
                         //    //   eventually we should get MD5 result files and then we should be able to purge this dataset
-                        //    msg = "  Stagemd5 file not found";
-                        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        //    LogWarning("  Stagemd5 file not found");
                         //}
 
                     }
@@ -1212,13 +1156,11 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                msg = "  Exception searching for MD5 results file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("  Exception searching for MD5 results file", ex);
                 return false;
             }
 
-            msg = "MD5 results file for dataset found. File name = " + sMD5ResultsFilePath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("MD5 results file for dataset found. File name = " + sMD5ResultsFilePath, true);
 
             // Read in results file
             try
@@ -1276,8 +1218,7 @@ namespace Space_Manager
 
                         if (string.IsNullOrEmpty(sFileNameTrimmed))
                         {
-                            msg = "Did not find " + sSubfolderTofind + " in line " + sInputLine + " in results file " + sMD5ResultsFilePath;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                            LogWarning("Did not find " + sSubfolderTofind + " in line " + sInputLine + " in results file " + sMD5ResultsFilePath);
                         }
                         else
                         {
@@ -1300,16 +1241,14 @@ namespace Space_Manager
                     else
                     {
                         // Invalid line; skip it (but continue parsing the file)
-                        msg = "Unable to split line " + sInputLine + " in results file " + sMD5ResultsFilePath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        LogWarning("Unable to split line " + sInputLine + " in results file " + sMD5ResultsFilePath);
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                msg = "Exception reading MD5 results file " + sMD5ResultsFilePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception reading MD5 results file " + sMD5ResultsFilePath, ex);
                 return false;
             }
 
@@ -1327,19 +1266,16 @@ namespace Space_Manager
         /// <returns>String representation of hash</returns>
         private string GenerateMD5HashFromFile(string inpFileNamePath)
         {
-            string msg;
             byte[] byteHash;
 
             //Verify input file exists
             if (!File.Exists(inpFileNamePath))
             {
-                msg = "clsUpdateOps.GenerateMD5HashFromFile; File not found: " + inpFileNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsUpdateOps.GenerateMD5HashFromFile; File not found: " + inpFileNamePath);
                 return "";
             }
 
-            msg = "Generating MD5 hash for file " + inpFileNamePath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Generating MD5 hash for file " + inpFileNamePath, true);
 
             var hashTool = MD5.Create();
 
@@ -1355,16 +1291,12 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                msg = "clsUpdateOps.GenerateMD5HashFromFile; Exception generating hash for file " + inpFileNamePath + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                return "";
+                LogError("clsUpdateOps.GenerateMD5HashFromFile; Exception generating hash for file " + inpFileNamePath, ex);
+                return string.Empty;
             }
             finally
             {
-                if ((fStream != null))
-                {
-                    fStream.Close();
-                }
+                fStream?.Close();
             }
 
             // Convert hash array to hex string
@@ -1379,18 +1311,14 @@ namespace Space_Manager
 
         private string GenerateSha1HashFromFile(string inpFileNamePath)
         {
-            string msg;
-
             //Verify input file exists
             if (!File.Exists(inpFileNamePath))
             {
-                msg = "clsUpdateOps.GenerateSha1HashFromFile; File not found: " + inpFileNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsUpdateOps.GenerateSha1HashFromFile; File not found: " + inpFileNamePath);
                 return "";
             }
 
-            msg = "Generating Sha-1 hash for file " + inpFileNamePath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Generating Sha-1 hash for file " + inpFileNamePath, true);
 
             var hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
 
@@ -1445,25 +1373,21 @@ namespace Space_Manager
 
                 //Execute the SP
                 var resCode = DMSProcedureExecutor.ExecuteSP(MyCmd, iMaxRetryCount, out sErrorMessage);
-                string msg;
                 if (resCode == 0)
                 {
-                    msg = "Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    Console.WriteLine(msg);
+                    ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged");
                 }
                 else
                 {
-                    msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
+                    var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
                     if (!string.IsNullOrEmpty(sErrorMessage))
                         msg += ": " + sErrorMessage;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    Console.WriteLine(msg);
+                    LogError(msg);
                 }
 #else
                 var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus(msg, true);
 #endif
 
             }
@@ -1505,7 +1429,6 @@ namespace Space_Manager
         /// <returns>TRUE for success; FALSE otherwise</returns>
         private bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
         {
-            string msg;
             var sCurrentStep = "Start";
 
             // Find out if there's a master MD5 results file for this dataset
@@ -1618,23 +1541,19 @@ namespace Space_Manager
                     sCurrentStep = "Delete " + sMD5ResultsFilePathTemp;
                     File.Delete(sMD5ResultsFilePathTemp);
 
-                    msg = "  Updated MD5 results file " + sMD5ResultsFileMaster;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    Console.WriteLine(msg);
+                    ReportStatus("  Updated MD5 results file " + sMD5ResultsFileMaster);
 
                 }
                 else
                 {
-                    msg = "MD5 results file does not require updating: " + sMD5ResultsFileMaster;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    ReportStatus("MD5 results file does not require updating: " + sMD5ResultsFileMaster, true);
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                msg = "Exception updating MD5 results file " + sMD5ResultsFileMaster + "; CurrentStep: " + sCurrentStep;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception updating MD5 results file " + sMD5ResultsFileMaster + "; CurrentStep: " + sCurrentStep, ex);
                 return false;
             }
         }
@@ -1684,8 +1603,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                var msg = "Exception validating that folder " + sDatasetFolderPath + " exists: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Exception validating that folder " + sDatasetFolderPath + " exists", ex);
                 return false;
             }
         }
@@ -1695,12 +1613,12 @@ namespace Space_Manager
         #region "Event Handlers"
         void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSLReader: " + e.Message);
+            LogError("MyEMSLReader: " + e.Message);
         }
 
         void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
+            ReportStatus(e.Message);
         }
 
         void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
@@ -1714,7 +1632,7 @@ namespace Space_Manager
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    ReportStatus(msg, true);
                     mPercentComplete = e.PercentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }

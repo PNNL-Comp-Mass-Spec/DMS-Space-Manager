@@ -31,6 +31,16 @@ namespace Space_Manager
         #region "Methods"
 
         /// <summary>
+        /// Convert bytes to Gigabytes
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        private static double BytesToGB(long bytes)
+        {
+            return bytes / 1024.0 / 1024.0 / 1024.0;
+        }
+
+        /// <summary>
         /// Parses a list of drive data objects from a string
         /// </summary>
         /// <param name="inpList">Input string containing drive information</param>
@@ -40,8 +50,7 @@ namespace Space_Manager
             if (string.IsNullOrWhiteSpace(inpList))
             {
                 // There were no drives in string
-                const string msg = "Drive list provided to GetDriveList is empty";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Drive list provided to GetDriveList is empty");
                 return null;
             }
 
@@ -55,8 +64,7 @@ namespace Space_Manager
             {
                 if (string.IsNullOrWhiteSpace(driveSpec))
                 {
-                    var msg = "Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec);
                     return null;
                 }
 
@@ -64,8 +72,7 @@ namespace Space_Manager
 
                 if (driveInfo.Length != 2)
                 {
-                    var msg = "Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600");;
                     return null;
                 }
 
@@ -107,8 +114,7 @@ namespace Space_Manager
                     var oFreeSpace = disk["FreeSpace"];
                     if (oFreeSpace == null)
                     {
-                        var msg = "Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready", true);
                         return SpaceCheckResults.Error;
                     }
 
@@ -117,26 +123,23 @@ namespace Space_Manager
 
                     if (totalSpace <= 0)
                     {
-                        var msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready", true);
                         return SpaceCheckResults.Error;
                     }
 
-                    driveFreeSpaceGB = availableSpace / Math.Pow(2D, 30D);	// Convert to GB
+                    driveFreeSpaceGB = BytesToGB((long)availableSpace);
                 }
                 catch (Exception ex)
                 {
                     var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
 
-                    if (Environment.MachineName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase))
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase);
+                    LogError(msg, postToDB);                    
 
                     if (driveFreeSpaceGB > 0)
                         driveFreeSpaceGB = -driveFreeSpaceGB;
 
-                    if (Math.Abs(driveFreeSpaceGB) < Single.Epsilon)
+                    if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
                         driveFreeSpaceGB = -1;
                 }
             }
@@ -152,28 +155,25 @@ namespace Space_Manager
 
                     if (!diDrive.IsReady)
                     {
-                        var msg = "Drive " + driveData.DriveLetter + " reports Not Ready via DriveInfo object; drive is offline or drive letter is invalid";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("Drive " + driveData.DriveLetter + " reports Not Ready via DriveInfo object; drive is offline or drive letter is invalid", true);
                         return SpaceCheckResults.Error;
                     }
 
                     if (diDrive.TotalSize <= 0)
                     {
-                        var msg = "Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready", true);
                         return SpaceCheckResults.Error;
                     }
 
-                    driveFreeSpaceGB = diDrive.TotalFreeSpace / Math.Pow(2D, 30D);	// Convert to GB
+                    driveFreeSpaceGB = BytesToGB(diDrive.TotalFreeSpace);
                 }
                 catch (Exception ex)
                 {
-                    var msg = "Exception getting free disk space via .NET DriveInfo object, drive " + driveData.DriveLetter + ": " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("Exception getting free disk space via .NET DriveInfo object, drive " + driveData.DriveLetter + ": " + ex.Message, true);
 
                     if (driveFreeSpaceGB > 0)
                         driveFreeSpaceGB = -driveFreeSpaceGB;
-                    if (Math.Abs(driveFreeSpaceGB) < Single.Epsilon)
+                    if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
                         driveFreeSpaceGB = -1;
                 }
 
@@ -184,8 +184,7 @@ namespace Space_Manager
                 testResult = SpaceCheckResults.Error;
 
                 // Log space requirement if debug logging enabled
-                var spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
+                ReportStatus( "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found", true);
             }
             else
             {
@@ -195,13 +194,88 @@ namespace Space_Manager
                     testResult = SpaceCheckResults.Below_Threshold;
 
                 // Log space requirement if debug logging enabled
-                var spaceMsg = "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Avail space: " + driveFreeSpaceGB.ToString("####0.0");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, spaceMsg);
+                ReportStatus("Drive " + driveData.DriveLetter + 
+                    " Space Threshold: " + driveData.MinDriveSpace + 
+                    ", Avail space: " + driveFreeSpaceGB.ToString("####0.0"), true);
 
             }
 
             return testResult;
         }
+
+        /// <summary>
+        /// Log an error message
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="postToDatabase">When true, log the message to the database and the local log file</param>
+        public static void LogError(string errorMessage, bool postToDatabase = false)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(errorMessage);
+            Console.ResetColor();
+
+            var loggerType = postToDatabase ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+        }
+
+        /// <summary>
+        /// Log an error message and exception
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="ex">Exception to log</param>
+        public static void LogError(string errorMessage, Exception ex)
+        {
+            ReportStatus(errorMessage, ex);
+        }
+
+        /// <summary>
+        /// Log a warning message
+        /// </summary>
+        /// <param name="warningMessage">Warning message</param>
+        public static void LogWarning(string warningMessage)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(warningMessage);
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+        }
+
+        /// <summary>
+        /// Shows information about an exception at the console and in the log file
+        /// </summary>
+        /// <param name="errorMessage">Error message (do not include ex.message)</param>
+        /// <param name="ex">Exception</param>
+        public static void ReportStatus(string errorMessage, Exception ex)
+        {
+            string formattedError;
+            if (errorMessage.EndsWith(ex.Message))
+            {
+                formattedError = errorMessage;
+            }
+            else
+            {
+                formattedError = errorMessage + ": " + ex.Message;
+            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(formattedError);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(ex));
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+        }
+
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="isDebug">True if a debug level message</param>
+        public static void ReportStatus(string statusMessage, bool isDebug = false)
+        {
+            Console.WriteLine(statusMessage);
+            var logLevel = isDebug ? clsLogTools.LogLevels.DEBUG : clsLogTools.LogLevels.INFO;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logLevel, statusMessage);
+        }
+
         #endregion
     }
 }

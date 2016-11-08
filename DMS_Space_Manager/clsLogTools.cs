@@ -259,7 +259,8 @@ namespace Space_Manager
         /// <summary>
         /// Sets the file logging level via an integer value (Overloaded)
         /// </summary>
-        /// <param name="InpLevel">"InpLevel">Integer corresponding to level (1-5, 5 being most verbose</param>
+        /// <param name="InpLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
+        /// <remarks>1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages</remarks>
         public static void SetFileLogLevel(int InpLevel)
         {
             var LogLevelEnumType = typeof(LogLevels);
@@ -280,7 +281,8 @@ namespace Space_Manager
         /// <summary>
         /// Sets file logging level based on enumeration (Overloaded)
         /// </summary>
-        /// <param name="InpLevel">LogLevels value defining level (Debug is most verbose)</param>
+        /// <param name="InpLevel">LogLevels value defining level (1-5, 5 being most verbose)</param>
+        /// <remarks>1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages</remarks>
         public static void SetFileLogLevel(LogLevels InpLevel)
         {
             var LogRepo = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
@@ -336,7 +338,7 @@ namespace Space_Manager
         /// Configures the file logger
         /// </summary>
         /// <param name="LogFileName">Base name for log file</param>
-        /// <param name="LogLevel">Debug level for file logger</param>
+        /// <param name="LogLevel">Debug level for file logger (1-5, 5 being most verbose)</param>
         public static void CreateFileLogger(string LogFileName, int LogLevel)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
