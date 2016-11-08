@@ -511,18 +511,29 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
             }
 
+            bool queryException;
+
             // First look for this dataset's files in MyEMSL
             // Next append any files visible using Samba (at \\adms.emsl.pnl.gov\dmsarch\)
-            var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName);
+            var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out queryException);
 
             if (lstFilesInMyEMSL.Count == 0)
             {
                 // Verify Samba dataset folder exists
                 if (!Directory.Exists(sambaDatasetNamePath))
                 {
-                    msg = "clsUpdateOps.CompareDatasetFolders, dataset not in MyEMSL and folder " + sambaDatasetNamePath + " not found; unable to verify files prior to purge";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                    Console.WriteLine(msg);
+                    string msg;
+
+                    if (queryException)
+                    {
+                        msg = "Query exception contacting MyEMSL; unable to verify files prior to purge";
+                    }
+                    else
+                    {
+                        msg = "Dataset not in MyEMSL and folder " + sambaDatasetNamePath +
+                              " not found; unable to verify files prior to purge";                        
+                    }
+                    LogError(msg, true);
 
                     // Check whether the parent folder exists
                     if (ValidateDatasetShareExists(sambaDatasetNamePath, 2))
@@ -640,6 +651,7 @@ namespace Space_Manager
             catch (Exception ex)
             {
                 LogError("Exception in FindFilesInMyEMSL", ex);
+                queryException = true;
             }
 
             return new List<ArchivedFileInfo>();
