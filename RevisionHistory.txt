@@ -1,5 +1,9 @@
 Space Manager Change Log
 
+Version 2.0.6155; November 7, 2016
+	- Added centralized logging methods
+	- Customized error message logged when a MyEMSL query throws an exception
+
 Version 2.0.6089; September 2, 2016
 	- Changed archive path from \\aurora.emsl.pnl.gov\archive\dmsarch\ to \\adms.emsl.pnl.gov\dmsarch\
 
