@@ -26,11 +26,11 @@ namespace Space_Manager
         //**********************************************************************************************************
 
         #region "Class variables"
-        private string m_BrokerUri = null;
-        private string m_CommandQueueName = null;	// Not presently used
-        private string m_BroadcastTopicName = null;	// Used for manager control functions (ie, start, read config)
-        private string m_StatusTopicName = null;	// Used for status output
-        private clsMgrSettings m_MgrSettings = null;
+        private string m_BrokerUri;
+        private string m_CommandQueueName;	// Not presently used
+        private string m_BroadcastTopicName;	// Used for manager control functions (ie, start, read config)
+        private string m_StatusTopicName;	// Used for status output
+        private clsMgrSettings m_MgrSettings;
 
         private IConnection m_Connection;
         private ISession m_StatusSession;
@@ -38,8 +38,8 @@ namespace Space_Manager
         private IMessageConsumer m_CommandConsumer;
         private IMessageConsumer m_BroadcastConsumer;
 
-        private bool m_IsDisposed = false;
-        private bool m_HasConnection = false;
+        private bool m_IsDisposed;
+        private bool m_HasConnection;
         #endregion
 
         #region "Events"
@@ -106,12 +106,12 @@ namespace Space_Manager
             {
                 try
                 {
-                    IConnectionFactory connectionFactory = new ConnectionFactory(this.m_BrokerUri);
-                    this.m_Connection = connectionFactory.CreateConnection();
-                    this.m_Connection.RequestTimeout = new System.TimeSpan(0, 0, 0, timeoutSeconds);
-                    this.m_Connection.Start();
+                    IConnectionFactory connectionFactory = new ConnectionFactory(m_BrokerUri);
+                    m_Connection = connectionFactory.CreateConnection();
+                    m_Connection.RequestTimeout = new TimeSpan(0, 0, 0, timeoutSeconds);
+                    m_Connection.Start();
 
-                    this.m_HasConnection = true;
+                    m_HasConnection = true;
                     // temp debug
                     // Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
 
@@ -157,17 +157,17 @@ namespace Space_Manager
 
                 // queue for telling manager to perform task (future?)
                 var commandSession = m_Connection.CreateSession();
-                m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(this.m_CommandQueueName));
+                m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command listener established");
 
                 // topic for commands broadcast to all capture tool managers
                 var broadcastSession = m_Connection.CreateSession();
-                m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(this.m_BroadcastTopicName));
+                m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Broadcast listener established");
 
                 // topic for the capture tool manager to send status information over
-                this.m_StatusSession = m_Connection.CreateSession();
-                this.m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+                m_StatusSession = m_Connection.CreateSession();
+                m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Status sender established");
 
                 return true;
@@ -191,12 +191,13 @@ namespace Space_Manager
             var textMessage = message as ITextMessage;
             var Msg = "clsMessageHandler(), Command message received";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-            if (this.CommandReceived != null)
+            if (CommandReceived != null)
             {
                 // call the delegate to process the commnd
                 Msg = "clsMessageHandler().OnCommandReceived: At lease one event handler assigned";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-                this.CommandReceived(textMessage.Text);
+                if (textMessage != null)
+                    CommandReceived(textMessage.Text);
             }
             else
             {
@@ -215,12 +216,13 @@ namespace Space_Manager
             var textMessage = message as ITextMessage;
             var Msg = "clsMessageHandler(), Broadcast message received";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-            if (this.BroadcastReceived != null)
+            if (BroadcastReceived != null)
             {
                 // call the delegate to process the commnd
                 Msg = "clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-                this.BroadcastReceived(textMessage.Text);
+                if (textMessage != null)
+                    BroadcastReceived(textMessage.Text);
             }
             else
             {
@@ -235,13 +237,13 @@ namespace Space_Manager
         /// <param name="message">Outgoing message string</param>
         public void SendMessage(string message)
         {
-            if (!this.m_IsDisposed)
+            if (!m_IsDisposed)
             {
-                var textMessage = this.m_StatusSession.CreateTextMessage(message);
+                var textMessage = m_StatusSession.CreateTextMessage(message);
                 textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
                 try
                 {
-                    this.m_StatusSender.Send(textMessage);
+                    m_StatusSender.Send(textMessage);
                 }
                 catch
                 {
@@ -250,7 +252,7 @@ namespace Space_Manager
             }
             else
             {
-                throw new ObjectDisposedException(this.GetType().FullName);
+                throw new ObjectDisposedException(GetType().FullName);
             }
         }
         #endregion
@@ -263,8 +265,8 @@ namespace Space_Manager
         {
             if (m_HasConnection)
             {
-                this.m_Connection.Dispose();
-                this.m_HasConnection = false;
+                m_Connection.Dispose();
+                m_HasConnection = false;
                 var msg = "Message connection closed";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
             }
@@ -275,11 +277,10 @@ namespace Space_Manager
         /// </summary>
         public void Dispose()
         {
-            if (!this.m_IsDisposed)
-            {
-                this.DestroyConnection();
-                this.m_IsDisposed = true;
-            }
+            if (m_IsDisposed) return;
+
+            DestroyConnection();
+            m_IsDisposed = true;
         }
 
         /// <summary>

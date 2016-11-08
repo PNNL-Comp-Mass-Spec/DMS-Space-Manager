@@ -107,19 +107,6 @@ namespace Space_Manager
         public override EnumRequestTaskResult RequestTask(string driveLetter)
         {
             var retVal = RequestTaskDetailed(driveLetter);
-            switch (retVal)
-            {
-                case EnumRequestTaskResult.TaskFound:
-                    m_TaskWasAssigned = true;
-                    break;
-                case EnumRequestTaskResult.NoTaskFound:
-                    m_TaskWasAssigned = false;
-                    break;
-                default:
-                    m_TaskWasAssigned = false;
-                    break;
-            }
-
             return retVal;
         }
 

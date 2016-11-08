@@ -57,14 +57,11 @@ namespace Space_Manager
 				//Add the most recent error message
 				m_ErrorQueue.Enqueue(ErrMsg);
 
-				//If there are > 4 entries in the queue, then delete the oldest ones
-				if (m_ErrorQueue.Count > 4)
-				{
-					while (m_ErrorQueue.Count > 4)
-					{
-						m_ErrorQueue.Dequeue();
-					}
-				}
+				// If there are more than 4 entries in the queue, delete the oldest ones
+			    while (m_ErrorQueue.Count > 4)
+			    {
+			        m_ErrorQueue.Dequeue();
+			    }
 			}
 		#endregion
 	}

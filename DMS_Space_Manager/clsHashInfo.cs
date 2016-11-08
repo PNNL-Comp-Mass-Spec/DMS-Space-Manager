@@ -39,9 +39,9 @@ namespace Space_Manager
 
         public clsHashInfo(string hashCode, string myEmslFileID)
         {
-            this.Clear();
-            this.HashCode = hashCode;
-            this.MyEMSLFileID = myEmslFileID;
+            Clear();
+            HashCode = hashCode;
+            MyEMSLFileID = myEmslFileID;
         }
 
         public void Clear()
@@ -52,11 +52,8 @@ namespace Space_Manager
 
         public bool IsMatch(clsHashInfo comparisonValue)
         {
-            if (string.Equals(this.HashCode, comparisonValue.HashCode) &&
-                string.Equals(this.MyEMSLFileID, comparisonValue.MyEMSLFileID))
-                return true;
-            else
-                return false;
+            return string.Equals(HashCode, comparisonValue.HashCode) &&
+                   string.Equals(MyEMSLFileID, comparisonValue.MyEMSLFileID);
         }
 
         public override string ToString()

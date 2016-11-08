@@ -28,8 +28,8 @@ namespace Space_Manager
 			int CpuUtilization { get; set; }
 			string Tool { get; set; }
 			EnumTaskStatus TaskStatus { get; set; }
-			Single Duration { get; set; }
-			Single Progress { get; set; }
+			float Duration { get; set; }
+			float Progress { get; set; }
 			string CurrentOperation { get; set; }
 			EnumTaskStatusDetail TaskStatusDetail { get; set; }
 			int JobNumber { get; set; }
@@ -44,8 +44,8 @@ namespace Space_Manager
 
 		#region "Methods"
 			void WriteStatusFile();
-			void UpdateAndWrite(Single PercentComplete);
-			void UpdateAndWrite(EnumTaskStatusDetail Status, Single PercentComplete);
+			void UpdateAndWrite(float PercentComplete);
+			void UpdateAndWrite(EnumTaskStatusDetail Status, float PercentComplete);
 			void UpdateStopped(bool MgrError);
 			void UpdateDisabled(bool Local);
 			void UpdateIdle();

@@ -46,7 +46,7 @@ namespace Space_Manager
 			public clsDriveData(string driveLetter, double driveSpace)
 			{
 				m_DriveLetter = driveLetter;
-				this.MinDriveSpace = driveSpace;
+				MinDriveSpace = driveSpace;
 			}
 		#endregion
 
@@ -66,7 +66,7 @@ namespace Space_Manager
 
 			public override string ToString()
 			{
-				return this.DriveLetter;
+				return DriveLetter;
 			}
 		#endregion
 

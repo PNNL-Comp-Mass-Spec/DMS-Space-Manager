@@ -117,23 +117,21 @@ namespace Space_Manager
             return RetDict;
         }
 
-        private bool CheckInitialSettings(Dictionary<string, string> InpDict)
+        private bool CheckInitialSettings(IReadOnlyDictionary<string, string> settingsDict)
         {
-            string MyMsg;
-
             //Verify manager settings dictionary exists
-            if (InpDict == null)
+            if (settingsDict == null)
             {
-                MyMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, MyMsg);
+                var msg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, msg);
                 return false;
             }
 
             //Verify intact config file was found
-            if (bool.Parse(InpDict["UsingDefaults"]))
+            if (bool.Parse(settingsDict["UsingDefaults"]))
             {
-                MyMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, default settings being used";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, MyMsg);
+                var msg = "clsMgrSettings.CheckInitialSettings(); Config file problem, default settings being used";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, msg);
                 return false;
             }
 
@@ -149,16 +147,16 @@ namespace Space_Manager
         public bool LoadMgrSettingsFromDB(Dictionary<string, string> mgrSettingsDict)
         {
             //Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
-            short RetryCount = 3;
-            string MyMsg;
+            short retryCount = 3;
+            string myMsg;
 
             var SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + mgrSettingsDict["MgrName"] + "'";
 
             //Get a table containing data for job
-            DataTable Dt = null;
+            DataTable resultsTable = null;
 
             //Get a datatable holding the parameters for one manager
-            while (RetryCount > 0)
+            while (retryCount > 0)
             {
                 try
                 {
@@ -169,7 +167,7 @@ namespace Space_Manager
                             using (var Ds = new DataSet())
                             {
                                 Da.Fill(Ds);
-                                Dt = Ds.Tables[0];
+                                resultsTable = Ds.Tables[0];
                             }							
                         }
                     }
@@ -178,51 +176,48 @@ namespace Space_Manager
                 }
                 catch (Exception ex)
                 {
-                    RetryCount -= 1;
-                    MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
-                    MyMsg = MyMsg + ", RetryCount = " + RetryCount;
-                    WriteErrorMsg(MyMsg);
+                    retryCount -= 1;
+                    myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
+                    myMsg = myMsg + ", RetryCount = " + retryCount;
+                    WriteErrorMsg(myMsg);
                     //Delay for 5 seconds before trying again
                     System.Threading.Thread.Sleep(5000);
                 }
             }
 
             //If loop exited due to errors, return false
-            if (RetryCount < 1)
+            if (retryCount < 1)
             {
-                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
-                WriteErrorMsg(MyMsg);
-                if (Dt != null)
-                {
-                    Dt.Dispose();
-                }
+                myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
+                WriteErrorMsg(myMsg);
+                resultsTable?.Dispose();
                 return false;
             }
 
-            if (Dt == null)
+            if (resultsTable == null)
             {
                 return false;
             }
             
             //Verify at least one row returned
-            if (Dt.Rows.Count < 1)
+            if (resultsTable.Rows.Count < 1)
             {
                 //Wrong number of rows returned
-                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Invalid row count retrieving manager settings: RowCount = ";
-                MyMsg += Dt.Rows.Count.ToString(CultureInfo.InvariantCulture);
-                WriteErrorMsg(MyMsg);
-                Dt.Dispose();
+                myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Invalid row count retrieving manager settings: RowCount = ";
+                myMsg += resultsTable.Rows.Count.ToString(CultureInfo.InvariantCulture);
+                WriteErrorMsg(myMsg);
+                resultsTable.Dispose();
                 return false;
             }
 
             //Fill a string dictionary with the manager parameters that have been found
             try
             {
-                foreach (DataRow TestRow in Dt.Rows)
+                foreach (DataRow resultRow in resultsTable.Rows)
                 {
                     //Add the column heading and value to the dictionary
-                    var ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
-                    var ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
+                    var ParamKey = DbCStr(resultRow[resultsTable.Columns["ParameterName"]]);
+                    var ParamVal = DbCStr(resultRow[resultsTable.Columns["ParameterValue"]]);
                     if (mgrSettingsDict.ContainsKey(ParamKey))
                     {
                         mgrSettingsDict[ParamKey] = ParamVal;
@@ -236,52 +231,52 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " + ex.Message;
-                WriteErrorMsg(MyMsg);
+                myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " + ex.Message;
+                WriteErrorMsg(myMsg);
                 return false;
             }
             finally
             {
-                Dt.Dispose();
+                resultsTable.Dispose();
             }
         }
 
-        public string GetParam(string ItemKey)
+        public string GetParam(string itemKey)
         {
-            string RetStr;
-            if (m_ParamDictionary.TryGetValue(ItemKey, out RetStr))
-                return RetStr;
+            string retStr;
+            if (m_ParamDictionary.TryGetValue(itemKey, out retStr))
+                return retStr;
             
             return string.Empty;
         }
 
-        public void SetParam(string ItemKey, string ItemValue)
+        public void SetParam(string itemKey, string itemValue)
         {
-            m_ParamDictionary[ItemKey] = ItemValue;
+            m_ParamDictionary[itemKey] = itemValue;
         }
 
         /// <summary>
         /// Writes specfied value to an application config file.
         /// </summary>
-        /// <param name="Key">Name for parameter (case sensitive)</param>
-        /// <param name="Value">New value for parameter</param>
+        /// <param name="key">Name for parameter (case sensitive)</param>
+        /// <param name="value">New value for parameter</param>
         /// <returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
         /// <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
-        public bool WriteConfigSetting(string Key, string Value)
+        public bool WriteConfigSetting(string key, string value)
         {
 
             ErrMsg = "";
 
             //Load the config document
-            var MyDoc = LoadConfigDocument();
-            if (MyDoc == null)
+            var doc = LoadConfigDocument();
+            if (doc == null)
             {
                 //Error message has already been produced by LoadConfigDocument
                 return false;
             }
 
             //Retrieve the settings node
-            var MyNode = MyDoc.SelectSingleNode("//applicationSettings");
+            var MyNode = doc.SelectSingleNode("//applicationSettings");
 
             if (MyNode == null)
             {
@@ -291,20 +286,20 @@ namespace Space_Manager
 
             try
             {
-                //Select the eleement containing the value for the specified key containing the key
-                var MyElement = (XmlElement)MyNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", Key));
+                //Select the element containing the value for the specified key containing the key
+                var MyElement = (XmlElement)MyNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
                 if (MyElement != null)
                 {
                     //Set key to specified value
-                    MyElement.InnerText = Value;
+                    MyElement.InnerText = value;
                 }
                 else
                 {
-                    //Key was not found
-                    ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + Key;
+                    //key was not found
+                    ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
-                MyDoc.Save(GetConfigFilePath());
+                doc.Save(GetConfigFilePath());
                 return true;
             }
             catch (Exception ex)
@@ -313,7 +308,7 @@ namespace Space_Manager
                 return false;
 
             }
-        } // End sub
+        }
 
         /// <summary>
         /// Loads an app config file for changing parameters

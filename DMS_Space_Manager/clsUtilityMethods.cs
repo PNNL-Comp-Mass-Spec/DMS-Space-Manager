@@ -19,15 +19,6 @@ namespace Space_Manager
         // Holds static utility methods that are put here to avoid cluttering up other classes
         //**********************************************************************************************************
 
-        #region "Enums"
-        public enum StoredProcedureExecutionResult
-        {
-            OK = 0,
-            Deadlock = -4,
-            Excessive_Retries = -5
-        }
-        #endregion
-
         #region "Methods"
 
         /// <summary>
@@ -72,7 +63,7 @@ namespace Space_Manager
 
                 if (driveInfo.Length != 2)
                 {
-                    LogError("Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600");;
+                    LogError("Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600");
                     return null;
                 }
 

@@ -7,7 +7,6 @@ namespace Space_Manager
 {
     class clsPurgeableFileSearcher
     {
-
         /// <summary>
         /// Look for files in diFolder matching sFilterSpec; do not recruse
         /// Matching files are added to lstServerFilesToPurge
@@ -15,11 +14,11 @@ namespace Space_Manager
         /// <param name="diFolder"></param>
         /// <param name="sFilterSpec"></param>
         /// <param name="lstServerFilesToPurge"></param>
-        private int AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, SortedSet<string> lstServerFilesToPurge)
+        private void AddFilesToPurge(DirectoryInfo diFolder, string sFilterSpec, SortedSet<string> lstServerFilesToPurge)
         {
             const int minSizeKB = 0;
             const bool recurse = false;
-            return AddFilesToPurge(diFolder, sFilterSpec, minSizeKB, recurse, lstServerFilesToPurge);
+            AddFilesToPurge(diFolder, sFilterSpec, minSizeKB, recurse, lstServerFilesToPurge);
         }
 
         /// <summary>

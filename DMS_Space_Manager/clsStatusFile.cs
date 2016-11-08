@@ -7,6 +7,7 @@
 //
 //*********************************************************************************************************
 using System;
+using System.Globalization;
 using System.Xml;
 using System.IO;
 
@@ -20,7 +21,7 @@ namespace Space_Manager
 
         #region "Class variables"
         //Status file name and location
-        private string m_FileNamePath = "";
+        private string m_FileNamePath;
 
         //Manager name
         private string m_MgrName = "";
@@ -35,7 +36,7 @@ namespace Space_Manager
         private int m_CpuUtilization;
 
         //Analysis Tool
-        private string m_Tool = "";
+        private string m_Tool;
 
         //Task status
         private EnumTaskStatus m_TaskStatus = EnumTaskStatus.No_Task;
@@ -59,19 +60,13 @@ namespace Space_Manager
         private int m_JobStep;
 
         //Dataset name
-        private string m_Dataset = "";
+        private string m_Dataset;
 
         //Most recent job info
         private string m_MostRecentJobInfo = "";
 
         //Number of spectrum files created
         private int m_SpectrumCount;
-
-        //Message broker connection string
-        private string m_MessageQueueURI;
-
-        //Broker topic for status reporting
-        private string m_MessageQueueTopic;
 
         //Flag to indicate if status should be logged to broker in addition to a file
         private bool m_LogToMsgQueue;
@@ -168,17 +163,15 @@ namespace Space_Manager
             set { m_SpectrumCount = value; }
         }
 
-        public string MessageQueueURI
-        {
-            get { return m_MessageQueueURI; }
-            set { m_MessageQueueURI = value; }
-        }
+        /// <summary>
+        /// Message broker connection string
+        /// </summary>
+        public string MessageQueueURI { get; set; }
 
-        public string MessageQueueTopic
-        {
-            get { return m_MessageQueueTopic; }
-            set { m_MessageQueueTopic = value; }
-        }
+        /// <summary>
+        /// Broker topic for status reporting
+        /// </summary>
+        public string MessageQueueTopic { get; set; }
 
         public bool LogToMsgQueue
         {
@@ -191,10 +184,10 @@ namespace Space_Manager
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileLocation">Full path to status file</param>
-        public clsStatusFile(string FileLocation)
+        /// <param name="fileLocation">Full path to status file</param>
+        public clsStatusFile(string fileLocation)
         {
-            m_FileNamePath = FileLocation;
+            m_FileNamePath = fileLocation;
             m_MgrStartTime = DateTime.Now;
             m_Progress = 0;
             m_SpectrumCount = 0;
@@ -284,8 +277,8 @@ namespace Space_Manager
                     XWriter.WriteStartElement("Manager");
                     XWriter.WriteElementString("MgrName", m_MgrName);
                     XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
-                    XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString());
-                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString());
+                    XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString(CultureInfo.InvariantCulture));
+                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString(CultureInfo.InvariantCulture));
                     XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString());
                     XWriter.WriteElementString("FreeMemoryMB", "0");
                     XWriter.WriteStartElement("RecentErrorMessages");
@@ -468,19 +461,26 @@ namespace Space_Manager
                 var XmlStr = File.ReadAllText(m_FileNamePath);
 
                 // Convert to an XML document
-                var Doc = new XmlDocument();
-                Doc.LoadXml(XmlStr);
+                var doc = new XmlDocument();
+                doc.LoadXml(XmlStr);
 
                 // Get the most recent log message
-                clsStatusData.MostRecentLogMessage = Doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentLogMessage").InnerText;
+                var logMessageNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentLogMessage");
+                if (logMessageNode != null)
+                    clsStatusData.MostRecentLogMessage = logMessageNode.InnerText;
 
                 //Get the most recent job info
-                m_MostRecentJobInfo = Doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo").InnerText;
+                var jobInfoNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo");
+                if (jobInfoNode != null)
+                    m_MostRecentJobInfo = jobInfoNode.InnerText;
 
                 //Get the error messsages
-                foreach (XmlNode Xn in Doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg"))
+                var errMsgNode = doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg");
+                if (errMsgNode == null) return;
+
+                foreach (XmlNode msgNode in errMsgNode)
                 {
-                    clsStatusData.AddErrorMessage(Xn.InnerText);
+                    clsStatusData.AddErrorMessage(msgNode.InnerText);
                 }
             }
             catch (Exception ex)

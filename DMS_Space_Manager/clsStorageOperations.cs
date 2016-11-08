@@ -78,6 +78,7 @@ namespace Space_Manager
             /// <summary>
             /// \\agate.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
             /// </summary>
+            /// <remarks>This will be true for all datasets added to DMS after September 2013</remarks>
             Compare_Archive_Samba_DatasetFolder_Missing
         }
 
@@ -143,7 +144,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        private PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
+        private readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
 
         #endregion
 
@@ -461,9 +462,11 @@ namespace Space_Manager
             try
             {
                 if (!diDatasetFolder.Exists)
-                    intFileCount = 0;
-                else
-                    intFileCount = diDatasetFolder.GetFiles().Length;
+                {
+                    ReportStatus("  Dataset not in archive (" + sambaDatasetNamePath + ")", true);
+                    return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                }
+                intFileCount = diDatasetFolder.GetFiles().Length;
             }
             catch (AccessViolationException)
             {
@@ -737,6 +740,7 @@ namespace Space_Manager
             {
                 // File doesn't exist in archive
                 // The archive could be offline or the file could be stored in MyEMSL
+                // All data added to DMS after September 2013 will only be in MyEMSL
 
                 return CheckSambaPathAvailability(sambaDatasetNamePath, sServerFilePath);
             }
@@ -1225,7 +1229,7 @@ namespace Space_Manager
 
                         var hashCode = lstHashAndPathInfo[0];
 
-                        var lstPathAndFileID = lstHashAndPathInfo[1].Split(new[] { '\t' }).ToList();
+                        var lstPathAndFileID = lstHashAndPathInfo[1].Split('\t').ToList();
 
                         var sFileNamePath = lstPathAndFileID[0];
 
@@ -1370,7 +1374,6 @@ namespace Space_Manager
 #if DoDelete
                 // Call stored procedure MarkPurgedJobs
 
-                var connStr = m_MgrParams.GetParam("ConnectionString");
                 const int iMaxRetryCount = 3;
                 string sErrorMessage;
 

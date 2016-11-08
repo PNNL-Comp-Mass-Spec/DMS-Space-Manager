@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Data.SqlClient;
 using System.Data;
 
@@ -26,7 +25,6 @@ namespace Space_Manager
 
         #region "Class variables"
         protected readonly IMgrParams m_MgrParams;
-        protected bool m_TaskWasAssigned;
         protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         protected readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
@@ -34,13 +32,6 @@ namespace Space_Manager
         #endregion
 
         #region "Properties"
-        public bool TaskWasAssigned
-        {
-            get
-            {
-                return m_TaskWasAssigned;
-            }
-        }
 
         public Dictionary<string, string> TaskDictionary
         {
@@ -154,93 +145,73 @@ namespace Space_Manager
         private string DbCStr(object InpObj)
         {
             //If input object is DbNull, returns "", otherwise returns String representation of object
-            if ((InpObj == null) || (object.ReferenceEquals(InpObj, DBNull.Value)))
+            if ((InpObj == null) || ReferenceEquals(InpObj, DBNull.Value))
             {
                 return "";
             }
-            else
-            {
-                return InpObj.ToString();
-            }
+            return InpObj.ToString();
         }
 
         protected float DbCSng(object InpObj)
         {
             //If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0F;
             }
-            else
-            {
-                return (float)InpObj;
-            }
+            return (float)InpObj;
         }
 
         protected double DbCDbl(object InpObj)
         {
             //If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0;
             }
-            else
-            {
-                return (double)InpObj;
-            }
+            return (double)InpObj;
         }
 
         protected int DbCInt(object InpObj)
         {
             //If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
-            else
-            {
-                return (int)InpObj;
-            }
+            return (int)InpObj;
         }
 
         protected long DbCLng(object InpObj)
         {
             //If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
-            else
-            {
-                return (long)InpObj;
-            }
+            return (long)InpObj;
         }
 
         protected decimal DbCDec(object InpObj)
         {
             //If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
-            else
-            {
-                return (decimal)InpObj;
-            }
+            return (decimal)InpObj;
         }
 
         protected short DbCShort(object InpObj)
         {
             //If input object is DbNull, returns 0, otherwise returns Short representation of object
-            if (object.ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
-            else
-            {
-                return (short)InpObj;
-            }
+            return (short)InpObj;
         }
+
         #endregion
      
     }

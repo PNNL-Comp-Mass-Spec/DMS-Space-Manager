@@ -17,12 +17,6 @@ namespace Space_Manager
         //**********************************************************************************************************
 
         #region "Enums"
-        private enum BroadcastCmdType
-        {
-            Shutdown,
-            ReadConfig,
-            Invalid
-        }
 
         //private enum LoopExitCode
         //{
@@ -150,6 +144,12 @@ namespace Space_Manager
             m_Task = new clsSpaceMgrTask(m_MgrSettings);
 
             // Set up the status file class
+            if (fInfo.DirectoryName == null)
+            {
+                LogError("Unable to determine the parent directory of the exe");
+                return false;
+            }
+
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
@@ -179,7 +179,7 @@ namespace Space_Manager
                     // The using statement also closes the StreamReader.
                     using (var sr = new StreamReader(historyFile))
                     {
-                        String line;
+                        string line;
                         // Read and display lines from the file until the end of 
                         // the file is reached.
                         while ((line = sr.ReadLine()) != null)
