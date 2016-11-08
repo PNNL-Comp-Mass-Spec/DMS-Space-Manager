@@ -54,7 +54,7 @@ namespace Space_Manager
             CLOSEOUT_PURGE_AUTO = 5,				// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
             CLOSEOUT_PURGE_ALL_EXCEPT_QC = 6,		// Purged instrument data, MSXML data, and older jobs; PurgePolicy=0
             CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE = 7,
-            CLOSEOUT_AURORA_OFFLINE = 8
+            CLOSEOUT_ARCHIVE_OFFLINE = 8            // Previously CLOSEOUT_AURORA_OFFLINE
         }
 
         public enum EnumRequestTaskResult : short

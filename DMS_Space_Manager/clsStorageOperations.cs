@@ -65,12 +65,18 @@ namespace Space_Manager
             Hash_Not_Found_For_File,
 
             /// <summary>
-            /// Folder not found: \\adms.emsl.pnl.gov\dmsarch
+            /// Folder not found: \\agate.emsl.pnl.gov\dmsarch
             /// </summary>
+            /// <remarks>
+            /// Previous SAMBA bridge hosts:
+            ///  aurora.emsl.pnl.gov
+            ///  a2.emsl.pnl.gov
+            ///  adms.emsl.pnl.gov
+            /// </remarks>
             Compare_Archive_Samba_Share_Missing,
 
             /// <summary>
-            /// \\adms.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
+            /// \\agate.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
             /// </summary>
             Compare_Archive_Samba_DatasetFolder_Missing
         }
@@ -234,7 +240,7 @@ namespace Space_Manager
                 case ArchiveCompareResults.Compare_Archive_Samba_Share_Missing:
                     // Archive share is missing
                     // Newer instruments will not have folders on the Samba share because all of their data is in MyEMSL
-                    return EnumCloseOutType.CLOSEOUT_AURORA_OFFLINE;
+                    return EnumCloseOutType.CLOSEOUT_ARCHIVE_OFFLINE;
 
                 case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:
                     // Dataset folder not found in the archive
@@ -434,10 +440,10 @@ namespace Space_Manager
         /// <returns>Comparison result</returns>
         private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string sServerFilePath)
         {
-            // Look for \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
-            //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
-            //       or \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\
-            //       or \\adms.emsl.pnl.gov\dmsarch\
+            // Look for \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
+            //       or \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
+            //       or \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\
+            //       or \\agate.emsl.pnl.gov\dmsarch\
 
             if (!ValidateDatasetShareExists(sambaDatasetNamePath))
             {
@@ -454,7 +460,10 @@ namespace Space_Manager
             int intFileCount;
             try
             {
-                intFileCount = diDatasetFolder.GetFiles().Length;
+                if (!diDatasetFolder.Exists)
+                    intFileCount = 0;
+                else
+                    intFileCount = diDatasetFolder.GetFiles().Length;
             }
             catch (AccessViolationException)
             {
@@ -474,7 +483,7 @@ namespace Space_Manager
 
             if (intFileCount > 0)
             {
-                // The folder exists in the aurora archive, but the file in question was not there 
+                // The folder exists in the archive, but the file in question was not there 
 
                 LogWarning("  Update required. Server file not found in archive: " + sServerFilePath);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
@@ -514,7 +523,7 @@ namespace Space_Manager
             bool queryException;
 
             // First look for this dataset's files in MyEMSL
-            // Next append any files visible using Samba (at \\adms.emsl.pnl.gov\dmsarch\)
+            // Next append any files visible using Samba (at \\agate.emsl.pnl.gov\dmsarch\)
             var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out queryException);
 
             if (lstFilesInMyEMSL.Count == 0)

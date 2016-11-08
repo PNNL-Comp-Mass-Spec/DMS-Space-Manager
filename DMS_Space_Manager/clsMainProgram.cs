@@ -483,9 +483,9 @@ namespace Space_Manager
                         break;
                     }
 
-                    if (purgeResult == EnumCloseOutType.CLOSEOUT_AURORA_OFFLINE)
+                    if (purgeResult == EnumCloseOutType.CLOSEOUT_ARCHIVE_OFFLINE)
                     {
-                        LogWarning("Aurora is offline; closing the manager");
+                        LogWarning("Archive is offline; closing the manager");
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
