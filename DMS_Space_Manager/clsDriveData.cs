@@ -9,66 +9,66 @@
 
 namespace Space_Manager
 {
-	public class clsDriveData
-	{
-		//*********************************************************************************************************
-		// Class to hold data for each drive being managed
-		//**********************************************************************************************************
+    public class clsDriveData
+    {
+        //*********************************************************************************************************
+        // Class to hold data for each drive being managed
+        //**********************************************************************************************************
 
-		#region "Class variables"
-			string m_DriveLetter = "";
-		#endregion
+        #region "Class variables"
+        string m_DriveLetter = "";
+        #endregion
 
-		#region "Properties"
-			public string DriveLetter
-			{
-				get {return AppendColonToDriveLetter(m_DriveLetter);}
-				set { m_DriveLetter = value; }
-			}
+        #region "Properties"
+        public string DriveLetter
+        {
+            get { return AppendColonToDriveLetter(m_DriveLetter); }
+            set { m_DriveLetter = value; }
+        }
 
-			public double MinDriveSpace { get; set; }	// Minimum allowable space in GB
-		#endregion
+        public double MinDriveSpace { get; set; }   // Minimum allowable space in GB
+        #endregion
 
-		#region "Constructors"
-			/// <summary>
-			/// Default constructor requiring use of properties to set values
-			/// </summary>
-			public clsDriveData()
-			{
-				// Default constructor - does nothing
-			}
+        #region "Constructors"
+        /// <summary>
+        /// Default constructor requiring use of properties to set values
+        /// </summary>
+        public clsDriveData()
+        {
+            // Default constructor - does nothing
+        }
 
-			/// <summary>
-			/// Constructor that allows setting property values
-			/// </summary>
-			/// <param name="driveLetter">Drive letter</param>
-			/// <param name="driveSpace">Min allowable drive space</param>
-			public clsDriveData(string driveLetter, double driveSpace)
-			{
-				m_DriveLetter = driveLetter;
-				MinDriveSpace = driveSpace;
-			}
-		#endregion
+        /// <summary>
+        /// Constructor that allows setting property values
+        /// </summary>
+        /// <param name="driveLetter">Drive letter</param>
+        /// <param name="driveSpace">Min allowable drive space</param>
+        public clsDriveData(string driveLetter, double driveSpace)
+        {
+            m_DriveLetter = driveLetter;
+            MinDriveSpace = driveSpace;
+        }
+        #endregion
 
-		#region "Methods"
-			/// <summary>
-			/// Appends colon to drive letter if not already present
-			/// </summary>
-			/// <param name="inpDrive">Drive letter to test</param>
-			/// <returns>Drive letter with appended colon</returns>
-			private string AppendColonToDriveLetter(string inpDrive)
-			{
-				if (!inpDrive.Contains(":"))
-					return inpDrive + ":";
-				else 
-					return inpDrive;
-			}
+        #region "Methods"
+        /// <summary>
+        /// Appends colon to drive letter if not already present
+        /// </summary>
+        /// <param name="inpDrive">Drive letter to test</param>
+        /// <returns>Drive letter with appended colon</returns>
+        private string AppendColonToDriveLetter(string inpDrive)
+        {
+            if (!inpDrive.Contains(":"))
+                return inpDrive + ":";
+            else
+                return inpDrive;
+        }
 
-			public override string ToString()
-			{
-				return DriveLetter;
-			}
-		#endregion
+        public override string ToString()
+        {
+            return DriveLetter;
+        }
+        #endregion
 
-	}
+    }
 }

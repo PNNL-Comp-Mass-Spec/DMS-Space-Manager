@@ -35,7 +35,8 @@ namespace Space_Manager
 
         // Constructor
         public clsHashInfo() :
-            this(string.Empty, string.Empty) { }
+            this(string.Empty, string.Empty)
+        { }
 
         public clsHashInfo(string hashCode, string myEmslFileID)
         {

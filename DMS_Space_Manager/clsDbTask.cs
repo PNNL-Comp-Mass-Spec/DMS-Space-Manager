@@ -75,9 +75,11 @@ namespace Space_Manager
         protected void PrintCommandParams(SqlCommand inpCmd)
         {
             //Verify there really are command paramters
-            if (inpCmd == null) return;
+            if (inpCmd == null)
+                return;
 
-            if (inpCmd.Parameters.Count < 1) return;
+            if (inpCmd.Parameters.Count < 1)
+                return;
 
             var myMsg = "";
 
@@ -213,6 +215,6 @@ namespace Space_Manager
         }
 
         #endregion
-     
+
     }
 }

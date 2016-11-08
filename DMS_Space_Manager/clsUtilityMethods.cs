@@ -125,7 +125,7 @@ namespace Space_Manager
                     var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
 
                     var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase);
-                    LogError(msg, postToDB);                    
+                    LogError(msg, postToDB);
 
                     if (driveFreeSpaceGB > 0)
                         driveFreeSpaceGB = -driveFreeSpaceGB;
@@ -175,7 +175,7 @@ namespace Space_Manager
                 testResult = SpaceCheckResults.Error;
 
                 // Log space requirement if debug logging enabled
-                ReportStatus( "Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found", true);
+                ReportStatus("Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found", true);
             }
             else
             {
@@ -185,8 +185,8 @@ namespace Space_Manager
                     testResult = SpaceCheckResults.Below_Threshold;
 
                 // Log space requirement if debug logging enabled
-                ReportStatus("Drive " + driveData.DriveLetter + 
-                    " Space Threshold: " + driveData.MinDriveSpace + 
+                ReportStatus("Drive " + driveData.DriveLetter +
+                    " Space Threshold: " + driveData.MinDriveSpace +
                     ", Avail space: " + driveFreeSpaceGB.ToString("####0.0"), true);
 
             }

@@ -223,7 +223,7 @@ namespace Space_Manager
                 LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
                 return;
             }
-            
+
             var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
 
             if (elaspedTime > 25)
@@ -266,7 +266,7 @@ namespace Space_Manager
                 if (!string.Equals(m_MgrSettings.GetParam("mgractive"), "true", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // Manager deactivated via manager config db
-                    ReportStatus("Manager disabled via config db");                    
+                    ReportStatus("Manager disabled via config db");
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Space Manager =====");
                     return RESTART_NOT_OK;
                 }
@@ -278,7 +278,7 @@ namespace Space_Manager
                     // Problem with drive spec. Error reporting handled by GetDriveList
                     return RESTART_NOT_OK;
                 }
-                
+
 
                 // Set drive operation state to Keep Running
                 var opStatus = DriveOpStatus.KeepRunning;
@@ -489,7 +489,7 @@ namespace Space_Manager
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
-                    
+
 
                 }
 
@@ -516,7 +516,7 @@ namespace Space_Manager
 
                 return false;
             }
-            
+
             return true;
         }
         #endregion

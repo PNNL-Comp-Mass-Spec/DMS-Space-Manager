@@ -94,7 +94,7 @@ namespace Space_Manager
                 }
                 return true;
             }
-            
+
             return false;
 
         }
@@ -107,8 +107,8 @@ namespace Space_Manager
         /// <param name="lstJobsToPurge">Jobs whose folders will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
         public SortedSet<string> FindDatasetFilesToPurge(
-            DirectoryInfo diDatasetFolder, 
-            clsStorageOperations.udtDatasetInfoType udtDatasetInfo, 
+            DirectoryInfo diDatasetFolder,
+            clsStorageOperations.udtDatasetInfoType udtDatasetInfo,
             out List<int> lstJobsToPurge)
         {
 
@@ -268,7 +268,7 @@ namespace Space_Manager
                     AddFilesToPurgeDateThreshold(diSubDir, 548, lstServerFilesToPurge);
                     continue;
                 }
-                
+
                 var reMatch = reJobFolder.Match(diSubDir.Name);
                 if (reMatch.Success)
                 {

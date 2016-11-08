@@ -142,7 +142,8 @@ namespace Space_Manager
                         // Append back slash to drive letter
                         myCmd.Parameters["@ServerDisk"].Value = driveLetter + @"\";
                     }
-                    else myCmd.Parameters["@ServerDisk"].Value = driveLetter;
+                    else
+                        myCmd.Parameters["@ServerDisk"].Value = driveLetter;
 
                     myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
                     myCmd.Parameters["@message"].Direction = ParameterDirection.Output;
@@ -192,7 +193,7 @@ namespace Space_Manager
                         break;
                     default:
                         // There was an SP error
-                        LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal + 
+                        LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
                             "; Msg text = " + (string)myCmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;

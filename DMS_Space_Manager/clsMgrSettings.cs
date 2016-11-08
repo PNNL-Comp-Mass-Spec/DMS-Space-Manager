@@ -168,10 +168,10 @@ namespace Space_Manager
                             {
                                 Da.Fill(Ds);
                                 resultsTable = Ds.Tables[0];
-                            }							
+                            }
                         }
                     }
-                    
+
                     break;
                 }
                 catch (Exception ex)
@@ -198,7 +198,7 @@ namespace Space_Manager
             {
                 return false;
             }
-            
+
             //Verify at least one row returned
             if (resultsTable.Rows.Count < 1)
             {
@@ -246,7 +246,7 @@ namespace Space_Manager
             string retStr;
             if (m_ParamDictionary.TryGetValue(itemKey, out retStr))
                 return retStr;
-            
+
             return string.Empty;
         }
 
@@ -344,7 +344,7 @@ namespace Space_Manager
             {
                 return "";
             }
-            
+
             return InpObj.ToString();
         }
 

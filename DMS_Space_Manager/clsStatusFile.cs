@@ -346,7 +346,8 @@ namespace Space_Manager
             }
 
             //Log to a message queue
-            if (m_LogToMsgQueue) LogStatusToMessageQueue(XMLText);
+            if (m_LogToMsgQueue)
+                LogStatusToMessageQueue(XMLText);
         }
 
         /// <summary>
@@ -355,7 +356,8 @@ namespace Space_Manager
         /// <param name="strStatusXML">A string contiaining the XML to write</param>
         private void LogStatusToMessageQueue(string strStatusXML)
         {
-            if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
+            if (MonitorUpdateRequired != null)
+                MonitorUpdateRequired(strStatusXML);
 
         }
 
@@ -452,7 +454,8 @@ namespace Space_Manager
         public void InitStatusFromFile()
         {
             //Verify status file exists
-            if (!File.Exists(m_FileNamePath)) return;
+            if (!File.Exists(m_FileNamePath))
+                return;
 
             //Get data from status file
             try
@@ -476,7 +479,8 @@ namespace Space_Manager
 
                 //Get the error messsages
                 var errMsgNode = doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg");
-                if (errMsgNode == null) return;
+                if (errMsgNode == null)
+                    return;
 
                 foreach (XmlNode msgNode in errMsgNode)
                 {

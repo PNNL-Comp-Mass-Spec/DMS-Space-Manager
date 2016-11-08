@@ -256,7 +256,7 @@ namespace Space_Manager
             if ((lstServerFilesToPurge.Count == 0))
             {
                 // Nothing was found to purge.
-                var msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName + 
+                var msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName +
                     ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
 
                 switch (udtDatasetInfo.PurgePolicy)
@@ -280,7 +280,7 @@ namespace Space_Manager
 
             }
 
-            var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) + 
+            var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) +
                 " for dataset " + udtDatasetInfo.ServerFolderPath;
 
 #if DoDelete
@@ -543,7 +543,7 @@ namespace Space_Manager
                     else
                     {
                         msg = "Dataset not in MyEMSL and folder " + sambaDatasetNamePath +
-                              " not found; unable to verify files prior to purge";                        
+                              " not found; unable to verify files prior to purge";
                     }
                     LogError(msg, true);
 
@@ -1035,8 +1035,8 @@ namespace Space_Manager
 
             ReportStatus("Getting archive hash for file " + fileNamePath, true);
 
-            if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) && 
-                string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) && 
+            if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) &&
+                string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
                 m_HashFileContents != null)
             {
                 // Hash file has already been loaded into memory; no need to re-load it

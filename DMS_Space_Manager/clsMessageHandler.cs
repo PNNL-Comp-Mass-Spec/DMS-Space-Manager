@@ -90,8 +90,9 @@ namespace Space_Manager
         /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
         private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
-            if (m_HasConnection) return;
-            
+            if (m_HasConnection)
+                return;
+
             if (retryCount < 0)
                 retryCount = 0;
 
@@ -152,8 +153,10 @@ namespace Space_Manager
         {
             try
             {
-                if (!m_HasConnection) CreateConnection();
-                if (!m_HasConnection) return false;
+                if (!m_HasConnection)
+                    CreateConnection();
+                if (!m_HasConnection)
+                    return false;
 
                 // queue for telling manager to perform task (future?)
                 var commandSession = m_Connection.CreateSession();
@@ -277,7 +280,8 @@ namespace Space_Manager
         /// </summary>
         public void Dispose()
         {
-            if (m_IsDisposed) return;
+            if (m_IsDisposed)
+                return;
 
             DestroyConnection();
             m_IsDisposed = true;
