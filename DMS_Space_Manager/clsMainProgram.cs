@@ -7,6 +7,7 @@
 //*********************************************************************************************************
 using System;
 using System.IO;
+using System.Windows.Forms;
 
 namespace Space_Manager
 {
@@ -56,6 +57,12 @@ namespace Space_Manager
         private bool m_MsgQueueInitSuccess;
 
         private string m_MgrName = "Unknown";
+
+        /// <summary>
+        /// DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+        /// </summary>
+        private int m_DebugLevel = 4;
+
         private System.Timers.Timer m_StatusTimer;
         private readonly DateTime m_DurationStart = DateTime.UtcNow;
         private clsStorageOperations m_StorageOps;
@@ -78,8 +85,17 @@ namespace Space_Manager
         /// <returns>TRUE for success; FALSE otherwise</returns>
         public bool InitMgr()
         {
+            // Create a database logger connected to DMS5
+            // Once the initial parameters have been successfully read, 
+            // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+
+            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(),
+                                       true);
+
             // Get the manager settings
+            // If you get an exception here while debugging in Visual Studio, be sure 
+            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
             try
             {
                 m_MgrSettings = new clsMgrSettings();
@@ -91,7 +107,7 @@ namespace Space_Manager
             }
 
             // Update the cached manager name
-            m_MgrName = m_MgrSettings.GetParam("MgrName");
+            m_MgrName = m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
 
             // Set up the loggers
             var logFileName = m_MgrSettings.GetParam("logfilename");
@@ -101,11 +117,11 @@ namespace Space_Manager
             clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
-            clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
+            clsLogTools.RemoveDefaultDbLogger();
+            clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName, false);
 
             // Make initial log entry
-            var msg = "=== Started Space Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            ReportStatus("=== Started Space Manager V" + Application.ProductVersion + " ===== ");
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
@@ -130,16 +146,25 @@ namespace Space_Manager
                 m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
             }
 
+            var configFileName = m_MgrSettings.GetParam("configfilename");
+            if (string.IsNullOrEmpty(configFileName))
+            {
+                // Manager parameter error; log an error and exit
+                LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters. " +
+                         "Shutting down the manager");
+                return false;
+            }
+
             // Setup a file watcher for the config file
-            var fInfo = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
-            m_FileWatcher = new FileSystemWatcher();
-            m_FileWatcher.BeginInit();
-            m_FileWatcher.Path = fInfo.DirectoryName;
-            m_FileWatcher.IncludeSubdirectories = false;
-            m_FileWatcher.Filter = m_MgrSettings.GetParam("configfilename");
-            m_FileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-            m_FileWatcher.EndInit();
-            m_FileWatcher.EnableRaisingEvents = true;
+            var fInfo = new FileInfo(Application.ExecutablePath);
+            m_FileWatcher = new FileSystemWatcher
+            {
+                Path = fInfo.DirectoryName,
+                IncludeSubdirectories = false,
+                Filter = configFileName,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
 
             // Subscribe to the file watcher Changed event
             m_FileWatcher.Changed += FileWatcherChanged;
@@ -150,7 +175,7 @@ namespace Space_Manager
             // Set up the status file class
             if (fInfo.DirectoryName == null)
             {
-                LogError("Unable to determine the parent directory of the exe");
+                LogError("Error determining the parent path for the executable, " + Application.ExecutablePath);
                 return false;
             }
 
@@ -161,14 +186,17 @@ namespace Space_Manager
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
+			
+            //Note: Might want to put this back in someday
+            //MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
             m_StatusFile.WriteStatusFile();
 
             // Set up the status reporting time
-            m_StatusTimer = new System.Timers.Timer();
-            m_StatusTimer.BeginInit();
-            m_StatusTimer.Enabled = false;
-            m_StatusTimer.Interval = 60000;	// 1 minute
-            m_StatusTimer.EndInit();
+            m_StatusTimer = new System.Timers.Timer
+            {
+                Enabled = false,
+                Interval = 60 * 1000
+            };
             m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
             // Get the most recent job history
@@ -181,7 +209,7 @@ namespace Space_Manager
                     // The using statement also closes the StreamReader.
                     using (var sr = new StreamReader(historyFile))
                     {
-                        string line;
+                        String line;
                         // Read and display lines from the file until the end of 
                         // the file is reached.
                         while ((line = sr.ReadLine()) != null)
@@ -208,7 +236,7 @@ namespace Space_Manager
             return true;
         }
 
-        private void InitializeMessageQueue()
+        private bool InitializeMessageQueue()
         {
             const int MAX_WAIT_TIME_SECONDS = 60;
 
@@ -223,7 +251,7 @@ namespace Space_Manager
                 worker.Abort();
                 m_MsgQueueInitSuccess = false;
                 LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
-                return;
+                return m_MsgQueueInitSuccess;
             }
 
             var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
@@ -232,6 +260,8 @@ namespace Space_Manager
             {
                 ReportStatus("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
             }
+
+            return m_MsgQueueInitSuccess;
         }
 
         private void InitializeMessageQueueWork()
