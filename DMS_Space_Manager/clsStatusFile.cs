@@ -356,9 +356,7 @@ namespace Space_Manager
         /// <param name="strStatusXML">A string contiaining the XML to write</param>
         private void LogStatusToMessageQueue(string strStatusXML)
         {
-            if (MonitorUpdateRequired != null)
-                MonitorUpdateRequired(strStatusXML);
-
+            MonitorUpdateRequired?.Invoke(strStatusXML);
         }
 
         /// <summary>

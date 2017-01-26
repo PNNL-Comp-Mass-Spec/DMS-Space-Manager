@@ -29,6 +29,7 @@ namespace Space_Manager
         /// Log a warning message
         /// </summary>
         /// <param name="warningMessage">Warning message</param>
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
             clsUtilityMethods.LogWarning(warningMessage, logToDb);

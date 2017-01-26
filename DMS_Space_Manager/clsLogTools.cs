@@ -85,9 +85,9 @@ namespace Space_Manager
         /// <summary>
         /// Writes a message to the logging system
         /// </summary>
-        /// <param name="LoggerType">Type of logger to use</param>
-        /// <param name="LogLevel">Level of log reporting</param>
-        /// <param name="InpMsg">Message to be logged</param>
+        /// <param name="loggerType">Type of logger to use</param>
+        /// <param name="logLevel">Level of log reporting</param>
+        /// <param name="message">Message to be logged</param>
         public static void WriteLog(LoggerTypes loggerType, LogLevels logLevel, string message)
         {
             WriteLogWork(loggerType, logLevel, message, null);
@@ -306,7 +306,7 @@ namespace Space_Manager
         /// <summary>
         /// Creates a file appender
         /// </summary>
-        /// <param name="LogfileName">Log file name for the appender to use</param>
+        /// <param name="logfileName">Log file name for the appender to use</param>
         /// <returns>A configured file appender</returns>
         private static FileAppender CreateFileAppender(string logfileName)
         {
@@ -335,8 +335,8 @@ namespace Space_Manager
         /// <summary>
         /// Configures the file logger
         /// </summary>
-        /// <param name="LogFileName">Base name for log file</param>
-        /// <param name="LogLevel">Debug level for file logger (1-5, 5 being most verbose)</param>
+        /// <param name="logFileName">Base name for log file</param>
+        /// <param name="logLevel">Debug level for file logger (1-5, 5 being most verbose)</param>
         public static void CreateFileLogger(string logFileName, int logLevel)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
@@ -354,10 +354,13 @@ namespace Space_Manager
         {
             CreateFileLogger(logFileName, (int)logLevel);
         }
+
+        /// <summary>
         /// Configures the Db logger
         /// </summary>
-        /// <param name="ConnStr">Database connection string</param>
-        /// <param name="ModuleName">Module name used by logger</param>
+        /// <param name="connStr">Database connection string</param>
+        /// <param name="moduleName">Module name used by logger</param>
+        /// <param name="isBeforeMgrControlParams">True if creating the database logger before contacting the manager control database</param>
         public static void CreateDbLogger(string connStr, string moduleName, bool isBeforeMgrControlParams)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_DbLogger.Logger;

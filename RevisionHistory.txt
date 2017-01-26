@@ -1,5 +1,9 @@
 Space Manager Change Log
 
+Version 2.0.6234; January 25, 2017
+	- Deprecate subscribing to the Command Que and Broadcast Topic queue in ActiveMQ
+	- Update logging and logic in clsMainProgram to match the CaptureTask Manager
+
 Version 2.0.6155; November 7, 2016
 	- Added centralized logging methods
 	- Customized error message logged when a MyEMSL query throws an exception
