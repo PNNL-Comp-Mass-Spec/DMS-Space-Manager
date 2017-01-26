@@ -9,10 +9,10 @@ namespace Space_Manager
         /// Log an error message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
-        /// <param name="postToDatabase">When true, log the message to the database and the local log file</param>
-        protected static void LogError(string errorMessage, bool postToDatabase = false)
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        protected static void LogError(string errorMessage, bool logToDb = false)
         {
-            clsUtilityMethods.LogError(errorMessage, postToDatabase);
+            clsUtilityMethods.LogError(errorMessage, logToDb);
         }
 
         /// <summary>
@@ -29,9 +29,9 @@ namespace Space_Manager
         /// Log a warning message
         /// </summary>
         /// <param name="warningMessage">Warning message</param>
-        protected static void LogWarning(string warningMessage)
+        protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            clsUtilityMethods.LogWarning(warningMessage);
+            clsUtilityMethods.LogWarning(warningMessage, logToDb);
         }
 
         /// <summary>

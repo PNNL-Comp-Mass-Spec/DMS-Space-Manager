@@ -198,14 +198,14 @@ namespace Space_Manager
         /// Log an error message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
-        /// <param name="postToDatabase">When true, log the message to the database and the local log file</param>
-        public static void LogError(string errorMessage, bool postToDatabase = false)
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        public static void LogError(string errorMessage, bool logToDb = false)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(errorMessage);
             Console.ResetColor();
 
-            var loggerType = postToDatabase ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
             clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
         }
 
@@ -223,12 +223,15 @@ namespace Space_Manager
         /// Log a warning message
         /// </summary>
         /// <param name="warningMessage">Warning message</param>
-        public static void LogWarning(string warningMessage)
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        public static void LogWarning(string warningMessage, bool logToDb = false)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(warningMessage);
             Console.ResetColor();
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+
+            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
         }
 
         /// <summary>
