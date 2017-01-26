@@ -1,11 +1,15 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 02/01/2011
 //
 //*********************************************************************************************************
+
+using System;
+using System.Data.SqlClient;
+using PRISM;
+
 namespace Space_Manager
 {
     // Namespace level values for application
@@ -76,4 +80,93 @@ namespace Space_Manager
     #region "Delegates"
     public delegate void StatusMonitorUpdateReceived(string msg);
     #endregion
+
+    public static class clsConversion
+    {
+        /// <summary>
+        /// Convert string to bool; default false if an error
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool CBoolSafe(string value)
+        {
+            return CBoolSafe(value, false);
+        }
+
+        public static bool CBoolSafe(string value, bool defaultValue)
+        {
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
+
+            bool blnValue;
+            if (bool.TryParse(value, out blnValue))
+                return blnValue;
+
+            return defaultValue;
+        }
+
+        public static int CIntSafe(string value, int defaultValue)
+        {
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
+
+            int intValue;
+            if (int.TryParse(value, out intValue))
+                return intValue;
+
+            return defaultValue;
+        }
+
+        public static float CSngSafe(string value, float defaultValue)
+        {
+            var fValue = defaultValue;
+
+            if (string.IsNullOrEmpty(value))
+                return fValue;
+
+            if (float.TryParse(value, out fValue))
+                return fValue;
+
+            return fValue;
+        }
+
+        public static int GetDbValue(SqlDataReader reader, int fieldIndex, int valueIfNull)
+        {
+            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
+                return valueIfNull;
+
+            return (int)reader.GetValue(fieldIndex);
+        }
+
+        public static string GetDbValue(SqlDataReader reader, int fieldIndex, string valueIfNull)
+        {
+            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
+                return valueIfNull;
+
+            return (string)reader.GetValue(fieldIndex);
+        }
+
+        public static string PossiblyQuotePath(string strPath)
+        {
+            if (string.IsNullOrEmpty(strPath))
+            {
+                return string.Empty;
+            }
+
+            if (strPath.Contains(" "))
+            {
+                if (!strPath.StartsWith("\""))
+                {
+                    strPath = "\"" + strPath;
+                }
+
+                if (!strPath.EndsWith("\""))
+                {
+                    strPath += "\"";
+                }
+            }
+
+            return strPath;
+        }
+    }
 }

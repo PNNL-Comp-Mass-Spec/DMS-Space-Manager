@@ -97,8 +97,8 @@ namespace Space_Manager
             var logFileName = m_MgrSettings.GetParam("logfilename");
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
-            var debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
-            clsLogTools.CreateFileLogger(logFileName, debugLevel);
+            m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
+            clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
@@ -157,9 +157,7 @@ namespace Space_Manager
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
-                //Note: Might want to put this back in someday
-                //MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
-                LogToMsgQueue = bool.Parse(m_MgrSettings.GetParam("LogStatusToMessageQueue")),
+                LogToMsgQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue"),
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
@@ -264,10 +262,10 @@ namespace Space_Manager
 
             try
             {
-                var maxReps = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
-
+                var maxReps = m_MgrSettings.GetParam("maxrepetitions", 25);
+                
                 // Check if manager has been disabled via manager config db
-                if (!string.Equals(m_MgrSettings.GetParam("mgractive"), "true", StringComparison.InvariantCultureIgnoreCase))
+                if (!m_MgrSettings.GetBooleanParam("mgractive"))
                 {
                     // Manager deactivated via manager config db
                     ReportStatus("Manager disabled via config db");
