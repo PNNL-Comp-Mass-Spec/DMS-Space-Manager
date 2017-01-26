@@ -12,7 +12,10 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="MgrName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Monroe_Space</Value>
+      <Value Profile="(Default)">Unknown_Space</Value>
+    </Setting>
+    <Setting Name="DefaultDMSConnString" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI</Value>
     </Setting>
   </Settings>
 </SettingsFile>

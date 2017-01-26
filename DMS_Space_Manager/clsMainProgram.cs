@@ -78,6 +78,7 @@ namespace Space_Manager
         /// <returns>TRUE for success; FALSE otherwise</returns>
         public bool InitMgr()
         {
+            var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             // Get the manager settings
             try
             {

@@ -113,6 +113,10 @@ namespace Space_Manager
             //Default settings in use flag
             TempStr = Properties.Settings.Default.UsingDefaults.ToString();
             RetDict.Add("UsingDefaults", TempStr);
+            // Default connection string for logging errors to the database
+            // Will get updated later when manager settings are loaded from the manager control database
+            var defaultDMSConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+            mgrSettingsFromFile.Add(MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString);
 
             return RetDict;
         }
