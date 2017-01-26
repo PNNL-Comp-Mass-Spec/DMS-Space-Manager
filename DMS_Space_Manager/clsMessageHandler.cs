@@ -27,11 +27,11 @@ namespace Space_Manager
 
         #region "Class variables"
         private string m_BrokerUri;
-        [Obsolete("Unused")]
-        private string m_CommandQueueName;      // Deprecated; never used
+        // [Obsolete("Unused")]
+        // private string m_CommandQueueName;      // Deprecated; never used
 
-        [Obsolete("Unused")]
-        private string m_BroadcastTopicName;    // Deprecated (was intended to be used for manager control functions, e.g. start, read config)
+        // [Obsolete("Unused")]
+        // private string m_BroadcastTopicName;    // Deprecated (was intended to be used for manager control functions, e.g. start, read config)
 
         private string m_StatusTopicName;	// Used for status output
         private clsMgrSettings m_MgrSettings;
@@ -52,8 +52,9 @@ namespace Space_Manager
 
         #region "Events"
 
-        public event MessageProcessorDelegate CommandReceived;
-        public event MessageProcessorDelegate BroadcastReceived;
+        // Deprecated in January 2017
+        // public event MessageProcessorDelegate CommandReceived;
+        // public event MessageProcessorDelegate BroadcastReceived;
 
         #endregion
 
@@ -69,19 +70,19 @@ namespace Space_Manager
             set { m_BrokerUri = value; }
         }
 
-        [Obsolete("Unused")]
-        public string CommandQueueName
-        {
-            get { return m_CommandQueueName; }
-            set { m_CommandQueueName = value; }
-        }
+        //[Obsolete("Unused")]
+        //public string CommandQueueName
+        //{
+        //    get { return m_CommandQueueName; }
+        //    set { m_CommandQueueName = value; }
+        //}
 
-        [Obsolete("Unused")]
-        public string BroadcastTopicName
-        {
-            get { return m_BroadcastTopicName; }
-            set { m_BroadcastTopicName = value; }
-        }
+        //[Obsolete("Unused")]
+        //public string BroadcastTopicName
+        //{
+        //    get { return m_BroadcastTopicName; }
+        //    set { m_BroadcastTopicName = value; }
+        //}
 
         public string StatusTopicName
         {
@@ -195,54 +196,56 @@ namespace Space_Manager
             }
         }
 
-        /// <summary>
-        /// Command listener function. Received commands will cause this to be called
-        ///	and it will trigger an event to pass on the command to all registered listeners
-        /// </summary>
-        /// <param name="message">Incoming message</param>
-        private void OnCommandReceived(IMessage message)
-        {
-            var textMessage = message as ITextMessage;
-            ReportStatus("clsMessageHandler(), Command message received", true);
-            if (CommandReceived != null)
-            {
-                // call the delegate to process the commnd
-                ReportStatus("clsMessageHandler().OnCommandReceived: At least one event handler assigned", true);
-                if (textMessage != null)
-                {
-                    CommandReceived(textMessage.Text);
-                }
-            }
-            else
-            {
-                ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
-            }
-        }
+        // <summary>
+        // Command listener function. Received commands will cause this to be called
+        //	and it will trigger an event to pass on the command to all registered listeners
+        // </summary>
+        // <param name="message">Incoming message</param>
+        // Deprecated in January 2017
+        //private void OnCommandReceived(IMessage message)
+        //{
+        //    var textMessage = message as ITextMessage;
+        //    ReportStatus("clsMessageHandler(), Command message received", true);
+        //    if (CommandReceived != null)
+        //    {
+        //        // call the delegate to process the commnd
+        //        ReportStatus("clsMessageHandler().OnCommandReceived: At least one event handler assigned", true);
+        //        if (textMessage != null)
+        //        {
+        //            CommandReceived(textMessage.Text);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
+        //    }
+        //}
 
-        /// <summary>
-        /// Broadcast listener function. Received Broadcasts will cause this to be called
-        ///	and it will trigger an event to pass on the command to all registered listeners
-        /// </summary>
-        /// <param name="message">Incoming message</param>
-        private void OnBroadcastReceived(IMessage message)
-        {
-            var textMessage = message as ITextMessage;
-            ReportStatus("clsMessageHandler(), Broadcast message received", true);
+        // <summary>
+        // Broadcast listener function. Received Broadcasts will cause this to be called
+        //	and it will trigger an event to pass on the command to all registered listeners
+        // </summary>
+        // <param name="message">Incoming message</param>
+        // Deprecated in January 2017
+        //private void OnBroadcastReceived(IMessage message)
+        //{
+        //    var textMessage = message as ITextMessage;
+        //    ReportStatus("clsMessageHandler(), Broadcast message received", true);
 
-            if (BroadcastReceived != null)
-            {
-                // call the delegate to process the commnd
-                ReportStatus("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned", true);
-                if (textMessage != null)
-                {
-                    BroadcastReceived(textMessage.Text);
-                }
-            }
-            else
-            {
-                ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
-            }
-        }
+        //    if (BroadcastReceived != null)
+        //    {
+        //        // call the delegate to process the commnd
+        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned", true);
+        //        if (textMessage != null)
+        //        {
+        //            BroadcastReceived(textMessage.Text);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
+        //    }
+        //}
 
         /// <summary>
         /// Sends a status message

@@ -10,6 +10,7 @@ using System.Xml;
 
 namespace Space_Manager
 {
+    [Obsolete("Unused")]
     internal static class clsXMLTools
     {
         //*********************************************************************************************************
