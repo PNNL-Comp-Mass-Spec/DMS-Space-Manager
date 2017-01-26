@@ -18,7 +18,7 @@ namespace Space_Manager
     // received commands are sent to a delegate function with this signature
     public delegate void MessageProcessorDelegate(string cmdText);
 
-    class clsMessageHandler : IDisposable
+    class clsMessageHandler : clsLoggerBase, IDisposable
     {
         //*********************************************************************************************************
         // Handles sending and receiving of control and status messages
@@ -51,17 +51,16 @@ namespace Space_Manager
         #endregion
 
         #region "Events"
+
         public event MessageProcessorDelegate CommandReceived;
         public event MessageProcessorDelegate BroadcastReceived;
+
         #endregion
 
         #region "Properties"
         public clsMgrSettings MgrSettings
         {
-            set
-            {
-                m_MgrSettings = value;
-            }
+            set { m_MgrSettings = value; }
         }
 
         public string BrokerUri
@@ -98,7 +97,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="retryCount">Number of times to try the connection</param>
         /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
-        private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
+        protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (m_HasConnection)
                 return;
@@ -119,16 +118,13 @@ namespace Space_Manager
                 {
                     IConnectionFactory connectionFactory = new ConnectionFactory(m_BrokerUri);
                     m_Connection = connectionFactory.CreateConnection();
-                    m_Connection.RequestTimeout = new TimeSpan(0, 0, 0, timeoutSeconds);
+                    m_Connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
                     m_Connection.Start();
 
                     m_HasConnection = true;
-                    // temp debug
-                    // Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Connected to broker");
+                    ReportStatus("Connected to broker", true);
                     return;
-
                 }
                 catch (Exception ex)
                 {
@@ -151,8 +147,7 @@ namespace Space_Manager
 
             msg += ": " + string.Join("; ", errorList);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
+            LogError(msg);
         }
 
         /// <summary>
@@ -178,17 +173,23 @@ namespace Space_Manager
                 // m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
                 // ReportStatus("Broadcast listener established", true);
 
-                // topic for the capture tool manager to send status information over
-                m_StatusSession = m_Connection.CreateSession();
-                m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Status sender established");
+                if (string.IsNullOrWhiteSpace(m_StatusTopicName))
+                {
+                    LogWarning("Status topic queue name is undefined");
+                }
+                else
+                {
+                    // topic for the capture tool manager to send status information over
+                    m_StatusSession = m_Connection.CreateSession();
+                    m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+                    ReportStatus("Status sender established", true);
+                }
 
                 return true;
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
-                var msg = "Exception while initializing message sessions";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
+                LogError("Exception while initializing message sessions", ex);
                 DestroyConnection();
                 return false;
             }
@@ -202,20 +203,19 @@ namespace Space_Manager
         private void OnCommandReceived(IMessage message)
         {
             var textMessage = message as ITextMessage;
-            var Msg = "clsMessageHandler(), Command message received";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+            ReportStatus("clsMessageHandler(), Command message received", true);
             if (CommandReceived != null)
             {
                 // call the delegate to process the commnd
-                Msg = "clsMessageHandler().OnCommandReceived: At lease one event handler assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnCommandReceived: At least one event handler assigned", true);
                 if (textMessage != null)
+                {
                     CommandReceived(textMessage.Text);
+                }
             }
             else
             {
-                Msg = "clsMessageHandler().OnCommandReceived: No event handlers assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
             }
         }
 
@@ -227,20 +227,20 @@ namespace Space_Manager
         private void OnBroadcastReceived(IMessage message)
         {
             var textMessage = message as ITextMessage;
-            var Msg = "clsMessageHandler(), Broadcast message received";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+            ReportStatus("clsMessageHandler(), Broadcast message received", true);
+
             if (BroadcastReceived != null)
             {
                 // call the delegate to process the commnd
-                Msg = "clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned", true);
                 if (textMessage != null)
+                {
                     BroadcastReceived(textMessage.Text);
+                }
             }
             else
             {
-                Msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
             }
         }
 
@@ -253,7 +253,8 @@ namespace Space_Manager
             if (!m_IsDisposed)
             {
                 var textMessage = m_StatusSession.CreateTextMessage(message);
-                textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
+                textMessage.Properties.SetString("ProcessorName",
+                                                 m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME));
                 try
                 {
                     m_StatusSender.Send(textMessage);
@@ -274,14 +275,13 @@ namespace Space_Manager
         /// <summary>
         /// Cleans up a connection after error or when closing
         /// </summary>
-        private void DestroyConnection()
+        protected void DestroyConnection()
         {
             if (m_HasConnection)
             {
                 m_Connection.Dispose();
                 m_HasConnection = false;
-                var msg = "Message connection closed";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("Message connection closed", true);
             }
         }
 
