@@ -111,8 +111,11 @@ namespace Space_Manager
             m_MsgQueueInitSuccess = false;
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-            m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
-            m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
+            
+            // Deprecated January 2017
+            //m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
+            //m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
+
             m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
             m_MsgHandler.MgrSettings = m_MgrSettings;
 

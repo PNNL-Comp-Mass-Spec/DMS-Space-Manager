@@ -27,16 +27,24 @@ namespace Space_Manager
 
         #region "Class variables"
         private string m_BrokerUri;
-        private string m_CommandQueueName;	// Not presently used
-        private string m_BroadcastTopicName;	// Used for manager control functions (ie, start, read config)
+        [Obsolete("Unused")]
+        private string m_CommandQueueName;      // Deprecated; never used
+
+        [Obsolete("Unused")]
+        private string m_BroadcastTopicName;    // Deprecated (was intended to be used for manager control functions, e.g. start, read config)
+
         private string m_StatusTopicName;	// Used for status output
         private clsMgrSettings m_MgrSettings;
 
         private IConnection m_Connection;
         private ISession m_StatusSession;
         private IMessageProducer m_StatusSender;
-        private IMessageConsumer m_CommandConsumer;
-        private IMessageConsumer m_BroadcastConsumer;
+
+        // [Obsolete("Unused")]
+        // private IMessageConsumer m_CommandConsumer;
+
+        // [Obsolete("Unused")]
+        // private IMessageConsumer m_BroadcastConsumer;
 
         private bool m_IsDisposed;
         private bool m_HasConnection;
@@ -62,12 +70,14 @@ namespace Space_Manager
             set { m_BrokerUri = value; }
         }
 
+        [Obsolete("Unused")]
         public string CommandQueueName
         {
             get { return m_CommandQueueName; }
             set { m_CommandQueueName = value; }
         }
 
+        [Obsolete("Unused")]
         public string BroadcastTopicName
         {
             get { return m_BroadcastTopicName; }
@@ -159,14 +169,14 @@ namespace Space_Manager
                     return false;
 
                 // queue for telling manager to perform task (future?)
-                var commandSession = m_Connection.CreateSession();
-                m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command listener established");
+                // var commandSession = m_Connection.CreateSession();
+                // m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
+                // ReportStatus("Command listener established", true);
 
-                // topic for commands broadcast to all capture tool managers
-                var broadcastSession = m_Connection.CreateSession();
-                m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Broadcast listener established");
+                // // Topic for commands broadcast to all capture tool managers
+                // var broadcastSession = m_Connection.CreateSession();
+                // m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
+                // ReportStatus("Broadcast listener established", true);
 
                 // topic for the capture tool manager to send status information over
                 m_StatusSession = m_Connection.CreateSession();
@@ -287,15 +297,17 @@ namespace Space_Manager
             m_IsDisposed = true;
         }
 
-        /// <summary>
-        /// Registers the command and broadcast listeners under control of main program.
-        /// This is done to prevent loss of queued messages if listeners are registered too early.
-        /// </summary>
-        public void RegisterListeners()
-        {
-            m_CommandConsumer.Listener += OnCommandReceived;
-            m_BroadcastConsumer.Listener += OnBroadcastReceived;
-        }
+        // <summary>
+        // Registers the command and broadcast listeners under control of main program.
+        // This is done to prevent loss of queued messages if listeners are registered too early.
+        // </summary>
+        // [Obsolete("Unused")]
+        // public void RegisterListeners()
+        // {
+        //    m_CommandConsumer.Listener += OnCommandReceived;
+        //    m_BroadcastConsumer.Listener += OnBroadcastReceived;
+        // }
+
         #endregion
     }
 }
