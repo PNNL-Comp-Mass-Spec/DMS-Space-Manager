@@ -160,7 +160,7 @@ namespace Space_Manager
                     myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 0;
                 }
 
-                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBConnectionString;
+                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBconnectionString;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
                 msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";

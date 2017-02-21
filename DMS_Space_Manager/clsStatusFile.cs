@@ -325,7 +325,7 @@ namespace Space_Manager
                     //  Since strXMLText now contains the XML, we can now safely close XWriter
                 }
 
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 //Write the output file
                 try

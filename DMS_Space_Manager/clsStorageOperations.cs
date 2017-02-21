@@ -144,7 +144,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        private readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
+        private readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 
         #endregion
 
@@ -159,7 +159,7 @@ namespace Space_Manager
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
 
-            DMSProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(connectionString);
+            DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(connectionString);
         }
 
         #endregion
@@ -330,7 +330,7 @@ namespace Space_Manager
                         catch
                         {
                             // Perform garbage collection, then try again
-                            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                            PRISM.clsProgRunner.GarbageCollectNow();
 
                             fiFile.Delete();
                         }
@@ -429,8 +429,7 @@ namespace Space_Manager
         {
             if (iValue == 1)
                 return string.Empty;
-            else
-                return "s";
+            return "s";
         }
 
         /// <summary>
