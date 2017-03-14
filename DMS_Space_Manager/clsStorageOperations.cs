@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/15/2010
@@ -43,7 +43,7 @@ namespace Space_Manager
             Compare_Equal,
 
             /// <summary>
-            /// File does not match, or the file does not exist in the archive or MyEMSL 
+            /// File does not match, or the file does not exist in the archive or MyEMSL
             /// </summary>
             Compare_Not_Equal_or_Missing,
 
@@ -284,7 +284,7 @@ namespace Space_Manager
                 " for dataset " + udtDatasetInfo.ServerFolderPath;
 
 #if DoDelete
-            // Purge the dataset folder by deleting contents            
+            // Purge the dataset folder by deleting contents
             ReportStatus(purgeMessage);
 #else
             ReportStatus("SIMULATE: " + purgeMessage);
@@ -452,7 +452,7 @@ namespace Space_Manager
             }
 
             // Make sure the archive folder has at least one file
-            // If it doesn't have any files, then we could have a permissions error, 
+            // If it doesn't have any files, then we could have a permissions error,
             // or we could be dealing with an instrument whose files are only in MyEMSL
 
             var diDatasetFolder = new DirectoryInfo(sambaDatasetNamePath);
@@ -485,7 +485,7 @@ namespace Space_Manager
 
             if (intFileCount > 0)
             {
-                // The folder exists in the archive, but the file in question was not there 
+                // The folder exists in the archive, but the file in question was not there
 
                 LogWarning("  Update required. Server file not found in archive: " + sServerFilePath);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
@@ -651,8 +651,8 @@ namespace Space_Manager
 
                 // Attach events
                 reader.ErrorEvent += reader_ErrorEvent;
-                reader.MessageEvent += reader_MessageEvent;
-                reader.ProgressEvent += reader_ProgressEvent;
+                reader.StatusEvent += reader_MessageEvent;
+                reader.ProgressUpdate += reader_ProgressEvent;
 
                 var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName);
 
@@ -1125,7 +1125,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Loads the MD5 results file for the given dataset into memory 
+        /// Loads the MD5 results file for the given dataset into memory
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
         /// <param name="bWaitingForMD5File">Output parameter: true if an MD5 has file was not found</param>
@@ -1154,7 +1154,7 @@ namespace Space_Manager
                         // We stopped creating stage stagemd5 files in January 2016
                         // Thus, the following logic is now disabled
 
-                        // Check to see if a stagemd5 file exists for this dataset. 
+                        // Check to see if a stagemd5 file exists for this dataset.
                         // This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
 
                         //var hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
@@ -1464,7 +1464,7 @@ namespace Space_Manager
             }
 
             // Update the hash file to remove any entries with a hash of HASH_MISMATCH in m_HashFileContents
-            // These are files for which the MD5 hash of the actual file doesn't match the hash stored in the master MD5 results file, 
+            // These are files for which the MD5 hash of the actual file doesn't match the hash stored in the master MD5 results file,
             //   and we thus need to re-compute the hash using the file in the Archive
             // In theory, before we do this, the Archive Update manager will update the file
             try
@@ -1512,7 +1512,7 @@ namespace Space_Manager
                         clsHashInfo hashInfo;
                         if (m_HashFileContents.TryGetValue(sFileNameTrimmed, out hashInfo))
                         {
-                            // Match found; examine sMD5HashNew	
+                            // Match found; examine sMD5HashNew
                             if (string.Equals(hashInfo.HashCode, HASH_MISMATCH))
                             {
                                 // Old comment:
@@ -1634,23 +1634,23 @@ namespace Space_Manager
         #endregion
 
         #region "Event Handlers"
-        void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_ErrorEvent(string message, Exception ex)
         {
-            LogError("MyEMSLReader: " + e.Message);
+            LogError("MyEMSLReader: " + message);
         }
 
-        void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_MessageEvent(string message)
         {
-            ReportStatus(e.Message);
+            ReportStatus(message);
         }
 
-        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        void reader_ProgressEvent(string progressMessage, float percentComplete)
         {
-            var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+            var msg = "Percent complete: " + percentComplete.ToString("0.0") + "%";
 
             /*
              * Logging of percent progress is disabled since we're only using the Reader to query for file information and not to download files from MyEMSL
-             * 
+             *
             if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
