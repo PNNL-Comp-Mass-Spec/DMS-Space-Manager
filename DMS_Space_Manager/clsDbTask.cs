@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
@@ -25,7 +25,8 @@ namespace Space_Manager
 
         #region "Class variables"
         protected readonly IMgrParams m_MgrParams;
-        protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        protected readonly Dictionary<string, string> m_JobParams =
+            new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         protected readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 
@@ -33,13 +34,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        public Dictionary<string, string> TaskDictionary
-        {
-            get
-            {
-                return m_JobParams;
-            }
-        }
+        public Dictionary<string, string> TaskDictionary => m_JobParams;
 
         public bool TraceMode { get; }
 
@@ -165,71 +160,78 @@ namespace Space_Manager
 
         private string DbCStr(object InpObj)
         {
-            //If input object is DbNull, returns "", otherwise returns String representation of object
-            if ((InpObj == null) || ReferenceEquals(InpObj, DBNull.Value))
+            // If input object is DbNull, returns "", otherwise returns String representation of object
+            if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))
             {
                 return "";
             }
+
             return InpObj.ToString();
         }
 
         protected float DbCSng(object InpObj)
         {
-            //If input object is DbNull, returns 0.0, otherwise returns Single representation of object
+            // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0F;
             }
+
             return (float)InpObj;
         }
 
         protected double DbCDbl(object InpObj)
         {
-            //If input object is DbNull, returns 0.0, otherwise returns Double representation of object
+            // If input object is DbNull, returns 0.0, otherwise returns Double representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0;
             }
+
             return (double)InpObj;
         }
 
         protected int DbCInt(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
+
             return (int)InpObj;
         }
 
         protected long DbCLng(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
+
             return (long)InpObj;
         }
 
         protected decimal DbCDec(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Decimal representation of object
+            // If input object is DbNull, returns 0, otherwise returns Decimal representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
+
             return (decimal)InpObj;
         }
 
         protected short DbCShort(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Short representation of object
+            // If input object is DbNull, returns 0, otherwise returns Short representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
             }
+
             return (short)InpObj;
         }
 

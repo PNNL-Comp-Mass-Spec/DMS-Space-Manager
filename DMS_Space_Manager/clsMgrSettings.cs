@@ -332,8 +332,8 @@ namespace Space_Manager
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !(PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending());
 
-                m_ErrMsg =
-                    "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
+                m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
+
                 if (logConnectionErrors)
                     WriteErrorMsg(m_ErrMsg, allowLogToDB);
                 return false;

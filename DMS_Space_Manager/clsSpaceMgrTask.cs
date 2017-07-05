@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
@@ -219,7 +219,18 @@ namespace Space_Manager
         /// Database calls to set a capture task complete
         /// </summary>
         /// <param name="spName">Name of SetComplete stored procedure</param>
-        /// <param name="completionCode">Integer representation of completion code</param>
+        /// <param name="completionCode">
+        /// Integer representation of completion code
+        ///  0 = success
+        ///  1 = Purge Failed
+        ///  2 = Archive Update required
+        ///  3 = Stage MD5 file required
+        ///  4 = Drive Missing
+        ///  5 = Purged Instrument Data (and any other auto-purge items)
+        ///  6 = Purged all data except QC folder
+        ///  7 = Dataset folder missing in archive
+        ///  8 = Archive offline
+        /// </param>
         /// <param name="datasetName">Dataset name</param>
         /// <returns>TRUE for sucesss; FALSE for failure</returns>
         public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
@@ -248,9 +259,9 @@ namespace Space_Manager
             }
 
             // Execute the SP
-            // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call 
+            // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call
             // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
-            var resCode = DMSProcedureExecutor.ExecuteSP(MyCmd);
+            var resCode = DMSProcedureExecutor.ExecuteSP(myCmd);
 
             if (resCode == 0)
             {
