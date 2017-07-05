@@ -169,15 +169,13 @@ namespace Space_Manager
                 PrintCommandParams(myCmd);
 
                 //Execute the SP
-                DataTable dt;
-
-                var retVal = DMSProcedureExecutor.ExecuteSP(myCmd, out dt);
+                var retVal = DMSProcedureExecutor.ExecuteSP(myCmd, out var queryResults);
 
                 switch (retVal)
                 {
                     case RET_VAL_OK:
                         //Step task was found; get the data for it
-                        var paramSuccess = FillParamDict(dt);
+                        var paramSuccess = FillParamDict(queryResults);
                         if (paramSuccess)
                         {
                             outcome = EnumRequestTaskResult.TaskFound;

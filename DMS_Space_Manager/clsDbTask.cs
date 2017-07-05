@@ -101,17 +101,22 @@ namespace Space_Manager
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + myMsg);
         }
 
-        protected bool FillParamDict(DataTable dt)
+        /// <summary>
+        /// Fill string dictionary with parameter values
+        /// </summary>
+        /// <param name="parameters">Result table from call to RequestStepTask</param>
+        /// <returns></returns>
+        protected bool FillParamDict(List<List<string>> parameters)
         {
-            // Verify valid datatable
-            if (dt == null)
+            // Verify valid parameters
+            if (parameters == null)
             {
-                LogError("clsDbTask.FillParamDict(): No parameter table");
+                LogError("clsDbTask.FillParamDict(): parameters is null");
                 return false;
             }
 
             // Verify at least one row present
-            if (dt.Rows.Count < 1)
+            if (parameters.Count < 1)
             {
                 LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
@@ -133,16 +138,20 @@ namespace Space_Manager
             // DatasetYearQuarter: 2011_3
 
             m_JobParams.Clear();
+
             try
             {
-                foreach (DataRow currRow in dt.Rows)
+                foreach (var dataRow in parameters)
                 {
-                    var myKey = currRow[dt.Columns["Parameter"]] as string;
-                    var myVal = currRow[dt.Columns["Value"]] as string;
+                    if (dataRow.Count < 2)
+                        continue;
 
-                    if (myKey != null)
+                    var paramName = dataRow[0];
+                    var paramValue = dataRow[1];
+
+                    if (!string.IsNullOrWhiteSpace(paramName))
                     {
-                        m_JobParams.Add(myKey, myVal);
+                        m_JobParams.Add(paramName, paramValue);
                     }
                 }
                 return true;
