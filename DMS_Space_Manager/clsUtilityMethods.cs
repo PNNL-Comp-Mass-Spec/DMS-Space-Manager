@@ -235,6 +235,25 @@ namespace Space_Manager
         }
 
         /// <summary>
+        /// Show a debug message, and optionally log to disk
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="writeToLog"></param>
+        public static void ReportDebug(string message, bool writeToLog = false)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("  " + message);
+            Console.ResetColor();
+
+            if (!writeToLog)
+                return;
+
+            var loggerType = clsLogTools.LoggerTypes.LogFile;
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.DEBUG, message);
+
+        }
+
+        /// <summary>
         /// Shows information about an exception at the console and in the log file
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
@@ -266,9 +285,14 @@ namespace Space_Manager
         /// <param name="isDebug">True if a debug level message</param>
         public static void ReportStatus(string statusMessage, bool isDebug = false)
         {
+            if (isDebug)
+            {
+                ReportDebug(statusMessage, true);
+                return;
+            }
+
             Console.WriteLine(statusMessage);
-            var logLevel = isDebug ? clsLogTools.LogLevels.DEBUG : clsLogTools.LogLevels.INFO;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logLevel, statusMessage);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
         }
 
         #endregion

@@ -40,13 +40,23 @@ namespace Space_Manager
                 return m_JobParams;
             }
         }
+
+        public bool TraceMode { get; }
+
         #endregion
 
         #region "Constructors"
 
-        protected clsDbTask(IMgrParams mgrParams)
+        /// <summary>
+        /// Class constructor
+        /// </summary>
+        /// <param name="mgrParams">Manager params for use by class</param>
+        /// <param name="traceMode">True to show additional debug messages</param>
+        protected clsDbTask(IMgrParams mgrParams, bool traceMode)
         {
             m_MgrParams = mgrParams;
+
+            TraceMode = traceMode;
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");

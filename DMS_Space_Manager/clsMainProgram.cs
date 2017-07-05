@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
@@ -40,12 +40,15 @@ namespace Space_Manager
         #endregion
 
         #region "Constants"
+
         private const int MAX_ERROR_COUNT = 55; // Zero-based, so will give 56 tries
         private const bool RESTART_OK = true;
         private const bool RESTART_NOT_OK = false;
+
         #endregion
 
         #region "Class variables"
+
         private clsMgrSettings m_MgrSettings;
         private clsSpaceMgrTask m_Task;
         private FileSystemWatcher m_FileWatcher;
@@ -66,16 +69,36 @@ namespace Space_Manager
         private System.Timers.Timer m_StatusTimer;
         private readonly DateTime m_DurationStart = DateTime.UtcNow;
         private clsStorageOperations m_StorageOps;
+
+        #endregion
+
+        #region "Properties"
+
+        public bool PreviewMode { get; }
+
+        public bool TraceMode { get; }
+
         #endregion
 
         #region "Constructors"
+
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProgram()
+        public clsMainProgram(bool previewMode = false, bool traceMode = false)
         {
-            // Does nothing at present
+            PreviewMode = previewMode;
+            TraceMode = traceMode;
+
+            if (PreviewMode)
+                Console.WriteLine("Preview mode enabled");
+
+
+            if (TraceMode)
+                Console.WriteLine("Trace mode enabled");
+
         }
+
         #endregion
 
         #region "Methods"
@@ -86,7 +109,7 @@ namespace Space_Manager
         public bool InitMgr()
         {
             // Create a database logger connected to DMS5
-            // Once the initial parameters have been successfully read, 
+            // Once the initial parameters have been successfully read,
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
@@ -94,8 +117,8 @@ namespace Space_Manager
                                        true);
 
             // Get the manager settings
-            // If you get an exception here while debugging in Visual Studio, be sure 
-            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
+            // If you get an exception here while debugging in Visual Studio, be sure
+            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
             try
             {
                 m_MgrSettings = new clsMgrSettings();
@@ -127,7 +150,7 @@ namespace Space_Manager
             m_MsgQueueInitSuccess = false;
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-            
+
             // Deprecated January 2017
             //m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
             //m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
@@ -170,7 +193,7 @@ namespace Space_Manager
             m_FileWatcher.Changed += FileWatcherChanged;
 
             // Set up the tool for getting tasks
-            m_Task = new clsSpaceMgrTask(m_MgrSettings);
+            m_Task = new clsSpaceMgrTask(m_MgrSettings, TraceMode);
 
             // Set up the status file class
             if (fInfo.DirectoryName == null)
@@ -186,7 +209,7 @@ namespace Space_Manager
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
-            
+
             //Note: Might want to put this back in someday
             //MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
             m_StatusFile.WriteStatusFile();
@@ -210,7 +233,7 @@ namespace Space_Manager
                     using (var sr = new StreamReader(historyFile))
                     {
                         String line;
-                        // Read and display lines from the file until the end of 
+                        // Read and display lines from the file until the end of
                         // the file is reached.
                         while ((line = sr.ReadLine()) != null)
                         {
@@ -230,7 +253,11 @@ namespace Space_Manager
             }
 
             // Set up the storage operations class
-            m_StorageOps = new clsStorageOperations(m_MgrSettings);
+            m_StorageOps = new clsStorageOperations(m_MgrSettings)
+            {
+                PreviewMode = PreviewMode,
+                TraceMode = TraceMode
+            };
 
             // Everything worked!
             return true;
@@ -293,7 +320,7 @@ namespace Space_Manager
             try
             {
                 var maxReps = m_MgrSettings.GetParam("maxrepetitions", 25);
-                
+
                 // Check if manager has been disabled via manager config db
                 if (!m_MgrSettings.GetBooleanParam("mgractive"))
                 {
@@ -494,7 +521,7 @@ namespace Space_Manager
                             m_ErrorCount++;
                             repCounter++;
                             break;
-                        // Obsolete: 
+                        // Obsolete:
                         //case EnumCloseOutType.CLOSEOUT_WAITING_HASH_FILE:
                         //	repCounter++;
                         //	m_ErrorCount = 0;

@@ -146,6 +146,10 @@ namespace Space_Manager
 
         private readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 
+        public bool PreviewMode { get; set; }
+
+        public bool TraceMode { get; set; }
+
         #endregion
 
         #region "Constructors"
@@ -285,7 +289,10 @@ namespace Space_Manager
 
 #if DoDelete
             // Purge the dataset folder by deleting contents
-            ReportStatus(purgeMessage);
+            if (PreviewMode)
+                ReportStatus("Preview: " + purgeMessage);
+            else
+                ReportStatus(purgeMessage);
 #else
             ReportStatus("SIMULATE: " + purgeMessage);
 #endif
@@ -315,7 +322,8 @@ namespace Space_Manager
                     // This code will only be reached if conditional compilation symbol DoDelete is defined
                     try
                     {
-                        fiFile.Delete();
+                        if (!PreviewMode)
+                            fiFile.Delete();
                     }
                     catch
                     {
@@ -325,14 +333,16 @@ namespace Space_Manager
 
                         try
                         {
-                            fiFile.Delete();
+                            if (!PreviewMode)
+                                fiFile.Delete();
                         }
                         catch
                         {
                             // Perform garbage collection, then try again
                             PRISM.clsProgRunner.GarbageCollectNow();
 
-                            fiFile.Delete();
+                            if (!PreviewMode)
+                                fiFile.Delete();
                         }
 
                     }
@@ -395,7 +405,10 @@ namespace Space_Manager
                 udtDatasetInfo.PurgePolicy = PurgePolicyConstants.PurgeAll;
             }
 
-#if !DoDelete
+#if DoDelete
+            if (PreviewMode)
+                purgeMessage = "Preview: " + purgeMessage;
+#else
             purgeMessage = "SIMULATE: " + purgeMessage;
 #endif
 
@@ -646,10 +659,12 @@ namespace Space_Manager
             {
                 var reader = new MyEMSLReader.Reader
                 {
-                    IncludeAllRevisions = false
+                    IncludeAllRevisions = false,
+                    TraceMode = TraceMode
                 };
 
                 // Attach events
+                reader.DebugEvent += reader_DebugEvent;
                 reader.ErrorEvent += reader_ErrorEvent;
                 reader.StatusEvent += reader_MessageEvent;
                 reader.ProgressUpdate += reader_ProgressEvent;
@@ -667,7 +682,6 @@ namespace Space_Manager
 
             return new List<ArchivedFileInfo>();
         }
-
 
         private ArchiveCompareResults CompareFileUsingMyEMSLInfo(
             string sServerFilePath,
@@ -938,6 +952,7 @@ namespace Space_Manager
             return false;
         }
 
+#if DoDelete
         /// <summary>
         /// Deletes a folder, including all files and subfolders
         /// Assures that the ReadOnly bit is turned off for each folder
@@ -961,14 +976,20 @@ namespace Space_Manager
 
                 try
                 {
-                    diFolder.Delete(true);
+                    if (PreviewMode)
+                        Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                    else
+                        diFolder.Delete(true);
                 }
                 catch
                 {
                     // The folder might have readonly files
                     // Manually delete each file
                     DeleteFilesCheckReadonly(diFolder);
-                    diFolder.Delete(true);
+                    if (PreviewMode)
+                        Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                    else
+                        diFolder.Delete(true);
                 }
 
                 return true;
@@ -980,6 +1001,7 @@ namespace Space_Manager
 
 
         }
+#endif
 
         /// <summary>
         /// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
@@ -1333,6 +1355,7 @@ namespace Space_Manager
             return hashStrBld.ToString();
         }
 
+        [Obsolete("Unused")]
         private string GenerateSha1HashFromFile(string inpFileNamePath)
         {
             //Verify input file exists
@@ -1634,6 +1657,12 @@ namespace Space_Manager
         #endregion
 
         #region "Event Handlers"
+
+        private void reader_DebugEvent(string message)
+        {
+            ReportStatus(message, true);
+        }
+
         void reader_ErrorEvent(string message, Exception ex)
         {
             LogError("MyEMSLReader: " + message);

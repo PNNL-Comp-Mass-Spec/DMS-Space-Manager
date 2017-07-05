@@ -34,8 +34,9 @@ namespace Space_Manager
         /// Class constructor
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
-        public clsSpaceMgrTask(IMgrParams mgrParams)
-            : base(mgrParams)
+        /// <param name="traceMode">True to show additional debug messages</param>
+        public clsSpaceMgrTask(IMgrParams mgrParams, bool traceMode)
+            : base(mgrParams, traceMode)
         {
             m_JobParams.Clear();
         }
