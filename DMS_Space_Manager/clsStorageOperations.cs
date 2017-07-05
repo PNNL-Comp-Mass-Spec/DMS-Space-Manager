@@ -1400,25 +1400,20 @@ namespace Space_Manager
                 string sErrorMessage;
 
                 //Setup for execution of the stored procedure
-                var MyCmd = new System.Data.SqlClient.SqlCommand();
+                var myCmd = new SqlCommand
                 {
-                    MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
-                    MyCmd.CommandText = SP_MARK_PURGED_JOBS;
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = SP_MARK_PURGED_JOBS
+                };
 
-                    var oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
-                    oParam.Direction = System.Data.ParameterDirection.ReturnValue;
+                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                    oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@JobList", System.Data.SqlDbType.VarChar, 4000));
-                    oParam.Direction = System.Data.ParameterDirection.Input;
-                    oParam.Value = sJobs;
+                myCmd.Parameters.Add(new SqlParameter("@JobList", SqlDbType.VarChar, 4000)).Value = sJobs;
 
-                    oParam = MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@InfoOnly", System.Data.SqlDbType.TinyInt));
-                    oParam.Direction = System.Data.ParameterDirection.Input;
-                    oParam.Value = 0;
-                }
+                myCmd.Parameters.Add(new SqlParameter("@InfoOnly", SqlDbType.TinyInt)).Value = 0;
 
                 //Execute the SP
-                var resCode = DMSProcedureExecutor.ExecuteSP(MyCmd, iMaxRetryCount, out sErrorMessage);
+                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, iMaxRetryCount, out sErrorMessage);
                 if (resCode == 0)
                 {
                     ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged");

@@ -117,7 +117,6 @@ namespace Space_Manager
         /// <returns>RequestTaskResult enum</returns>
         private EnumRequestTaskResult RequestTaskDetailed(string driveLetter)
         {
-            var myCmd = new SqlCommand();
             EnumRequestTaskResult outcome;
 
             //string strProductVersion = Application.ProductVersion;
@@ -126,40 +125,35 @@ namespace Space_Manager
             try
             {
                 //Set up the command object prior to SP execution
+                var myCmd = new SqlCommand
                 {
-                    myCmd.CommandType = CommandType.StoredProcedure;
-                    myCmd.CommandText = SP_NAME_REQUEST_TASK;
-                    myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    myCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = SP_NAME_REQUEST_TASK
+                };
 
-                    myCmd.Parameters.Add(new SqlParameter("@StorageServerName", SqlDbType.VarChar, 128));
-                    myCmd.Parameters["@StorageServerName"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@StorageServerName"].Value = m_MgrParams.GetParam("machname");
+                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                    myCmd.Parameters.Add(new SqlParameter("@ServerDisk", SqlDbType.VarChar, 128));
-                    myCmd.Parameters["@ServerDisk"].Direction = ParameterDirection.Input;
-                    if (driveLetter.EndsWith(":"))
-                    {
-                        // Append back slash to drive letter
-                        myCmd.Parameters["@ServerDisk"].Value = driveLetter + @"\";
-                    }
-                    else
-                        myCmd.Parameters["@ServerDisk"].Value = driveLetter;
+                myCmd.Parameters.Add(new SqlParameter("@StorageServerName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("machname");
 
-                    myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    myCmd.Parameters["@message"].Direction = ParameterDirection.Output;
-                    myCmd.Parameters["@message"].Value = "";
+                string serverDisk;
 
-                    myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt));
-                    myCmd.Parameters["@infoOnly"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@infoOnly"].Value = 0;
-
-                    // We stopped creating stagemd5 files in January 2016
-                    // Thus, pass 0 for this parameter instead of 1
-                    myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt));
-                    myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@ExcludeStageMD5RequiredDatasets"].Value = 0;
+                if (driveLetter.EndsWith(":"))
+                {
+                    // Append back slash to drive letter
+                    serverDisk = driveLetter + @"\";
                 }
+                else
+                    serverDisk = driveLetter;
+
+                myCmd.Parameters.Add(new SqlParameter("@ServerDisk", SqlDbType.VarChar, 128)).Value = serverDisk;
+
+                myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+                myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+
+                // We stopped creating stagemd5 files in January 2016
+                // Thus, pass 0 for this parameter instead of 1
+                myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt)).Value = 0;
 
                 var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBconnectionString;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -232,20 +226,25 @@ namespace Space_Manager
         {
 
             //Setup for execution of the stored procedure
-            var MyCmd = new SqlCommand();
+            var myCmd = new SqlCommand
             {
-                MyCmd.CommandType = CommandType.StoredProcedure;
-                MyCmd.CommandText = spName;
-                MyCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-                MyCmd.Parameters.Add(new SqlParameter("@datasetNum", SqlDbType.VarChar, 128));
-                MyCmd.Parameters["@datasetNum"].Direction = ParameterDirection.Input;
-                MyCmd.Parameters["@datasetNum"].Value = datasetName;
-                MyCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int));
-                MyCmd.Parameters["@completionCode"].Direction = ParameterDirection.Input;
-                MyCmd.Parameters["@completionCode"].Value = completionCode;
-                MyCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
+                CommandType = CommandType.StoredProcedure,
+                CommandText = spName
+            };
+
+            myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+
+            myCmd.Parameters.Add(new SqlParameter("@datasetNum", SqlDbType.VarChar, 128)).Value = datasetName;
+
+            myCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = completionCode;
+
+            myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+            if (TraceMode)
+            {
+                clsUtilityMethods.ReportDebug(
+                    string.Format("Calling {0} for dataset {1} with completion code {2}",
+                                  spName, datasetName, completionCode));
             }
 
             // Execute the SP
