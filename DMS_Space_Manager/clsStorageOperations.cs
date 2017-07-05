@@ -688,7 +688,7 @@ namespace Space_Manager
         private ArchiveCompareResults CompareFileUsingMyEMSLInfo(
             string sServerFilePath,
             udtDatasetInfoType udtDatasetInfo,
-            Dictionary<string, string> dctFilesInMyEMSL,
+            IReadOnlyDictionary<string, string> dctFilesInMyEMSL,
             out bool fileInMyEMSL)
         {
             var comparisonResult = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
@@ -733,7 +733,7 @@ namespace Space_Manager
             string sambaDatasetNamePath,
             string sServerFilePath,
             udtDatasetInfoType udtDatasetInfo,
-            DirectoryInfo diDatasetFolder)
+            FileSystemInfo diDatasetFolder)
         {
             // Convert the file name on the storage server to its equivalent in the archive
             var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
@@ -1378,7 +1378,7 @@ namespace Space_Manager
         /// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
         /// </summary>
         /// <param name="lstJobsToPurge"></param>
-        private void MarkPurgedJobs(List<int> lstJobsToPurge)
+        private void MarkPurgedJobs(IReadOnlyCollection<int> lstJobsToPurge)
         {
             const string SP_MARK_PURGED_JOBS = "MarkPurgedJobs";
 
