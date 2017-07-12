@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/14/2010
@@ -26,7 +26,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        private static double BytesToGB(long bytes)
+        public static double BytesToGB(long bytes)
         {
             return bytes / 1024.0 / 1024.0 / 1024.0;
         }
