@@ -27,11 +27,6 @@ namespace Space_Manager
 
         #region "Class variables"
         private string m_BrokerUri;
-        // [Obsolete("Unused")]
-        // private string m_CommandQueueName;      // Deprecated; never used
-
-        // [Obsolete("Unused")]
-        // private string m_BroadcastTopicName;    // Deprecated (was intended to be used for manager control functions, e.g. start, read config)
 
         private string m_StatusTopicName;	// Used for status output
         private clsMgrSettings m_MgrSettings;
@@ -40,21 +35,11 @@ namespace Space_Manager
         private ISession m_StatusSession;
         private IMessageProducer m_StatusSender;
 
-        // [Obsolete("Unused")]
-        // private IMessageConsumer m_CommandConsumer;
-
-        // [Obsolete("Unused")]
-        // private IMessageConsumer m_BroadcastConsumer;
-
         private bool m_IsDisposed;
         private bool m_HasConnection;
         #endregion
 
         #region "Events"
-
-        // Deprecated in January 2017
-        // public event MessageProcessorDelegate CommandReceived;
-        // public event MessageProcessorDelegate BroadcastReceived;
 
         #endregion
 
@@ -167,16 +152,6 @@ namespace Space_Manager
                 if (!m_HasConnection)
                     return false;
 
-                // queue for telling manager to perform task (future?)
-                // var commandSession = m_Connection.CreateSession();
-                // m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
-                // LogDebug("Command listener established");
-
-                // // Topic for commands broadcast to all capture tool managers
-                // var broadcastSession = m_Connection.CreateSession();
-                // m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
-                // LogDebug("Broadcast listener established");
-
                 if (string.IsNullOrWhiteSpace(m_StatusTopicName))
                 {
                     LogWarning("Status topic queue name is undefined");
@@ -198,57 +173,6 @@ namespace Space_Manager
                 return false;
             }
         }
-
-        // <summary>
-        // Command listener function. Received commands will cause this to be called
-        //	and it will trigger an event to pass on the command to all registered listeners
-        // </summary>
-        // <param name="message">Incoming message</param>
-        // Deprecated in January 2017
-        //private void OnCommandReceived(IMessage message)
-        //{
-        //    var textMessage = message as ITextMessage;
-        //    LogDebug("clsMessageHandler(), Command message received");
-        //    if (CommandReceived != null)
-        //    {
-        //        // call the delegate to process the commnd
-        //        LogDebug("clsMessageHandler().OnCommandReceived: At least one event handler assigned");
-        //        if (textMessage != null)
-        //        {
-        //            CommandReceived(textMessage.Text);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        LogDebug("clsMessageHandler().OnCommandReceived: No event handlers assigned");
-        //    }
-        //}
-
-        // <summary>
-        // Broadcast listener function. Received Broadcasts will cause this to be called
-        //	and it will trigger an event to pass on the command to all registered listeners
-        // </summary>
-        // <param name="message">Incoming message</param>
-        // Deprecated in January 2017
-        //private void OnBroadcastReceived(IMessage message)
-        //{
-        //    var textMessage = message as ITextMessage;
-        //    LogDebug("clsMessageHandler(), Broadcast message received");
-
-        //    if (BroadcastReceived != null)
-        //    {
-        //        // call the delegate to process the commnd
-        //        LogDebug("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned");
-        //        if (textMessage != null)
-        //        {
-        //            BroadcastReceived(textMessage.Text);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        LogDebug("clsMessageHandler().OnBroadcastReceived: No event handlers assigned");
-        //    }
-        //}
 
         /// <summary>
         /// Sends a status message

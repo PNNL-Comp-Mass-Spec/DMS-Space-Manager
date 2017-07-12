@@ -151,23 +151,12 @@ namespace Space_Manager
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
 
-            // Deprecated January 2017
-            //m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
-            //m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
-
             m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
             m_MsgHandler.MgrSettings = m_MgrSettings;
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
             InitializeMessageQueue();
-
-            if (m_MsgQueueInitSuccess)
-            {
-                // Deprecated in January 2017
-                // m_MsgHandler.CommandReceived += OnCommandReceived;
-                // m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
-            }
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
             if (string.IsNullOrEmpty(configFileName))
@@ -601,66 +590,7 @@ namespace Space_Manager
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
         }
-
-        // <summary>
-        // Handles received manager control command
-        // </summary>
-        // <param name="cmdText"></param>
-        // Deprecated in January 2017
-        //private void OnBroadcastReceived(string cmdText)
-        //{
-        //    LogDebug("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText);
-
-        //    clsBroadcastCmd recvCmd;
-
-        //    // Parse the received message
-        //    try
-        //    {
-        //        recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogError("Exception while parsing broadcast data", ex);
-        //        return;
-        //    }
-
-        //    // Determine if the message applies to this machine
-        //    if (!recvCmd.MachineList.Contains(m_MgrName))
-        //    {
-        //        // Received command doesn't apply to this manager
-        //        LogDebug("Received command not applicable to this manager instance");
-        //        return;
-        //    }
-
-        //    // Get the command and take appropriate action
-        //    switch (recvCmd.MachCmd.ToLower())
-        //    {
-        //        case "shutdown":
-        //            //     m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
-        //            //	   m_Running = false;
-        //            break;
-        //        case "readconfig":
-        //            ReportStatus("Reload config message received");
-        //            m_ConfigChanged = true;
-        //            //	   m_Running = false;
-        //            break;
-        //        default:
-        //            // Invalid command received; do nothing except log it
-        //            LogWarning("Invalid broadcast command received: " + cmdText);
-        //            break;
-        //    }
-        //}
-
-        // <summary>
-        // Handles manager execution command (future)
-        // </summary>
-        // <param name="cmdText"></param>
-        // Deprecated in January 2017
-        //private void OnCommandReceived(string cmdText)
-        //{
-        //    //TODO: (Future)
-        //}
-
+        
         /// <summary>
         /// Updates the status at m_StatusTimer interval
         /// </summary>
