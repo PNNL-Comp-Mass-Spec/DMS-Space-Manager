@@ -213,9 +213,7 @@ namespace Space_Manager
 
             ReportStatus("Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath);
 
-            SortedSet<string> lstServerFilesToPurge;
-            List<int> lstJobsToPurge;
-            var compResult = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out lstServerFilesToPurge, out lstJobsToPurge);
+            var compResult = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge);
 
             switch (compResult)
             {
@@ -550,11 +548,9 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
             }
 
-            bool queryException;
-
             // First look for this dataset's files in MyEMSL
             // Next append any files visible using Samba (at \\agate.emsl.pnl.gov\dmsarch\)
-            var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out queryException);
+            var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out var queryException);
 
             if (lstFilesInMyEMSL.Count == 0)
             {
@@ -704,8 +700,6 @@ namespace Space_Manager
             IReadOnlyDictionary<string, string> dctFilesInMyEMSL,
             out bool fileInMyEMSL)
         {
-            var comparisonResult = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
-
             fileInMyEMSL = false;
 
             // Convert the file name on the storage server to its equivalent relative path
@@ -875,12 +869,11 @@ namespace Space_Manager
         /// <returns>Enum containing compare results</returns>
         private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
         {
-            string sFilePathInDictionary;
 
             LogDebug("Comparing file " + serverFile + " to file " + archiveFile);
 
             // Get hash for archive file
-            var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
+            var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out var sFilePathInDictionary);
             if (string.IsNullOrEmpty(archiveFileHash))
             {
                 // There was a problem. Description has already been logged
@@ -1079,11 +1072,9 @@ namespace Space_Manager
             }
             else
             {
-                bool bWaitingForMD5File;
-
                 m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
-                var bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out bWaitingForMD5File);
+                var bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var bWaitingForMD5File);
 
                 if (!bHashFileLoaded)
                 {
@@ -1107,10 +1098,9 @@ namespace Space_Manager
             }
             else
             {
-                clsHashInfo hashInfo;
-                if (!m_HashFileContents.TryGetValue(sFileNameTrimmed, out hashInfo))
+                if (!m_HashFileContents.TryGetValue(sFileNameTrimmed, out var hashInfo))
                 {
-                    ReportStatus("  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath, true);
+                    LogDebug("  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath);
                     return HASH_NOT_FOUND;
                 }
 
@@ -1140,9 +1130,7 @@ namespace Space_Manager
 
         private PurgePolicyConstants GetPurgePolicyEnum(string sPurgePolicy)
         {
-            int iPurgePolicy;
-
-            if (int.TryParse(sPurgePolicy, out iPurgePolicy))
+            if (int.TryParse(sPurgePolicy, out var iPurgePolicy))
             {
                 switch (iPurgePolicy)
                 {
@@ -1419,7 +1407,6 @@ namespace Space_Manager
                 // Call stored procedure MarkPurgedJobs
 
                 const int iMaxRetryCount = 3;
-                string sErrorMessage;
 
                 //Setup for execution of the stored procedure
                 var myCmd = new SqlCommand
@@ -1435,7 +1422,7 @@ namespace Space_Manager
                 myCmd.Parameters.Add(new SqlParameter("@InfoOnly", SqlDbType.TinyInt)).Value = 0;
 
                 //Execute the SP
-                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, iMaxRetryCount, out sErrorMessage);
+                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, iMaxRetryCount, out var sErrorMessage);
                 if (resCode == 0)
                 {
                     ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged");
@@ -1450,7 +1437,7 @@ namespace Space_Manager
                 }
 #else
                 var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
-                ReportStatus(msg, true);
+                LogDebug(msg);
 #endif
 
             }
@@ -1549,8 +1536,7 @@ namespace Space_Manager
                             continue;
                         }
 
-                        clsHashInfo hashInfo;
-                        if (m_HashFileContents.TryGetValue(sFileNameTrimmed, out hashInfo))
+                        if (m_HashFileContents.TryGetValue(sFileNameTrimmed, out var hashInfo))
                         {
                             // Match found; examine sMD5HashNew
                             if (string.Equals(hashInfo.HashCode, HASH_MISMATCH))
