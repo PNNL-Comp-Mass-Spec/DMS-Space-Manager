@@ -533,8 +533,16 @@ namespace Space_Manager
                             break;
                     }
 
+#if DoDelete
                     // Close the purge task
-                    m_Task.CloseTask(purgeResult);
+                    if (PreviewMode)
+                        m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
+                    else
+                        m_Task.CloseTask(purgeResult);
+#else
+                    // Close the purge task
+                    m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
+#endif
 
                     if (purgeResult == EnumCloseOutType.CLOSEOUT_DRIVE_MISSING)
                     {
