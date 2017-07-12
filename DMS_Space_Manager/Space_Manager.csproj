@@ -62,7 +62,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>RefLib\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader, Version=1.2.6394.16525, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MyEMSLReader, Version=1.3.6401.37178, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
