@@ -297,12 +297,12 @@ namespace Space_Manager
             if (!m_MsgHandler.Init())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
-                ReportStatus("Message handler init error", true);
+                LogDebug("Message handler init error");
                 m_MsgQueueInitSuccess = false;
             }
             else
             {
-                ReportStatus("Message handler initialized", true);
+                LogDebug("Message handler initialized");
                 m_MsgQueueInitSuccess = true;
             }
 
@@ -596,7 +596,7 @@ namespace Space_Manager
         /// <param name="e"></param>
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            ReportStatus("clsMainProgram.FileWatcherChanged event received", true);
+            LogDebug("clsMainProgram.FileWatcherChanged event received");
 
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
@@ -609,7 +609,7 @@ namespace Space_Manager
         // Deprecated in January 2017
         //private void OnBroadcastReceived(string cmdText)
         //{
-        //    ReportStatus("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText, true);
+        //    LogDebug("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText);
 
         //    clsBroadcastCmd recvCmd;
 
@@ -628,7 +628,7 @@ namespace Space_Manager
         //    if (!recvCmd.MachineList.Contains(m_MgrName))
         //    {
         //        // Received command doesn't apply to this manager
-        //        ReportStatus("Received command not applicable to this manager instance", true);
+        //        LogDebug("Received command not applicable to this manager instance");
         //        return;
         //    }
 

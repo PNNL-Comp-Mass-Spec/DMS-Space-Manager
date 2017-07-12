@@ -359,7 +359,20 @@ namespace Space_Manager
             }
 
             // Log debug message
-            ReportStatus("Deleted " + iFilesDeleted + " file" + CheckPlural(iFilesDeleted), true);
+            purgeMessage = iFilesDeleted + " file" + CheckPlural(iFilesDeleted);
+
+#if DoDelete
+            if (PreviewMode)
+                LogDebug("Previewed deletion of " + purgeMessage);
+            else
+                ReportStatus("Deleted " + purgeMessage);
+#else
+            if (PreviewMode)
+                LogDebug("Previewed deletion of " + purgeMessage);
+            else
+                LogDebug("Simulated deletion of " + purgeMessage);
+
+#endif
 
             // Look for empty folders that can now be deleted
             foreach (var serverFolder in lstServerFolders)
@@ -378,7 +391,7 @@ namespace Space_Manager
             }
 
             // Log debug message
-            ReportStatus("Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted), true);
+            LogDebug("Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted));
 
             // Delete the dataset folder if it is empty
             bool datasetFolderDeleted;
@@ -394,7 +407,7 @@ namespace Space_Manager
             }
 
             // Log debug message
-            ReportStatus("Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath, true);
+            LogDebug("Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath);
 
             // Mark the jobs in lstJobsToPurge as purged
             MarkPurgedJobs(lstJobsToPurge);
@@ -477,7 +490,7 @@ namespace Space_Manager
             {
                 if (!diDatasetFolder.Exists)
                 {
-                    ReportStatus("  Dataset not in archive (" + sambaDatasetNamePath + ")", true);
+                    LogDebug("  Dataset not in archive (" + sambaDatasetNamePath + ")");
                     return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
                 }
                 intFileCount = diDatasetFolder.GetFiles().Length;
@@ -796,7 +809,7 @@ namespace Space_Manager
 
                 if (bAssumeEqual)
                 {
-                    ReportStatus("    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1), true);
+                    LogDebug("    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1));
                     return ArchiveCompareResults.Compare_Equal;
                 }
 
@@ -864,7 +877,7 @@ namespace Space_Manager
         {
             string sFilePathInDictionary;
 
-            ReportStatus("Comparing file " + serverFile + " to file " + archiveFile, true);
+            LogDebug("Comparing file " + serverFile + " to file " + archiveFile);
 
             // Get hash for archive file
             var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out sFilePathInDictionary);
@@ -1056,7 +1069,7 @@ namespace Space_Manager
 
             sFilePathInDictionary = string.Empty;
 
-            ReportStatus("Getting archive hash for file " + fileNamePath, true);
+            LogDebug("Getting archive hash for file " + fileNamePath);
 
             if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) &&
                 string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
@@ -1208,7 +1221,7 @@ namespace Space_Manager
                 return false;
             }
 
-            ReportStatus("MD5 results file for dataset found. File name = " + sMD5ResultsFilePath, true);
+            LogDebug("MD5 results file for dataset found. File name = " + sMD5ResultsFilePath);
 
             // Read in results file
             try
@@ -1323,7 +1336,7 @@ namespace Space_Manager
                 return "";
             }
 
-            ReportStatus("Generating MD5 hash for file " + inpFileNamePath, true);
+            LogDebug("Generating MD5 hash for file " + inpFileNamePath);
 
             var hashTool = MD5.Create();
 
@@ -1367,7 +1380,7 @@ namespace Space_Manager
                 return "";
             }
 
-            ReportStatus("Generating Sha-1 hash for file " + inpFileNamePath, true);
+            LogDebug("Generating Sha-1 hash for file " + inpFileNamePath);
 
             var hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
 
@@ -1396,6 +1409,13 @@ namespace Space_Manager
                 }
 
 #if DoDelete
+                if (PreviewMode)
+                {
+                    var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
+                    LogDebug(msg);
+                    return;
+                }
+
                 // Call stored procedure MarkPurgedJobs
 
                 const int iMaxRetryCount = 3;
@@ -1589,7 +1609,7 @@ namespace Space_Manager
                 }
                 else
                 {
-                    ReportStatus("MD5 results file does not require updating: " + sMD5ResultsFileMaster, true);
+                    LogDebug("MD5 results file does not require updating: " + sMD5ResultsFileMaster);
                 }
 
                 return true;
@@ -1657,7 +1677,7 @@ namespace Space_Manager
 
         private void reader_DebugEvent(string message)
         {
-            ReportStatus(message, true);
+            LogDebug(message);
         }
 
         void reader_ErrorEvent(string message, Exception ex)
@@ -1681,7 +1701,7 @@ namespace Space_Manager
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
-                    ReportStatus(msg, true);
+                    LogDebug(msg);
                     mPercentComplete = e.PercentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }

@@ -211,7 +211,7 @@ namespace Space_Manager
             }
             else
             {
-                ReportStatus("Successfully set task complete in database, dataset " + m_JobParams["dataset"], true);
+                LogDebug("Successfully set task complete in database, dataset " + m_JobParams["dataset"]);
             }
         }
 

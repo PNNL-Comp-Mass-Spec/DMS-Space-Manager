@@ -175,7 +175,7 @@ namespace Space_Manager
                 testResult = SpaceCheckResults.Error;
 
                 // Log space requirement if debug logging enabled
-                ReportStatus("Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found", true);
+                ReportDebug("Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found");
             }
             else
             {

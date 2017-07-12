@@ -4,6 +4,14 @@ namespace Space_Manager
 {
     public abstract class clsLoggerBase
     {
+        /// <summary>
+        /// Log a debug message
+        /// </summary>
+        /// <param name="statusMessage"></param>
+        protected static void LogDebug(string statusMessage)
+        {
+            clsUtilityMethods.ReportStatus(statusMessage, true);
+        }
 
         /// <summary>
         /// Log an error message
