@@ -719,21 +719,48 @@ namespace Space_Manager
             }
 
             // Look for this file in dctFilesInMyEMSL
-            string archiveFileHash;
-            if (dctFilesInMyEMSL.TryGetValue(relativeFilePath, out archiveFileHash))
+            if (!dctFilesInMyEMSL.TryGetValue(relativeFilePath, out var archiveFileHash))
             {
-
-                fileInMyEMSL = true;
-                var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
-
-                // Compute the sha-1 hash value of the file
-                if (string.Equals(serverFileHash, archiveFileHash))
+                if (TraceMode)
                 {
-                    comparisonResult = ArchiveCompareResults.Compare_Equal;
+                    LogDebug(
+                        string.Format("{0} not found in MyEMSL", relativeFilePath));
                 }
+
+                return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
-            return comparisonResult;
+            var serverFile = new FileInfo(sServerFilePath);
+            if (!serverFile.Exists)
+            {
+                LogError("File not found, cannot compare to MyEMSL Info: " + serverFile.FullName);
+                return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
+            }
+
+            if (TraceMode)
+            {
+                LogDebug(
+                    string.Format("Computing sha-1 hash for {0:F2} GB file {1}",
+                                  clsUtilityMethods.BytesToGB(serverFile.Length), relativeFilePath));
+            }
+
+            fileInMyEMSL = true;
+            var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
+
+            // Compute the sha-1 hash value of the file
+            if (string.Equals(serverFileHash, archiveFileHash))
+            {
+                if (TraceMode)
+                {
+                    LogDebug(" ... hash matches MyEMSL");
+                }
+
+                return ArchiveCompareResults.Compare_Equal;
+            }
+
+            LogDebug(string.Format(" ... hashes do not match: {0} locally vs. {1} in MyEMSL", serverFileHash, archiveFileHash));
+
+            return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
         }
 
         private ArchiveCompareResults CompareFileUsingSamba(
