@@ -70,9 +70,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>RefLib\Pacifica.Core.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=2.4.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PRISM-Library.1.0.6\lib\net462\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -142,6 +139,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TRFFC17.ICO" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.9</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

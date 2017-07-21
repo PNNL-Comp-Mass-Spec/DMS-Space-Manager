@@ -17,7 +17,7 @@ namespace Space_Manager
         // Application startup class
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "July 4, 2017";
+        private const string PROGRAM_DATE = "July 20, 2017";
 
         private static clsMainProgram m_MainProgram;
 

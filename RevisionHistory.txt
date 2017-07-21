@@ -1,7 +1,11 @@
 Space Manager Change Log
 
+Version 2.0.6410; July 20, 2017
+	- Move the PRISM.dll package reference into the .csproj file
+
 Version 2.0.6394; July 4, 2017
 	- Use new MyEMSL APIs
+	- Update to .NET 4.6.2
 
 Version 2.0.6261; February 21, 2017
 	- Updated PRISM.dll
