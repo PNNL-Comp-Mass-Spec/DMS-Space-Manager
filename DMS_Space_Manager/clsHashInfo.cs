@@ -11,26 +11,17 @@ namespace Space_Manager
         /// </summary>
         public string HashCode
         {
-            get
-            {
-                return mHashCode;
-            }
-            set
-            {
-                mHashCode = value ?? string.Empty;
-            }
+            get => mHashCode;
+            set => mHashCode = value ?? string.Empty;
         }
 
+        /// <summary>
+        /// MyEMSL File ID
+        /// </summary>
         public string MyEMSLFileID
         {
-            get
-            {
-                return mMyEMSLFileID;
-            }
-            set
-            {
-                mMyEMSLFileID = value ?? string.Empty;
-            }
+            get => mMyEMSLFileID;
+            set => mMyEMSLFileID = value ?? string.Empty;
         }
 
         // Constructor

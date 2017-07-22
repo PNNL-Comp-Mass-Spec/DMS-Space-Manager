@@ -22,8 +22,8 @@ namespace Space_Manager
         #region "Properties"
         public string DriveLetter
         {
-            get { return AppendColonToDriveLetter(m_DriveLetter); }
-            set { m_DriveLetter = value; }
+            get => AppendColonToDriveLetter(m_DriveLetter);
+            set => m_DriveLetter = value;
         }
 
         public double MinDriveSpace { get; set; }   // Minimum allowable space in GB

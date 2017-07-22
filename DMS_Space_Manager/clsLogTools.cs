@@ -75,10 +75,8 @@ namespace Space_Manager
             }
         }
 
-        public static bool FileLogDebugEnabled
-        {
-            get { return m_FileLogger.IsDebugEnabled; }
-        }
+        public static bool FileLogDebugEnabled => m_FileLogger.IsDebugEnabled;
+
         #endregion
 
         #region "Methods"

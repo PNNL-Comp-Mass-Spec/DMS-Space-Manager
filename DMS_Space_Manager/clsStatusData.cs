@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
@@ -42,13 +42,8 @@ namespace Space_Manager
             }
         }
 
-        public static IEnumerable<string> ErrorQueue
-        {
-            get
-            {
-                return m_ErrorQueue;
-            }
-        }
+        public static IEnumerable<string> ErrorQueue => m_ErrorQueue;
+
         #endregion
 
         #region "Methods"
