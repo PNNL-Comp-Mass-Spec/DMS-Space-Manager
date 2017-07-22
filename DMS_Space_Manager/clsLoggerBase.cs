@@ -8,9 +8,10 @@ namespace Space_Manager
         /// Log a debug message
         /// </summary>
         /// <param name="statusMessage"></param>
-        protected static void LogDebug(string statusMessage)
+        /// <param name="writeToLog"></param>
+        protected static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            clsUtilityMethods.ReportStatus(statusMessage, true);
+            clsUtilityMethods.ReportDebug(statusMessage, writeToLog);
         }
 
         /// <summary>
