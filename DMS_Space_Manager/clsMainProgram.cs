@@ -8,6 +8,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using PRISM;
 
 namespace Space_Manager
 {
@@ -67,7 +68,6 @@ namespace Space_Manager
         private int m_DebugLevel = 4;
 
         private System.Timers.Timer m_StatusTimer;
-        private readonly DateTime m_DurationStart = DateTime.UtcNow;
         private clsStorageOperations m_StorageOps;
 
         #endregion
@@ -194,13 +194,19 @@ namespace Space_Manager
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
-                LogToMsgQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue"),
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
 
-            //Note: Might want to put this back in someday
-            //MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
+            RegisterEvents((clsEventNotifier)m_StatusFile);
+
+            var logStatusToMessageQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue");
+            var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
+            var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+
+            m_StatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
+
+
             m_StatusFile.WriteStatusFile();
 
             // Set up the status reporting time
@@ -577,6 +583,57 @@ namespace Space_Manager
         }
         #endregion
 
+        #region "clsEventNotifier events"
+
+        private void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        {
+            if (writeDebugEventsToLog)
+            {
+                oProcessingClass.DebugEvent += DebugEventHandler;
+            }
+            else
+            {
+                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+            }
+
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void DebugEventHandlerConsoleOnly(string statusMessage)
+        {
+            LogDebug(statusMessage, writeToLog: false);
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            ReportStatus(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            m_StatusFile.CurrentOperation = progressMessage;
+            m_StatusFile.UpdateAndWrite(percentComplete);
+        }
+        #endregion
+
         #region "Event handlers"
         /// <summary>
         /// Config file has been updated
@@ -590,7 +647,7 @@ namespace Space_Manager
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
         }
-        
+
         /// <summary>
         /// Updates the status at m_StatusTimer interval
         /// </summary>
@@ -598,10 +655,9 @@ namespace Space_Manager
         /// <param name="e"></param>
         void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var duration = DateTime.UtcNow - m_DurationStart;
-            m_StatusFile.Duration = (Single)duration.TotalHours;
             m_StatusFile.WriteStatusFile();
         }
+
         #endregion
     }
 }
