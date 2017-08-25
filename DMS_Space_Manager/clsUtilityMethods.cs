@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Management;
+using PRISM;
 
 namespace Space_Manager
 {
@@ -201,9 +202,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogError(string errorMessage, bool logToDb = false)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(errorMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowError(errorMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
             clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
@@ -226,9 +225,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(warningMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowWarning(warningMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
             clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
@@ -241,9 +238,7 @@ namespace Space_Manager
         /// <param name="writeToLog"></param>
         public static void ReportDebug(string message, bool writeToLog = false)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("  " + message);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(message);
 
             if (!writeToLog)
                 return;
@@ -260,21 +255,8 @@ namespace Space_Manager
         /// <param name="ex">Exception</param>
         public static void ReportStatus(string errorMessage, Exception ex)
         {
-            string formattedError;
-            if (errorMessage.EndsWith(ex.Message))
-            {
-                formattedError = errorMessage;
-            }
-            else
-            {
-                formattedError = errorMessage + ": " + ex.Message;
-            }
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(formattedError);
+            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(PRISM.Utilities.GetExceptionStackTraceMultiLine(ex));
-            Console.ResetColor();
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
         }
 
