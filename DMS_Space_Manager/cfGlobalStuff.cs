@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 02/01/2011
@@ -14,7 +14,10 @@ namespace Space_Manager
     // Namespace level values for application
 
     #region "Enums"
-    //Status constants
+
+    /// <summary>
+    /// Manager status constants
+    /// </summary>
     public enum EnumMgrStatus : short
     {
         Stopped,
@@ -24,6 +27,9 @@ namespace Space_Manager
         Disabled_MC
     }
 
+    /// <summary>
+    /// Task status constants
+    /// </summary>
     public enum EnumTaskStatus : short
     {
         Stopped,
@@ -34,6 +40,9 @@ namespace Space_Manager
         No_Task
     }
 
+    /// <summary>
+    /// Task detail constants
+    /// </summary>
     public enum EnumTaskStatusDetail : short
     {
         Retrieving_Resources,
@@ -61,6 +70,9 @@ namespace Space_Manager
         CLOSEOUT_PREVIEWED_PURGE = 9
     }
 
+    /// <summary>
+    /// Request task result codes
+    /// </summary>
     public enum EnumRequestTaskResult : short
     {
         TaskFound = 0,
@@ -69,18 +81,27 @@ namespace Space_Manager
         ConfigChanged = 3
     }
 
+    /// <summary>
+    /// Space check result codes
+    /// </summary>
     public enum SpaceCheckResults
     {
         Error = -1,
         Above_Threshold = 1,
         Below_Threshold = 0
     }
+
     #endregion
 
     #region "Delegates"
+
     public delegate void StatusMonitorUpdateReceived(string msg);
+
     #endregion
 
+    /// <summary>
+    /// Conversion utilities
+    /// </summary>
     public static class clsConversion
     {
         /// <summary>

@@ -1,10 +1,11 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,11 +19,11 @@ using log4net.Appender;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Wraps Log4Net functions
+    /// </summary>
     public static class clsLogTools
     {
-        //*********************************************************************************************************
-        // Wraps Log4Net functions
-        //**********************************************************************************************************
 
         #region "Contants"
 
@@ -34,6 +35,7 @@ namespace Space_Manager
         #endregion
 
         #region "Enums"
+
         public enum LogLevels
         {
             DEBUG = 5,
@@ -49,15 +51,18 @@ namespace Space_Manager
             LogDb,
             LogSystem
         }
+        
         #endregion
 
         #region "Class variables"
+
         private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
         private static string m_FileDate;
         private static string m_BaseFileName;
         private static log4net.Appender.FileAppender m_FileAppender;
+
         #endregion
 
         #region "Properties"

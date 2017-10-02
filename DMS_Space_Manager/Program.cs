@@ -1,21 +1,21 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
 //*********************************************************************************************************
+
 using System;
 using PRISM;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Application startup class
+    /// </summary>
     static class Program
     {
-        //*********************************************************************************************************
-        // Application startup class
-        //**********************************************************************************************************
 
         private const string PROGRAM_DATE = "July 21, 2017";
 

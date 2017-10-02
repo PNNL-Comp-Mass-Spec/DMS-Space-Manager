@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/14/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,11 +14,11 @@ using PRISM;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Holds static utility methods that are put here to avoid cluttering up other classes
+    /// </summary>
     public static class clsUtilityMethods
     {
-        //*********************************************************************************************************
-        // Holds static utility methods that are put here to avoid cluttering up other classes
-        //**********************************************************************************************************
 
         #region "Methods"
 

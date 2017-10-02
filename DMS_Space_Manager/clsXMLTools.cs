@@ -1,21 +1,22 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Xml;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Tools for parsing input XML
+    /// </summary>
     [Obsolete("Unused")]
     internal static class clsXMLTools
     {
-        //*********************************************************************************************************
-        // Tools for parsing input XML
-        //**********************************************************************************************************
 
         #region "Methods"
 

@@ -1,6 +1,5 @@
-﻿
-//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+﻿//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/14/2010
@@ -9,17 +8,20 @@
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Class to hold data for each drive being managed
+    /// </summary>
     public class clsDriveData
     {
-        //*********************************************************************************************************
-        // Class to hold data for each drive being managed
-        //**********************************************************************************************************
 
         #region "Class variables"
+
         string m_DriveLetter = "";
+
         #endregion
 
         #region "Properties"
+
         public string DriveLetter
         {
             get => AppendColonToDriveLetter(m_DriveLetter);
@@ -27,6 +29,7 @@ namespace Space_Manager
         }
 
         public double MinDriveSpace { get; set; }   // Minimum allowable space in GB
+
         #endregion
 
         #region "Constructors"

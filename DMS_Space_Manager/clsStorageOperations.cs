@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/15/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,12 +19,13 @@ using MyEMSLReader;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Class to perform a purge task and all associated operations
+    /// </summary>
     public class clsStorageOperations : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Class to perform a purge task and all associated operations
-        //**********************************************************************************************************
         #region "Constants"
+
         const string RESULT_FILE_NAME_PREFIX = "results.";
         // Obsolete: const string STAGED_FILE_NAME_PREFIX = "stagemd5.";
         const string WAITING_FOR_HASH_FILE = "(HASH)";
@@ -105,6 +106,7 @@ namespace Space_Manager
         #endregion
 
         #region "Structures"
+
         public struct udtDatasetInfoType
         {
             public string DatasetName;
@@ -120,6 +122,7 @@ namespace Space_Manager
             public PurgePolicyConstants PurgePolicy;
             public string RawDataType;
         }
+
         #endregion
 
         #region "Class variables"

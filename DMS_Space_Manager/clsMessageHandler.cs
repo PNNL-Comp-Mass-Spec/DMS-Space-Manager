@@ -1,5 +1,4 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Gary Kiebel and Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
@@ -15,17 +14,16 @@ using Apache.NMS.ActiveMQ.Commands;
 
 namespace Space_Manager
 {
-    // received commands are sent to a delegate function with this signature
-    public delegate void MessageProcessorDelegate(string cmdText);
 
+    /// <summary>
+    /// Handles sending and receiving of control and status messages
+    /// Base code provided by Gary Kiebel
+    /// </summary>
     class clsMessageHandler : clsLoggerBase, IDisposable
     {
-        //*********************************************************************************************************
-        // Handles sending and receiving of control and status messages
-        // Base code provided by Gary Kiebel
-        //**********************************************************************************************************
 
         #region "Class variables"
+
         private string m_BrokerUri;
 
         private string m_StatusTopicName;	// Used for status output
@@ -37,13 +35,11 @@ namespace Space_Manager
 
         private bool m_IsDisposed;
         private bool m_HasConnection;
-        #endregion
-
-        #region "Events"
 
         #endregion
 
         #region "Properties"
+
         public clsMgrSettings MgrSettings
         {
             set => m_MgrSettings = value;
@@ -74,6 +70,7 @@ namespace Space_Manager
             get => m_StatusTopicName;
             set => m_StatusTopicName = value;
         }
+
         #endregion
 
         #region "Methods"
@@ -199,9 +196,11 @@ namespace Space_Manager
                 throw new ObjectDisposedException(GetType().FullName);
             }
         }
+
         #endregion
 
         #region "Cleanup"
+
         /// <summary>
         /// Cleans up a connection after error or when closing
         /// </summary>

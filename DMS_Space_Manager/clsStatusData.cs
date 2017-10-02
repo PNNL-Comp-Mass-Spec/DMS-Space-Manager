@@ -5,23 +5,21 @@
 // Created 09/08/2010
 //
 //*********************************************************************************************************
+
 using System.Collections.Generic;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
+    ///	status file class to the log tools class
+    /// </summary>
     static class clsStatusData
     {
-        //*********************************************************************************************************
-        //Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
-        //	status file class to the log tools class
-        //**********************************************************************************************************
 
-        #region "Class variables"
         private static string m_MostRecentLogMessage;
         private static readonly Queue<string> m_ErrorQueue = new Queue<string>();
-        #endregion
 
-        #region "Properties"
         public static string MostRecentLogMessage
         {
             get
@@ -44,9 +42,6 @@ namespace Space_Manager
 
         public static IEnumerable<string> ErrorQueue => m_ErrorQueue;
 
-        #endregion
-
-        #region "Methods"
         public static void AddErrorMessage(string ErrMsg)
         {
             //Add the most recent error message
@@ -58,6 +53,6 @@ namespace Space_Manager
                 m_ErrorQueue.Dequeue();
             }
         }
-        #endregion
+
     }
 }

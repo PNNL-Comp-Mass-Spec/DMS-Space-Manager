@@ -1,29 +1,31 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Class for loading, storing and accessing manager parameters.
+    /// </summary>
+    /// <remarks>
+    /// Loads initial settings from local config file, then checks to see if remainder of settings
+    /// should be loaded or manager set to inactive. If manager active, retrieves remainder of settings
+    /// from manager control database.
+    /// </remarks>
     public class clsMgrSettings : clsLoggerBase, IMgrParams
     {
-        //*********************************************************************************************************
-        //	Class for loading, storing and accessing manager parameters.
-        //	Loads initial settings from local config file, then checks to see if remainder of settings should be
-        //		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
-        //		parameters database.
-        //**********************************************************************************************************
 
         #region "Constants"
 
@@ -36,13 +38,17 @@ namespace Space_Manager
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion
+
         #region "Class variables"
+
         private Dictionary<string, string> m_ParamDictionary;
         private bool m_MCParamsLoaded;
         private string m_ErrMsg = "";
+
         #endregion
 
         #region "Properties"
+
         public string ErrMsg => m_ErrMsg;
 
         public Dictionary<string, string> TaskDictionary => m_ParamDictionary;

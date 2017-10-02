@@ -1,20 +1,20 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
 //*********************************************************************************************************
+
 using System;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Interface used by classes that create and update task status file
+    /// </summary>
     public interface IStatusFile
     {
-        //*********************************************************************************************************
-        // Interface used by classes that create and update task status file
-        //**********************************************************************************************************
 
         #region "Events"
 

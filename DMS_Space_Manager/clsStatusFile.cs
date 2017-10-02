@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/08/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Diagnostics;
 using System.Xml;
@@ -14,11 +14,11 @@ using PRISM;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Class to handle status file updates
+    /// </summary>
     public class clsStatusFile : clsEventNotifier, IStatusFile
     {
-        //*********************************************************************************************************
-        // Class to handle status file updates
-        //**********************************************************************************************************
 
         #region "Class variables"
 

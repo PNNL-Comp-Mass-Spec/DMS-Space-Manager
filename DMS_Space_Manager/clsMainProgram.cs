@@ -5,6 +5,7 @@
 // Created 09/09/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -12,11 +13,11 @@ using PRISM;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Main program execution loop for application
+    /// </summary>
     class clsMainProgram : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Main program execution loop for application
-        //**********************************************************************************************************
 
         #region "Enums"
 
@@ -38,6 +39,7 @@ namespace Space_Manager
             Exit_Restart_OK,
             Exit_No_Restart
         }
+        
         #endregion
 
         #region "Constants"
@@ -102,6 +104,7 @@ namespace Space_Manager
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Initializes the manager
         /// </summary>
@@ -581,6 +584,7 @@ namespace Space_Manager
 
             return true;
         }
+        
         #endregion
 
         #region "clsEventNotifier events"
@@ -632,6 +636,7 @@ namespace Space_Manager
             m_StatusFile.CurrentOperation = progressMessage;
             m_StatusFile.UpdateAndWrite(percentComplete);
         }
+        
         #endregion
 
         #region "Event handlers"

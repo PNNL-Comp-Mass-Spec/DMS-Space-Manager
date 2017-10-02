@@ -5,24 +5,28 @@
 // Created 09/09/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Base class for handling task-related data
+    /// </summary>
     abstract class clsDbTask : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Base class for handling task-related data
-        //**********************************************************************************************************
 
         #region "Constants"
+
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = -53000;
+
         #endregion
 
         #region "Class variables"
+
         protected readonly IMgrParams m_MgrParams;
         protected readonly Dictionary<string, string> m_JobParams =
             new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);

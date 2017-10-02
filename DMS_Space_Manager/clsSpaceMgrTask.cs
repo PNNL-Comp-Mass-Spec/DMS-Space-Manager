@@ -1,37 +1,32 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 09/09/2010
 //
 //*********************************************************************************************************
+
 using System;
 using System.Data.SqlClient;
 using System.Data;
 
 namespace Space_Manager
 {
+    /// <summary>
+    /// Provides database access and tools for one capture task
+    /// </summary>
     class clsSpaceMgrTask : clsDbTask, ITaskParams
     {
-        //*********************************************************************************************************
-        // Provides database access and tools for one capture task
-        //**********************************************************************************************************
 
         #region "Constants"
 
         private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
         private const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
-        #endregion
-
-        #region "Class variables"
 
         #endregion
-
-        #region "Constructors"
 
         /// <summary>
-        /// Class constructor
+        /// Constructor
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
         /// <param name="traceMode">True to show additional debug messages</param>
@@ -40,8 +35,6 @@ namespace Space_Manager
         {
             m_JobParams.Clear();
         }
-
-        #endregion
 
         #region "Methods"
 
