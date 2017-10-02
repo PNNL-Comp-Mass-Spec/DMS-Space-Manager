@@ -1,5 +1,9 @@
 Space Manager Change Log
 
+Version 2.0.6484; October 2, 2017
+	- No longer log "Dataset not in MyEMSL and folder not found" to the database since stored procedure SetPurgeTaskComplete also logs an error
+	- Remove obsolete classes and code
+
 Version 2.0.6410; July 20, 2017
 	- Move the PRISM.dll package reference into the .csproj file
 

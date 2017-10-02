@@ -571,7 +571,8 @@ namespace Space_Manager
                         msg = "Dataset not in MyEMSL and folder " + sambaDatasetNamePath +
                               " not found; unable to verify files prior to purge";
                     }
-                    LogError(msg, true);
+
+                    LogError(msg);
 
                     // Check whether the parent folder exists
                     if (ValidateDatasetShareExists(sambaDatasetNamePath, 2))
