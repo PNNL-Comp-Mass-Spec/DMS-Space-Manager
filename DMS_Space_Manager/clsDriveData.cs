@@ -13,20 +13,9 @@ namespace Space_Manager
     /// </summary>
     public class clsDriveData
     {
+        private readonly string m_DriveLetter;
 
-        #region "Class variables"
-
-        string m_DriveLetter = "";
-
-        #endregion
-
-        #region "Properties"
-
-        public string DriveLetter
-        {
-            get => AppendColonToDriveLetter(m_DriveLetter);
-            set => m_DriveLetter = value;
-        }
+        public string DriveLetter => AppendColonToDriveLetter(m_DriveLetter);
 
         public double MinDriveSpace { get; set; }   // Minimum allowable space in GB
 
@@ -40,9 +29,7 @@ namespace Space_Manager
             m_DriveLetter = driveLetter;
             MinDriveSpace = driveSpace;
         }
-        #endregion
 
-        #region "Methods"
         /// <summary>
         /// Appends colon to drive letter if not already present
         /// </summary>
@@ -60,7 +47,5 @@ namespace Space_Manager
         {
             return DriveLetter;
         }
-        #endregion
-
     }
 }
