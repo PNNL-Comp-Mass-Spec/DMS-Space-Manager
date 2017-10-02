@@ -1388,24 +1388,7 @@ namespace Space_Manager
 
             return hashStrBld.ToString();
         }
-
-        [Obsolete("Unused")]
-        private string GenerateSha1HashFromFile(string inpFileNamePath)
-        {
-            //Verify input file exists
-            if (!File.Exists(inpFileNamePath))
-            {
-                LogError("clsUpdateOps.GenerateSha1HashFromFile; File not found: " + inpFileNamePath);
-                return "";
-            }
-
-            LogDebug("Generating Sha-1 hash for file " + inpFileNamePath);
-
-            var hashValue = Pacifica.Core.Utilities.GenerateSha1Hash(inpFileNamePath);
-
-            return hashValue;
-        }
-
+        
         /// <summary>
         /// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
         /// </summary>

@@ -30,19 +30,8 @@ namespace Space_Manager
 
         public double MinDriveSpace { get; set; }   // Minimum allowable space in GB
 
-        #endregion
-
-        #region "Constructors"
         /// <summary>
-        /// Default constructor requiring use of properties to set values
-        /// </summary>
-        public clsDriveData()
-        {
-            // Default constructor - does nothing
-        }
-
-        /// <summary>
-        /// Constructor that allows setting property values
+        /// Constructor
         /// </summary>
         /// <param name="driveLetter">Drive letter</param>
         /// <param name="driveSpace">Min allowable drive space</param>
