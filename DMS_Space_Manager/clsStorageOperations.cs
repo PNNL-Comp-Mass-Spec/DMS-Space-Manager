@@ -1642,19 +1642,9 @@ namespace Space_Manager
         /// Validate that the share for the dataset actually exists
         /// </summary>
         /// <param name="sDatasetFolderPath"></param>
-        /// <returns></returns>
-        private bool ValidateDatasetShareExists(string sDatasetFolderPath)
-        {
-            return ValidateDatasetShareExists(sDatasetFolderPath, -1);
-        }
-
-        /// <summary>
-        /// Validate that the share for the dataset actually exists
-        /// </summary>
-        /// <param name="sDatasetFolderPath"></param>
         /// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; -1 means parse all parent folders until a valid one is found</param>
         /// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
-        private bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth)
+        private bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth = -1)
         {
             try
             {
