@@ -45,8 +45,7 @@ namespace Space_Manager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public string GetParam(string name)
         {
-            string value;
-            if (m_JobParams.TryGetValue(name, out value))
+            if (m_JobParams.TryGetValue(name, out var value))
             {
                 return value;
             }

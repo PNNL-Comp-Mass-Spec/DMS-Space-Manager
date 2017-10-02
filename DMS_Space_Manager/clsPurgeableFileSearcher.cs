@@ -77,9 +77,8 @@ namespace Space_Manager
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
         private bool AddFilesToPurgeDateThreshold(DirectoryInfo diFolder, int iAgeThresholdDays, SortedSet<string> lstServerFilesToPurge)
         {
-            DateTime dtMostRecentUpdate;
 
-            var lstFiles = FindFilesAndNewestDate(diFolder, out dtMostRecentUpdate);
+            var lstFiles = FindFilesAndNewestDate(diFolder, out var dtMostRecentUpdate);
 
             if (iAgeThresholdDays < 1)
                 iAgeThresholdDays = 1;
@@ -292,9 +291,8 @@ namespace Space_Manager
                             // Files are not yet 3 years old
                             // If all of the files are 1 year old, then purge files over 50 MB
 
-                            DateTime dtMostRecentUpdate;
 
-                            var lstFiles = FindFilesAndNewestDate(diSubDir, out dtMostRecentUpdate);
+                            var lstFiles = FindFilesAndNewestDate(diSubDir, out var dtMostRecentUpdate);
 
                             if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
                             {
@@ -310,8 +308,7 @@ namespace Space_Manager
                         {
                             if (reMatch.Groups.Count > 0)
                             {
-                                int jobNum;
-                                if (int.TryParse(reMatch.Groups[1].Value, out jobNum))
+                                if (int.TryParse(reMatch.Groups[1].Value, out var jobNum))
                                     lstJobsToPurge.Add(jobNum);
                             }
                         }

@@ -435,13 +435,12 @@ namespace Space_Manager
                     }
 
                     // Check available space on server drive and compare it with min allowed space
-                    double driveFreeSpaceGB;
                     var serverName = m_MgrSettings.GetParam("machname");
                     var perspective = m_MgrSettings.GetParam("perspective");
                     var checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
                                                                         perspective,
                                                                         testDrive,
-                                                                        out driveFreeSpaceGB);
+                                                                        out var driveFreeSpaceGB);
 
                     if (checkResult == SpaceCheckResults.Above_Threshold)
                     {
@@ -450,8 +449,7 @@ namespace Space_Manager
                         break;
                     }
 
-                    string pendingWindowsUpdateMessage;
-                    if (PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
+                    if (PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out var pendingWindowsUpdateMessage))
                     {
                         ReportStatus("Exiting: " + pendingWindowsUpdateMessage);
                         break;

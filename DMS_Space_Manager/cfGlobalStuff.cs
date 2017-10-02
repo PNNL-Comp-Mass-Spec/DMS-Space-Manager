@@ -119,8 +119,7 @@ namespace Space_Manager
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
 
-            bool blnValue;
-            if (bool.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out var blnValue))
                 return blnValue;
 
             return defaultValue;
@@ -131,8 +130,7 @@ namespace Space_Manager
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
 
-            int intValue;
-            if (int.TryParse(value, out intValue))
+            if (int.TryParse(value, out var intValue))
                 return intValue;
 
             return defaultValue;

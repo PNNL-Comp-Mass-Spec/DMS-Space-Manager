@@ -22,10 +22,7 @@ namespace Space_Manager
 
         public static string MostRecentLogMessage
         {
-            get
-            {
-                return m_MostRecentLogMessage;
-            }
+            get => m_MostRecentLogMessage;
             set
             {
                 //Filter out routine startup and shutdown messages
