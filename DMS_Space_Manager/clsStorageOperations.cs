@@ -1003,44 +1003,41 @@ namespace Space_Manager
         {
             var diFolder = new DirectoryInfo(folderPath);
 
-            if (diFolder.Exists)
+            if (!diFolder.Exists)
             {
-                foreach (var diSubFolder in diFolder.GetDirectories())
-                {
-                    // Check whether the folder is marked as Read-Only
-                    if ((diSubFolder.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                        diSubFolder.Attributes = diSubFolder.Attributes & ~FileAttributes.ReadOnly;
-
-                    DeleteFolderRecurse(diSubFolder.FullName);
-                }
-
-                try
-                {
-                    if (PreviewMode)
-                        Console.WriteLine("Preview: Delete " + diFolder.FullName);
-                    else
-                        diFolder.Delete(true);
-                }
-                catch
-                {
-                    // The folder might have readonly files
-                    // Manually delete each file
-                    DeleteFilesCheckReadonly(diFolder);
-                    if (PreviewMode)
-                        Console.WriteLine("Preview: Delete " + diFolder.FullName);
-                    else
-                        diFolder.Delete(true);
-                }
-
-                return true;
+                // Folder not found; nothing to delete
+                return;
             }
 
+            foreach (var diSubFolder in diFolder.GetDirectories())
+            {
+                // Check whether the folder is marked as Read-Only
+                if ((diSubFolder.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    diSubFolder.Attributes = diSubFolder.Attributes & ~FileAttributes.ReadOnly;
 
-            // Folder not found; return true anyway
-            return true;
+                DeleteFolderRecurse(diSubFolder.FullName);
+            }
 
+            try
+            {
+                if (PreviewMode)
+                    Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                else
+                    diFolder.Delete(true);
+            }
+            catch
+            {
+                // The folder might have readonly files
+                // Manually delete each file
+                DeleteFilesCheckReadonly(diFolder);
+                if (PreviewMode)
+                    Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                else
+                    diFolder.Delete(true);
+            }
 
         }
+
 #endif
 
         /// <summary>
