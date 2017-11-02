@@ -133,7 +133,7 @@ namespace Space_Manager
             }
 
             // Update the cached manager name
-            m_MgrName = m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
+            m_MgrName = m_MgrSettings.ManagerName;
 
             // Set up the loggers
             var logFileName = m_MgrSettings.GetParam("logfilename");

@@ -78,6 +78,11 @@ namespace Space_Manager
         /// </summary>
         public string ErrMsg => m_ErrMsg;
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, Environment.MachineName + "_Undefined-Manager");
+
         public Dictionary<string, string> TaskDictionary => m_ParamDictionary;
 
         #endregion
@@ -255,14 +260,13 @@ namespace Space_Manager
                 return false;
             }
 
-            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters: true);
+            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors, returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
             }
 
-            success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
+            success = StoreParameters(dtSettings, skipExistingParameters: false);
 
             if (!success)
                 return false;
@@ -277,12 +281,11 @@ namespace Space_Manager
 
                 // This manager has group-based settings defined; load them now
 
-                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters: false);
+                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors, returnErrorIfNoParameters: false);
 
                 if (success)
                 {
-                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: managerName);
+                    success = StoreParameters(dtSettings, skipExistingParameters: true);
                 }
             }
 
@@ -392,9 +395,8 @@ namespace Space_Manager
         /// </summary>
         /// <param name="dtSettings"></param>
         /// <param name="skipExistingParameters"></param>
-        /// <param name="managerName"></param>
         /// <returns></returns>
-        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
+        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters)
         {
             bool success;
 
@@ -434,7 +436,7 @@ namespace Space_Manager
             {
                 m_ErrMsg =
                     "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table for manager '" +
-                    managerName + "': " + ex.Message;
+                    ManagerName + "': " + ex.Message;
                 WriteErrorMsg(m_ErrMsg);
                 success = false;
             }
