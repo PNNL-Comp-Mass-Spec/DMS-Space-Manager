@@ -15,7 +15,6 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Security.Cryptography;
-using MyEMSLReader;
 
 namespace Space_Manager
 {
@@ -303,8 +302,8 @@ namespace Space_Manager
             // This list keeps track of the folders that we are processing
             var lstServerFolders = new SortedSet<string>();
 
-            var iFilesDeleted = 0;
-            var iFoldersDeleted = 0;
+            var filesDeleted = 0;
+            var foldersDeleted = 0;
 
             // Delete the files listed in lstServerFilesToPurge
             // If the PurgePolicy is AutoPurge or Delete All Except QC, the files in lstServerFilesToPurge could be a subset of the actual files present
@@ -350,7 +349,7 @@ namespace Space_Manager
 
                     }
 #endif
-                    iFilesDeleted += 1;
+                    filesDeleted += 1;
                 }
                 catch (Exception ex)
                 {
@@ -360,7 +359,7 @@ namespace Space_Manager
             }
 
             // Log debug message
-            purgeMessage = iFilesDeleted + " file" + CheckPlural(iFilesDeleted);
+            purgeMessage = filesDeleted + " file" + CheckPlural(filesDeleted);
 
 #if DoDelete
             if (PreviewMode)
@@ -382,7 +381,7 @@ namespace Space_Manager
                 {
                     if (serverFolder != udtDatasetInfo.ServerFolderPath)
                         // Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
-                        DeleteFolderIfEmpty(serverFolder, ref iFoldersDeleted);
+                        DeleteFolderIfEmpty(serverFolder, ref foldersDeleted);
                 }
                 catch (Exception ex)
                 {
@@ -392,14 +391,14 @@ namespace Space_Manager
             }
 
             // Log debug message
-            LogDebug("Deleted " + iFoldersDeleted + " empty folder" + CheckPlural(iFoldersDeleted));
+            LogDebug("Deleted " + foldersDeleted + " empty folder" + CheckPlural(foldersDeleted));
 
             // Delete the dataset folder if it is empty
             bool datasetFolderDeleted;
             try
             {
                 // Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
-                datasetFolderDeleted = DeleteFolderIfEmpty(udtDatasetInfo.ServerFolderPath, ref iFoldersDeleted);
+                datasetFolderDeleted = DeleteFolderIfEmpty(udtDatasetInfo.ServerFolderPath, ref foldersDeleted);
             }
             catch (Exception ex)
             {
@@ -452,11 +451,11 @@ namespace Space_Manager
         /// Returns "s" if the value is 0 or greater than 1
         /// Returns "" if the value is 1
         /// </summary>
-        /// <param name="iValue"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        private string CheckPlural(int iValue)
+        private string CheckPlural(int value)
         {
-            if (iValue == 1)
+            if (value == 1)
                 return string.Empty;
             return "s";
         }
@@ -465,9 +464,9 @@ namespace Space_Manager
         /// A file was not found in the archive.  Check whether the dataset has any files available via Samba
         /// </summary>
         /// <param name="sambaDatasetNamePath">Samba path for the dataset</param>
-        /// <param name="sServerFilePath">File path that was not found (included in a log message)</param>
+        /// <param name="serverFilePath">File path that was not found (included in a log message)</param>
         /// <returns>Comparison result</returns>
-        private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string sServerFilePath)
+        private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string serverFilePath)
         {
             // Look for \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
             //       or \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
@@ -516,7 +515,7 @@ namespace Space_Manager
             {
                 // The folder exists in the archive, but the file in question was not there
 
-                LogWarning("  Update required. Server file not found in archive: " + sServerFilePath);
+                LogWarning("  Update required. Server file not found in archive: " + serverFilePath);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
@@ -593,7 +592,7 @@ namespace Space_Manager
             var oPurgeableFileSearcher = new clsPurgeableFileSearcher();
             lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(diDatasetFolder, udtDatasetInfo, out lstJobsToPurge);
 
-            var sMismatchMessage = string.Empty;
+            var mismatchMessage = string.Empty;
 
             // Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
             // File paths are not case sensitive
@@ -610,7 +609,7 @@ namespace Space_Manager
 
             // Loop through the file list, checking for archive copies and comparing if archive copy present
             // We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mismatch is present
-            foreach (var sServerFilePath in lstServerFilesToPurge)
+            foreach (var serverFilePath in lstServerFilesToPurge)
             {
                 // Determine if file exists in archive
 
@@ -620,13 +619,13 @@ namespace Space_Manager
                 var fileInMyEMSL = false;
                 if (dctFilesInMyEMSL.Count > 0)
                 {
-                    comparisonResult = CompareFileUsingMyEMSLInfo(sServerFilePath, udtDatasetInfo, dctFilesInMyEMSL, out fileInMyEMSL);
+                    comparisonResult = CompareFileUsingMyEMSLInfo(serverFilePath, udtDatasetInfo, dctFilesInMyEMSL, out fileInMyEMSL);
                 }
 
                 if (!fileInMyEMSL)
                 {
                     // Look for the file using Samba
-                    comparisonResult = CompareFileUsingSamba(sambaDatasetNamePath, sServerFilePath, udtDatasetInfo, diDatasetFolder);
+                    comparisonResult = CompareFileUsingSamba(sambaDatasetNamePath, serverFilePath, udtDatasetInfo, diDatasetFolder);
                 }
 
                 if (comparisonResult == ArchiveCompareResults.Compare_Equal)
@@ -635,8 +634,8 @@ namespace Space_Manager
                 if (comparisonResult == ArchiveCompareResults.Compare_Not_Equal_or_Missing)
                 {
                     // An update is required
-                    if (string.IsNullOrEmpty(sMismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal_or_Missing)
-                        sMismatchMessage = "  Update required. Server file " + sServerFilePath + " doesn't match copy in MyEMSL or in the archive";
+                    if (string.IsNullOrEmpty(mismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal_or_Missing)
+                        mismatchMessage = "  Update required. Server file " + serverFilePath + " doesn't match copy in MyEMSL or in the archive";
 
                     eCompResultOverall = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
                     continue;
@@ -656,7 +655,7 @@ namespace Space_Manager
                     break;
 
                 case ArchiveCompareResults.Compare_Not_Equal_or_Missing:
-                    LogWarning(sMismatchMessage);
+                    LogWarning(mismatchMessage);
                     break;
 
             }
@@ -665,7 +664,7 @@ namespace Space_Manager
 
         }
 
-        private List<ArchivedFileInfo> FindFilesInMyEMSL(string datasetName, out bool queryException)
+        private List<MyEMSLReader.ArchivedFileInfo> FindFilesInMyEMSL(string datasetName, out bool queryException)
         {
 
             queryException = false;
@@ -697,11 +696,11 @@ namespace Space_Manager
                 queryException = true;
             }
 
-            return new List<ArchivedFileInfo>();
+            return new List<MyEMSLReader.ArchivedFileInfo>();
         }
 
         private ArchiveCompareResults CompareFileUsingMyEMSLInfo(
-            string sServerFilePath,
+            string serverFilePath,
             udtDatasetInfoType udtDatasetInfo,
             IReadOnlyDictionary<string, string> dctFilesInMyEMSL,
             out bool fileInMyEMSL)
@@ -709,12 +708,12 @@ namespace Space_Manager
             fileInMyEMSL = false;
 
             // Convert the file name on the storage server to its equivalent relative path
-            var relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, sServerFilePath);
+            var relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, serverFilePath);
             relativeFilePath = relativeFilePath.TrimStart('\\');
 
             if (relativeFilePath.Length == 0)
             {
-                LogError("File name not returned when converting from server path to relative path for file" + sServerFilePath);
+                LogError("File name not returned when converting from server path to relative path for file" + serverFilePath);
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -736,7 +735,7 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
-            var serverFile = new FileInfo(sServerFilePath);
+            var serverFile = new FileInfo(serverFilePath);
             if (!serverFile.Exists)
             {
                 LogError("File not found, cannot compare to MyEMSL Info: " + serverFile.FullName);
@@ -751,7 +750,7 @@ namespace Space_Manager
             }
 
             fileInMyEMSL = true;
-            var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(sServerFilePath);
+            var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFilePath);
 
             // Compute the sha-1 hash value of the file
             if (string.Equals(serverFileHash, archiveFileHash))
@@ -771,15 +770,15 @@ namespace Space_Manager
 
         private ArchiveCompareResults CompareFileUsingSamba(
             string sambaDatasetNamePath,
-            string sServerFilePath,
+            string serverFilePath,
             udtDatasetInfoType udtDatasetInfo,
             FileSystemInfo diDatasetFolder)
         {
             // Convert the file name on the storage server to its equivalent in the archive
-            var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, sServerFilePath);
+            var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, serverFilePath);
             if (archFilePath.Length == 0)
             {
-                LogError("File name not returned when converting from server path to archive path for file" + sServerFilePath);
+                LogError("File name not returned when converting from server path to archive path for file" + serverFilePath);
                 return ArchiveCompareResults.Compare_Error;
             }
 
@@ -797,11 +796,11 @@ namespace Space_Manager
                 // The archive could be offline or the file could be stored in MyEMSL
                 // All data added to DMS after September 2013 will only be in MyEMSL
 
-                return CheckSambaPathAvailability(sambaDatasetNamePath, sServerFilePath);
+                return CheckSambaPathAvailability(sambaDatasetNamePath, serverFilePath);
             }
 
             // File exists in archive, so compare the server and archive versions
-            var comparisonResult = CompareTwoFiles(sServerFilePath, archFilePath, udtDatasetInfo);
+            var comparisonResult = CompareTwoFiles(serverFilePath, archFilePath, udtDatasetInfo);
 
             if (comparisonResult == ArchiveCompareResults.Compare_Equal ||
                 comparisonResult == ArchiveCompareResults.Compare_Not_Equal_or_Missing)
@@ -819,8 +818,8 @@ namespace Space_Manager
 
                 const int AGED_FILE_DAYS = 45;
 
-                var fiServerFile = new FileInfo(sServerFilePath);
-                var bAssumeEqual = false;
+                var fiServerFile = new FileInfo(serverFilePath);
+                var assumeEqual = false;
                 var dFileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
                 if (dFileAgeDays >= AGED_FILE_DAYS ||
@@ -829,12 +828,12 @@ namespace Space_Manager
                     if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
                     {
                         // Copy in archive is the same size and same date (or newer)
-                        bAssumeEqual = true;
+                        assumeEqual = true;
                     }
 
                 }
 
-                if (bAssumeEqual)
+                if (assumeEqual)
                 {
                     LogDebug("    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1));
                     return ArchiveCompareResults.Compare_Equal;
@@ -906,7 +905,7 @@ namespace Space_Manager
             LogDebug("Comparing file " + serverFile + " to file " + archiveFile);
 
             // Get hash for archive file
-            var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out var sFilePathInDictionary);
+            var archiveFileHash = GetArchiveFileHash(serverFile, udtDatasetInfo, out var filePathInDictionary);
             if (string.IsNullOrEmpty(archiveFileHash))
             {
                 // There was a problem. Description has already been logged
@@ -956,7 +955,7 @@ namespace Space_Manager
             }
 
             // Update the cached hash value to #HashMismatch#
-            m_HashFileContents[sFilePathInDictionary].HashCode = HASH_MISMATCH;
+            m_HashFileContents[filePathInDictionary].HashCode = HASH_MISMATCH;
 
             //Files not equal
             return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
@@ -967,9 +966,9 @@ namespace Space_Manager
         /// Delete the given folder if it is empty (no files, and all subfolders are empty)
         /// </summary>
         /// <param name="serverFolder"></param>
-        /// <param name="iFoldersDeleted"></param>
+        /// <param name="foldersDeleted"></param>
         /// <returns>True if the folder was empty and was deleted; otherwise false</returns>
-        private bool DeleteFolderIfEmpty(string serverFolder, ref int iFoldersDeleted)
+        private bool DeleteFolderIfEmpty(string serverFolder, ref int foldersDeleted)
         {
 
             var diFolder = new DirectoryInfo(serverFolder);
@@ -985,7 +984,7 @@ namespace Space_Manager
                 // This code will only be reached if conditional compilation symbol DoDelete is defined
                 DeleteFolderRecurse(diFolder.FullName);
 #endif
-                iFoldersDeleted += 1;
+                foldersDeleted += 1;
 
                 return true;
             }
@@ -998,11 +997,11 @@ namespace Space_Manager
         /// Deletes a folder, including all files and subfolders
         /// Assures that the ReadOnly bit is turned off for each folder
         /// </summary>
-        /// <param name="sFolderPath"></param>
+        /// <param name="folderPath"></param>
         /// <returns></returns>
-        private bool DeleteFolderRecurse(string sFolderPath)
+        private void DeleteFolderRecurse(string folderPath)
         {
-            var diFolder = new DirectoryInfo(sFolderPath);
+            var diFolder = new DirectoryInfo(folderPath);
 
             if (diFolder.Exists)
             {
@@ -1072,11 +1071,11 @@ namespace Space_Manager
         {
             var hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
 
-            var sMD5ResultsFilePath = Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
-            sMD5ResultsFilePath = Path.Combine(sMD5ResultsFilePath, udtDatasetInfo.YearQuarter);
-            sMD5ResultsFilePath = Path.Combine(sMD5ResultsFilePath, RESULT_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
+            var md5ResultsFilePath = Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
+            md5ResultsFilePath = Path.Combine(md5ResultsFilePath, udtDatasetInfo.YearQuarter);
+            md5ResultsFilePath = Path.Combine(md5ResultsFilePath, RESULT_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
 
-            return sMD5ResultsFilePath;
+            return md5ResultsFilePath;
         }
 
         /// <summary>
@@ -1084,16 +1083,16 @@ namespace Space_Manager
         /// </summary>
         /// <param name="fileNamePath">File on storage server to find a matching archive hatch for</param>
         /// <param name="udtDatasetInfo">Dataset being purged</param>
-        /// <param name="sFilePathInDictionary"></param>
+        /// <param name="filePathInDictionary"></param>
         /// <returns>MD5 or Sha-1 Hash value for success; otherwise return (HASH) or an empty string</returns>
-        private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string sFilePathInDictionary)
+        private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string filePathInDictionary)
         {
             // Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
             // will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
             // and extract the file hash if found. If the hash file is not found, return an empty string,
             // telling the manager to request result file creation
 
-            sFilePathInDictionary = string.Empty;
+            filePathInDictionary = string.Empty;
 
             LogDebug("Getting archive hash for file " + fileNamePath);
 
@@ -1107,11 +1106,11 @@ namespace Space_Manager
             {
                 m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
-                var bHashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var bWaitingForMD5File);
+                var hashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var waitingForMD5File);
 
-                if (!bHashFileLoaded)
+                if (!hashFileLoaded)
                 {
-                    if (bWaitingForMD5File)
+                    if (waitingForMD5File)
                         return WAITING_FOR_HASH_FILE;
 
                     // Error occurred (and has been logged)
@@ -1122,22 +1121,22 @@ namespace Space_Manager
             // Search the hash file contents for a file that matches the input file
             var filePathUnix = fileNamePath.Replace(@"\", @"/");
 
-            var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
-            var sFileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, sSubfolderTofind);
+            var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+            var fileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, subfolderTofind);
 
-            if (string.IsNullOrEmpty(sFileNameTrimmed))
+            if (string.IsNullOrEmpty(fileNameTrimmed))
             {
-                LogWarning("  Did not find " + sSubfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")");
+                LogWarning("  Did not find " + subfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")");
             }
             else
             {
-                if (!m_HashFileContents.TryGetValue(sFileNameTrimmed, out var hashInfo))
+                if (!m_HashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
                 {
-                    LogDebug("  MD5 hash not found for file " + fileNamePath + " using " + sFileNameTrimmed + "; see results file " + m_MD5ResultsFilePath);
+                    LogDebug("  MD5 hash not found for file " + fileNamePath + " using " + fileNameTrimmed + "; see results file " + m_MD5ResultsFilePath);
                     return HASH_NOT_FOUND;
                 }
 
-                sFilePathInDictionary = string.Copy(sFileNameTrimmed);
+                filePathInDictionary = string.Copy(fileNameTrimmed);
                 return hashInfo.HashCode;
             }
 
@@ -1161,11 +1160,11 @@ namespace Space_Manager
             }
         }
 
-        private PurgePolicyConstants GetPurgePolicyEnum(string sPurgePolicy)
+        private PurgePolicyConstants GetPurgePolicyEnum(string purgePolicy)
         {
-            if (int.TryParse(sPurgePolicy, out var iPurgePolicy))
+            if (int.TryParse(purgePolicy, out var purgePolicyValue))
             {
-                switch (iPurgePolicy)
+                switch (purgePolicyValue)
                 {
                     case 0:
                         return PurgePolicyConstants.Auto;
@@ -1186,20 +1185,20 @@ namespace Space_Manager
         /// Loads the MD5 results file for the given dataset into memory
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
-        /// <param name="bWaitingForMD5File">Output parameter: true if an MD5 has file was not found</param>
+        /// <param name="waitingForMD5File">Output parameter: true if an MD5 has file was not found</param>
         /// <returns>True if success, false if an error</returns>
-        private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool bWaitingForMD5File)
+        private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool waitingForMD5File)
         {
 
             // Find out if there's an MD5 results file for this dataset
-            var sMD5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
+            var md5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
-            bWaitingForMD5File = false;
+            waitingForMD5File = false;
             m_MD5ResultsFileDatasetName = string.Empty;
 
             try
             {
-                if (!File.Exists(sMD5ResultsFilePath))
+                if (!File.Exists(md5ResultsFilePath))
                 {
                     // MD5 results file not found
                     if (string.CompareOrdinal(udtDatasetInfo.DatasetName, m_LastMD5WarnDataset) != 0)
@@ -1207,7 +1206,7 @@ namespace Space_Manager
                         // Warning not yet posted
                         m_LastMD5WarnDataset = string.Copy(udtDatasetInfo.DatasetName);
 
-                        ReportStatus("  MD5 results file not found: " + sMD5ResultsFilePath);
+                        ReportStatus("  MD5 results file not found: " + md5ResultsFilePath);
 
                         // We stopped creating stage stagemd5 files in January 2016
                         // Thus, the following logic is now disabled
@@ -1232,7 +1231,7 @@ namespace Space_Manager
 
                     }
 
-                    bWaitingForMD5File = true;
+                    waitingForMD5File = true;
                     return false;
                 }
             }
@@ -1242,16 +1241,16 @@ namespace Space_Manager
                 return false;
             }
 
-            LogDebug("MD5 results file for dataset found. File name = " + sMD5ResultsFilePath);
+            LogDebug("MD5 results file for dataset found. File name = " + md5ResultsFilePath);
 
             // Read in results file
             try
             {
                 m_HashFileContents.Clear();
 
-                var sContents = File.ReadAllLines(sMD5ResultsFilePath);
+                var contents = File.ReadAllLines(md5ResultsFilePath);
 
-                foreach (var sInputLine in sContents)
+                foreach (var inputLine in contents)
                 {
 
                     // Extract the hash values value from the data line
@@ -1276,7 +1275,7 @@ namespace Space_Manager
                     //    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic	915648
 
 
-                    var lstHashAndPathInfo = sInputLine.Split(new[] { ' ' }, 2).ToList();
+                    var lstHashAndPathInfo = inputLine.Split(new[] { ' ' }, 2).ToList();
                     if (lstHashAndPathInfo.Count > 1)
                     {
 
@@ -1288,55 +1287,55 @@ namespace Space_Manager
 
                         var lstPathAndFileID = lstHashAndPathInfo[1].Split('\t').ToList();
 
-                        var sFileNamePath = lstPathAndFileID[0];
+                        var fileNamePath = lstPathAndFileID[0];
 
                         var myEmslFileID = string.Empty;
                         if (lstPathAndFileID.Count > 1)
                             myEmslFileID = lstPathAndFileID[1];
 
-                        var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                        var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
-                        var sFileNameTrimmed = TrimPathAfterSubfolder(sFileNamePath, sSubfolderTofind);
+                        var fileNameTrimmed = TrimPathAfterSubfolder(fileNamePath, subfolderTofind);
 
-                        if (string.IsNullOrEmpty(sFileNameTrimmed))
+                        if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
-                            LogWarning("Did not find " + sSubfolderTofind + " in line " + sInputLine + " in results file " + sMD5ResultsFilePath);
+                            LogWarning("Did not find " + subfolderTofind + " in line " + inputLine + " in results file " + md5ResultsFilePath);
                         }
                         else
                         {
                             var newHashInfo = new clsHashInfo(hashCode, myEmslFileID);
 
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-                            if (m_HashFileContents.ContainsKey(sFileNameTrimmed))
+                            if (m_HashFileContents.ContainsKey(fileNameTrimmed))
                             {
                                 // Preferentially use the newer value, unless the older value is a MyEMSL Sha-1 hash but the newer value is an MD5 hash
-                                if (!(hashCode.Length < 40 && m_HashFileContents[sFileNameTrimmed].HashCode.Length >= 40))
+                                if (!(hashCode.Length < 40 && m_HashFileContents[fileNameTrimmed].HashCode.Length >= 40))
                                 {
 
-                                    m_HashFileContents[sFileNameTrimmed] = newHashInfo;
+                                    m_HashFileContents[fileNameTrimmed] = newHashInfo;
                                 }
                             }
                             else
-                                m_HashFileContents.Add(sFileNameTrimmed, newHashInfo);
+                                m_HashFileContents.Add(fileNameTrimmed, newHashInfo);
                         }
                     }
                     else
                     {
                         // Invalid line; skip it (but continue parsing the file)
-                        LogWarning("Unable to split line " + sInputLine + " in results file " + sMD5ResultsFilePath);
+                        LogWarning("Unable to split line " + inputLine + " in results file " + md5ResultsFilePath);
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                LogError("Exception reading MD5 results file " + sMD5ResultsFilePath, ex);
+                LogError("Exception reading MD5 results file " + md5ResultsFilePath, ex);
                 return false;
             }
 
             // If we get here, then the file has successfully been loaded
             m_MD5ResultsFileDatasetName = string.Copy(udtDatasetInfo.DatasetName);
-            m_MD5ResultsFilePath = string.Copy(sMD5ResultsFilePath);
+            m_MD5ResultsFilePath = string.Copy(md5ResultsFilePath);
 
             return true;
         }
@@ -1390,7 +1389,7 @@ namespace Space_Manager
 
             return hashStrBld.ToString();
         }
-        
+
         /// <summary>
         /// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
         /// </summary>
@@ -1402,27 +1401,27 @@ namespace Space_Manager
             if (lstJobsToPurge.Count > 0)
             {
                 // Construct a comma-separated list of jobs
-                var sJobs = string.Empty;
+                var jobs = string.Empty;
 
                 foreach (var job in lstJobsToPurge)
                 {
-                    if (sJobs.Length > 0)
-                        sJobs += "," + job;
+                    if (jobs.Length > 0)
+                        jobs += "," + job;
                     else
-                        sJobs = job.ToString(CultureInfo.InvariantCulture);
+                        jobs = job.ToString(CultureInfo.InvariantCulture);
                 }
 
 #if DoDelete
                 if (PreviewMode)
                 {
-                    var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
+                    var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
                     LogDebug(msg);
                     return;
                 }
 
                 // Call stored procedure MarkPurgedJobs
 
-                const int iMaxRetryCount = 3;
+                const int maxRetryCount = 3;
 
                 //Setup for execution of the stored procedure
                 var myCmd = new SqlCommand
@@ -1433,26 +1432,26 @@ namespace Space_Manager
 
                 myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                myCmd.Parameters.Add(new SqlParameter("@JobList", SqlDbType.VarChar, 4000)).Value = sJobs;
+                myCmd.Parameters.Add(new SqlParameter("@JobList", SqlDbType.VarChar, 4000)).Value = jobs;
 
                 myCmd.Parameters.Add(new SqlParameter("@InfoOnly", SqlDbType.TinyInt)).Value = 0;
 
                 //Execute the SP
-                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, iMaxRetryCount, out var sErrorMessage);
+                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, maxRetryCount, out var errorMessage);
                 if (resCode == 0)
                 {
-                    ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged");
+                    ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
                 }
                 else
                 {
-                    var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs + " as purged";
-                    if (!string.IsNullOrEmpty(sErrorMessage))
-                        msg += ": " + sErrorMessage;
+                    var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged";
+                    if (!string.IsNullOrEmpty(errorMessage))
+                        msg += ": " + errorMessage;
 
                     LogError(msg);
                 }
 #else
-                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + sJobs;
+                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
                 LogDebug(msg);
 #endif
 
@@ -1460,27 +1459,27 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Looks for sSubfolderTofind in sFileNamePath
-        /// If found, returns the text that occurs after sSubfolderTofind
+        /// Looks for subfolderTofind in fileNamePath
+        /// If found, returns the text that occurs after subfolderTofind
         /// If not found, then returns an empty string
         /// </summary>
-        /// <param name="sFileNamePath"></param>
-        /// <param name="sSubfolderTofind"></param>
+        /// <param name="fileNamePath"></param>
+        /// <param name="subfolderTofind"></param>
         /// <returns></returns>
-        private string TrimPathAfterSubfolder(string sFileNamePath, string sSubfolderTofind)
+        private string TrimPathAfterSubfolder(string fileNamePath, string subfolderTofind)
         {
-            var iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind, StringComparison.InvariantCultureIgnoreCase);
+            var startIndex = fileNamePath.IndexOf(subfolderTofind, StringComparison.InvariantCultureIgnoreCase);
 
-            if (iStartIndex < 0)
+            if (startIndex < 0)
             {
                 // Try again using lowercase
-                iStartIndex = sFileNamePath.IndexOf(sSubfolderTofind, StringComparison.InvariantCultureIgnoreCase);
+                startIndex = fileNamePath.IndexOf(subfolderTofind, StringComparison.InvariantCultureIgnoreCase);
             }
 
-            if (iStartIndex >= 0)
+            if (startIndex >= 0)
             {
-                if (iStartIndex + sSubfolderTofind.Length < sFileNamePath.Length)
-                    return sFileNamePath.Substring(iStartIndex + sSubfolderTofind.Length);
+                if (startIndex + subfolderTofind.Length < fileNamePath.Length)
+                    return fileNamePath.Substring(startIndex + subfolderTofind.Length);
 
                 return string.Empty;
             }
@@ -1492,18 +1491,17 @@ namespace Space_Manager
         /// Updates the archive hash file for a dataset to only retain lines where the MD5 hash value agree
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset Info</param>
-        /// <returns>TRUE for success; FALSE otherwise</returns>
-        private bool UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
+        private void UpdateMD5ResultsFile(udtDatasetInfoType udtDatasetInfo)
         {
-            var sCurrentStep = "Start";
+            var currentStep = "Start";
 
             // Find out if there's a master MD5 results file for this dataset
-            var sMD5ResultsFileMaster = GenerateMD5ResultsFilePath(udtDatasetInfo);
+            var md5ResultsFileMasterPath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
-            if (!File.Exists(sMD5ResultsFileMaster))
+            if (!File.Exists(md5ResultsFileMasterPath))
             {
                 // Master MD5 results file not found; nothing to do
-                return true;
+                return;
             }
 
             // Update the hash file to remove any entries with a hash of HASH_MISMATCH in m_HashFileContents
@@ -1512,49 +1510,49 @@ namespace Space_Manager
             // In theory, before we do this, the Archive Update manager will update the file
             try
             {
-                var lstUpdatedMD5Info = new List<string>();
-                var bWriteUpdatedMD5Info = false;
+                var updatedMD5Info = new List<string>();
+                var writeUpdatedMD5Info = false;
 
-                var cSplitChars = new[] { ' ' };
+                var splitChars = new[] { ' ' };
 
-                var sSubfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
-                sCurrentStep = "Read master MD5 results file";
+                currentStep = "Read master MD5 results file";
 
                 // Open the master MD5 results file and read each line
-                using (var srMD5ResultsFileMaster = new StreamReader(new FileStream(sMD5ResultsFileMaster, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srMD5ResultsFileMaster = new StreamReader(new FileStream(md5ResultsFileMasterPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
                     while (!srMD5ResultsFileMaster.EndOfStream)
                     {
-                        var sInputLine = srMD5ResultsFileMaster.ReadLine();
-                        if (string.IsNullOrWhiteSpace(sInputLine))
+                        var inputLine = srMD5ResultsFileMaster.ReadLine();
+                        if (string.IsNullOrWhiteSpace(inputLine))
                             continue;
 
-                        // Extract the MD5 results value from sLineIn
+                        // Extract the MD5 results value from lineIn
                         // Format is MD5 code, then a space, then a full path to the file
                         // Example:
                         // 2036b65346acd59f3dd044b6a97bf44a /archive/dmsarch/LTQ_Orb_1/2008_1/EIF_Plasma_C_18_10Jan08_Draco_07-12-24/Seq200901221155_Auto362389/EIF_Plasma_C_18_10Jan08_Draco_07-12-24_out.zip
 
-                        var lineParts = sInputLine.Split(cSplitChars, 2);
+                        var lineParts = inputLine.Split(splitChars, 2);
                         if (lineParts.Length <= 1)
                         {
                             continue;
                         }
 
                         // Look for the unix file path in m_HashFileContents
-                        var sFileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], sSubfolderTofind);
+                        var fileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], subfolderTofind);
 
-                        if (string.IsNullOrEmpty(sFileNameTrimmed))
+                        if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
                             // Did not find in lineParts[1]; this is unexpected
                             // An error should have already been logged when function LoadMD5ResultsFile() parsed this file
                             continue;
                         }
 
-                        if (m_HashFileContents.TryGetValue(sFileNameTrimmed, out var hashInfo))
+                        if (m_HashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
                         {
-                            // Match found; examine sMD5HashNew
+                            // Match found; examine md5HashNew
                             if (string.Equals(hashInfo.HashCode, HASH_MISMATCH))
                             {
                                 // Old comment:
@@ -1565,75 +1563,73 @@ namespace Space_Manager
                                 //   We need to run a new archive update job for this dataset
                                 //   The ArchiveVerify tool will run as part of that job and will update the cached hash values
 
-                                bWriteUpdatedMD5Info = true;
+                                writeUpdatedMD5Info = true;
                             }
                             else
                             {
                                 // Hash codes match; retain this line
-                                lstUpdatedMD5Info.Add(sInputLine);
+                                updatedMD5Info.Add(inputLine);
                             }
                         }
                         else
                         {
                             // Match not found in m_HashFileContents
                             // Retain this line
-                            lstUpdatedMD5Info.Add(sInputLine);
+                            updatedMD5Info.Add(inputLine);
                         }
 
                     } // while not at EndOfStream
 
                 }
 
-                if (bWriteUpdatedMD5Info)
+                if (writeUpdatedMD5Info)
                 {
-                    var sMD5ResultsFilePathTemp = sMD5ResultsFileMaster + ".updated";
+                    var md5ResultsFilePathTemp = md5ResultsFileMasterPath + ".updated";
 
-                    sCurrentStep = "Create " + sMD5ResultsFilePathTemp;
-                    var swUpdatedMD5Results = new StreamWriter(new FileStream(sMD5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read));
+                    currentStep = "Create " + md5ResultsFilePathTemp;
+                    var swUpdatedMD5Results = new StreamWriter(new FileStream(md5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    foreach (var sOutputLine in lstUpdatedMD5Info)
+                    foreach (var outputLine in updatedMD5Info)
                     {
-                        swUpdatedMD5Results.WriteLine(sOutputLine);
+                        swUpdatedMD5Results.WriteLine(outputLine);
                     }
 
                     swUpdatedMD5Results.Close();
                     System.Threading.Thread.Sleep(100);
 
-                    sCurrentStep = "Overwrite master MD5 results file with " + sMD5ResultsFilePathTemp;
-                    File.Copy(sMD5ResultsFilePathTemp, sMD5ResultsFileMaster, true);
+                    currentStep = "Overwrite master MD5 results file with " + md5ResultsFilePathTemp;
+                    File.Copy(md5ResultsFilePathTemp, md5ResultsFileMasterPath, true);
                     System.Threading.Thread.Sleep(100);
 
-                    sCurrentStep = "Delete " + sMD5ResultsFilePathTemp;
-                    File.Delete(sMD5ResultsFilePathTemp);
+                    currentStep = "Delete " + md5ResultsFilePathTemp;
+                    File.Delete(md5ResultsFilePathTemp);
 
-                    ReportStatus("  Updated MD5 results file " + sMD5ResultsFileMaster);
+                    ReportStatus("  Updated MD5 results file " + md5ResultsFileMasterPath);
 
                 }
                 else
                 {
-                    LogDebug("MD5 results file does not require updating: " + sMD5ResultsFileMaster);
+                    LogDebug("MD5 results file does not require updating: " + md5ResultsFileMasterPath);
                 }
 
-                return true;
             }
             catch (Exception ex)
             {
-                LogError("Exception updating MD5 results file " + sMD5ResultsFileMaster + "; CurrentStep: " + sCurrentStep, ex);
-                return false;
+                LogError("Exception updating MD5 results file " + md5ResultsFileMasterPath + "; CurrentStep: " + currentStep, ex);
             }
         }
 
         /// <summary>
         /// Validate that the share for the dataset actually exists
         /// </summary>
-        /// <param name="sDatasetFolderPath"></param>
+        /// <param name="datasetFolderPath"></param>
         /// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; -1 means parse all parent folders until a valid one is found</param>
         /// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
-        private bool ValidateDatasetShareExists(string sDatasetFolderPath, int maxParentDepth = -1)
+        private bool ValidateDatasetShareExists(string datasetFolderPath, int maxParentDepth = -1)
         {
             try
             {
-                var diDatasetFolder = new DirectoryInfo(sDatasetFolderPath);
+                var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
 
                 if (diDatasetFolder.Exists)
                     return true;
@@ -1658,7 +1654,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                LogError("Exception validating that folder " + sDatasetFolderPath + " exists", ex);
+                LogError("Exception validating that folder " + datasetFolderPath + " exists", ex);
                 return false;
             }
         }
