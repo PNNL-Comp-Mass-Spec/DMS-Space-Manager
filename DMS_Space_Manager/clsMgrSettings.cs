@@ -8,11 +8,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
+using System.Data;
 using System.IO;
-using System.Windows.Forms;
 using System.Xml;
+using System.Windows.Forms;
+using PRISM;
 
 namespace Space_Manager
 {
@@ -29,19 +30,42 @@ namespace Space_Manager
 
         #region "Constants"
 
+        /// <summary>
+        /// Status message for when the manager is deactivated locally
+        /// </summary>
+        /// <remarks>Used when MgrActive_Local is False in AnalysisManagerProg.exe.config</remarks>
         public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 
+        /// <summary>
+        /// Manager parameter: config database connection string
+        /// </summary>
         public const string MGR_PARAM_MGR_CFG_DB_CONN_STRING = "MgrCnfgDbConnectStr";
+        /// <summary>
+        /// Manager parameter: manager active
+        /// </summary>
+        /// <remarks>Defined in AnalysisManagerProg.exe.config</remarks>
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
+
+        /// <summary>
+        /// Manager parameter: manager name
+        /// </summary>
         public const string MGR_PARAM_MGR_NAME = "MgrName";
+
+        /// <summary>
+        /// Manager parameter: using defaults flag
+        /// </summary>
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
+
+        /// <summary>
+        /// Connection string to DMS5
+        /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion
 
         #region "Class variables"
 
-        private Dictionary<string, string> m_ParamDictionary;
+        private readonly Dictionary<string, string> m_ParamDictionary;
         private bool m_MCParamsLoaded;
         private string m_ErrMsg = "";
 
@@ -49,6 +73,9 @@ namespace Space_Manager
 
         #region "Properties"
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         public string ErrMsg => m_ErrMsg;
 
         public Dictionary<string, string> TaskDictionary => m_ParamDictionary;
@@ -59,9 +86,14 @@ namespace Space_Manager
 
         public clsMgrSettings()
         {
+            m_ParamDictionary = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
             if (!LoadSettings())
             {
-                throw new ApplicationException("Unable to initialize manager settings class");
+                if (string.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
+                    throw new ApplicationException(DEACTIVATED_LOCALLY);
+
+                throw new ApplicationException("Unable to initialize manager settings class: " + m_ErrMsg);
             }
         }
 
@@ -69,29 +101,28 @@ namespace Space_Manager
         {
             m_ErrMsg = "";
 
-            // If the param dictionary exists, it needs to be cleared out
-            if (m_ParamDictionary != null)
-            {
-                m_ParamDictionary.Clear();
-                m_ParamDictionary = null;
-            }
+            m_ParamDictionary.Clear();
 
             // Get settings from config file
-            m_ParamDictionary = LoadMgrSettingsFromFile();
+            var settingsFromFile = LoadMgrSettingsFromFile();
+            foreach (var item in settingsFromFile)
+            {
+                m_ParamDictionary.Add(item.Key, item.Value);
+            }
 
             // Get directory for main executable
             var appPath = Application.ExecutablePath;
             var fi = new FileInfo(appPath);
             m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
-            //Test the settings retrieved from the config file
+            // Test the settings retrieved from the config file
             if (!CheckInitialSettings(m_ParamDictionary))
             {
-                //Error logging handled by CheckInitialSettings
+                // Error logging handled by CheckInitialSettings
                 return false;
             }
 
-            //Determine if manager is deactivated locally
+            // Determine if manager is deactivated locally
             if (!GetBooleanParam(MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
                 LogWarning(DEACTIVATED_LOCALLY);
@@ -99,17 +130,17 @@ namespace Space_Manager
                 return false;
             }
 
-            //Get remaining settings from database
+            // Get remaining settings from database
             if (!LoadMgrSettingsFromDB())
             {
-                //Error logging handled by LoadMgrSettingsFromDB
+                // Error logging handled by LoadMgrSettingsFromDB
                 return false;
             }
 
             // Set flag indicating params have been loaded from manger config db
             m_MCParamsLoaded = true;
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -122,7 +153,7 @@ namespace Space_Manager
             var mgrCfgDBConnString = Properties.Settings.Default.MgrCnfgDbConnectStr;
             mgrSettingsFromFile.Add(MGR_PARAM_MGR_CFG_DB_CONN_STRING, mgrCfgDBConnString);
 
-            //Manager active flag
+            // Manager active flag
             var mgrActiveLocal = Properties.Settings.Default.MgrActive_Local.ToString();
             mgrSettingsFromFile.Add(MGR_PARAM_MGR_ACTIVE_LOCAL, mgrActiveLocal);
 
@@ -137,7 +168,7 @@ namespace Space_Manager
             else
                 mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, mgrName);
 
-            //Default settings in use flag
+            // Default settings in use flag
             var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
             mgrSettingsFromFile.Add(MGR_PARAM_USING_DEFAULTS, usingDefaults);
 
@@ -180,7 +211,7 @@ namespace Space_Manager
                 }
             }
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -188,7 +219,7 @@ namespace Space_Manager
         {
             foreach (DataRow oRow in dtSettings.Rows)
             {
-                //Add the column heading and value to the dictionary
+                // Add the column heading and value to the dictionary
                 var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 
                 if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase))
@@ -206,16 +237,13 @@ namespace Space_Manager
             return string.Empty;
         }
 
-        public bool LoadMgrSettingsFromDB()
+        /// <summary>
+        /// Retrieves the manager settings from the Manager Control database
+        /// </summary>
+        /// <returns></returns>
+        public bool LoadMgrSettingsFromDB(bool logConnectionErrors = true)
         {
-            const bool logConnectionErrors = true;
-            return LoadMgrSettingsFromDB(logConnectionErrors);
-        }
-
-        public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
-        {
-            //Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
-
+            // Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 
             var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
 
@@ -227,38 +255,34 @@ namespace Space_Manager
                 return false;
             }
 
-            var returnErrorIfNoParameters = true;
             var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters);
+                                                    returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
             }
 
-            var skipExistingParameters = false;
-            success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+            success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
 
             if (!success)
                 return false;
 
             while (success)
             {
-                var strMgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
-                if (string.IsNullOrEmpty(strMgrSettingsGroup))
+                var mgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
+                if (string.IsNullOrEmpty(mgrSettingsGroup))
                 {
                     break;
                 }
 
                 // This manager has group-based settings defined; load them now
 
-                returnErrorIfNoParameters = false;
-                success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters);
+                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors,
+                                                    returnErrorIfNoParameters: false);
 
                 if (success)
                 {
-                    skipExistingParameters = true;
-                    success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: managerName);
                 }
             }
 
@@ -266,9 +290,8 @@ namespace Space_Manager
         }
 
         private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors,
-                                               bool returnErrorIfNoParameters)
+                                               bool returnErrorIfNoParameters, int retryCount = 3)
         {
-            short retryCount = 3;
             var DBConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
             dtSettings = null;
 
@@ -280,11 +303,11 @@ namespace Space_Manager
                 return false;
             }
 
-            var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName +
-                         "'";
+            var sqlStr = string.Format("SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '{0}'",
+                managerName);
 
             // Get a datatable holding the parameters for this manager
-            while (retryCount > 0)
+            while (retryCount >= 0)
             {
                 try
                 {
@@ -312,25 +335,28 @@ namespace Space_Manager
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
-                        ex.Message + ", RetryCount = " + retryCount;
+                    var msg = string.Format("LoadMgrSettingsFromDB; Exception getting manager settings from database: {0}; " +
+                                            "ConnectionString: {1}, RetryCount = {2}",
+                                            ex.Message, DBConnectionString, retryCount);
 
                     if (logConnectionErrors)
-                        WriteErrorMsg(errMsg, allowLogToDB: false);
+                        WriteErrorMsg(msg, allowLogToDB: false);
 
-                    //Delay for 5 seconds before trying again
-                    System.Threading.Thread.Sleep(5000);
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
                 }
-            }
 
-            //If loop exited due to errors, return false
-            if (retryCount < 1)
+            } // while
+
+            // If loop exited due to errors, return false
+            if (retryCount < 0)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
-                var allowLogToDB = !(PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending());
+                var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());
 
-                m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
-
+                m_ErrMsg =
+                    "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
                 if (logConnectionErrors)
                     WriteErrorMsg(m_ErrMsg, allowLogToDB);
                 return false;
@@ -350,7 +376,7 @@ namespace Space_Manager
             // Verify at least one row returned
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
-                //Wrong number of rows returned
+                // Wrong number of rows returned
                 m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager " + managerName +
                            " not defined in the manager control database; using " + DBConnectionString;
                 WriteErrorMsg(m_ErrMsg);
@@ -361,16 +387,22 @@ namespace Space_Manager
             return true;
         }
 
-        public bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
+        /// <summary>
+        /// Update mParamDictionary with settings in dtSettings, optionally skipping existing parameters
+        /// </summary>
+        /// <param name="dtSettings"></param>
+        /// <param name="skipExistingParameters"></param>
+        /// <param name="managerName"></param>
+        /// <returns></returns>
+        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
         {
             bool success;
 
-            //Fill a string dictionary with the manager parameters that have been found
             try
             {
                 foreach (DataRow oRow in dtSettings.Rows)
                 {
-                    //Add the column heading and value to the dictionary
+                    // Add the column heading and value to the dictionary
                     var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
                     var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
 
@@ -414,7 +446,6 @@ namespace Space_Manager
             return success;
         }
 
-
         /// <summary>
         /// Lookup the value of a boolean parameter
         /// </summary>
@@ -439,7 +470,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -455,7 +486,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -472,7 +503,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -511,15 +542,15 @@ namespace Space_Manager
         {
             m_ErrMsg = "";
 
-            //Load the config document
+            // Load the config document
             var doc = LoadConfigDocument();
             if (doc == null)
             {
-                //Error message has already been produced by LoadConfigDocument
+                // Error message has already been produced by LoadConfigDocument
                 return false;
             }
 
-            //Retrieve the settings node
+            // Retrieve the settings node
             var appSettingsNode = doc.SelectSingleNode("//applicationSettings");
 
             if (appSettingsNode == null)
@@ -530,16 +561,16 @@ namespace Space_Manager
 
             try
             {
-                //Select the element containing the value for the specified key containing the key
+                // Select the element containing the value for the specified key containing the key
                 var matchingElement = (XmlElement)appSettingsNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
                 if (matchingElement != null)
                 {
-                    //Set key to specified value
+                    // Set key to specified value
                     matchingElement.InnerText = value;
                 }
                 else
                 {
-                    //Key was not found
+                    // Key was not found
                     m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
@@ -550,7 +581,6 @@ namespace Space_Manager
             {
                 m_ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
                 return false;
-
             }
         }
 
