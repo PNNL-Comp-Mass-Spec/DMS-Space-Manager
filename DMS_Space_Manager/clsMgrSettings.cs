@@ -559,7 +559,21 @@ namespace Space_Manager
                 mParamDictionary.Add(itemKey, itemValue);
             }
         }
+
+        /// <summary>
+        /// Converts a database output object that could be dbNull to a string
+        /// </summary>
+        /// <param name="inpObj"></param>
+        /// <returns>String equivalent of object; empty string if object is dbNull</returns>
+        /// <remarks></remarks>
+        private string DbCStr(object inpObj)
+        {
+            if (inpObj == null)
+            {
+                return "";
             }
+
+            return inpObj.ToString();
         }
 
         /// <summary>
@@ -615,6 +629,12 @@ namespace Space_Manager
             }
         }
 
+        private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
+        {
+            var logToDb = !mMCParamsLoaded && allowLogToDB;
+            LogError(errorMessage, logToDb);
+        }
+
         /// <summary>
         /// Loads an app config file for changing parameters
         /// </summary>
@@ -641,22 +661,6 @@ namespace Space_Manager
         private string GetConfigFilePath()
         {
             return Application.ExecutablePath + ".config";
-        }
-
-        private string DbCStr(object InpObj)
-        {
-            if (InpObj == null)
-            {
-                return "";
-            }
-
-            return InpObj.ToString();
-        }
-
-        private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
-        {
-            var logToDb = !m_MCParamsLoaded && allowLogToDB;
-            LogError(errorMessage, logToDb);
         }
 
         #endregion
