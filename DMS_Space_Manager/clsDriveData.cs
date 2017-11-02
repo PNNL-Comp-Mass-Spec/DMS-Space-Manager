@@ -17,7 +17,10 @@ namespace Space_Manager
 
         public string DriveLetter => AppendColonToDriveLetter(m_DriveLetter);
 
-        public double MinDriveSpace { get; set; }   // Minimum allowable space in GB
+        /// <summary>
+        /// Minimum allowable space, in GB
+        /// </summary>
+        public double MinDriveSpace { get; set; }
 
         /// <summary>
         /// Constructor

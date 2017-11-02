@@ -50,7 +50,7 @@ namespace Space_Manager
             get => m_BrokerUri;
             set => m_BrokerUri = value;
         }
-     
+
         public string StatusTopicName
         {
             get => m_StatusTopicName;
@@ -211,7 +211,7 @@ namespace Space_Manager
             DestroyConnection();
             m_IsDisposed = true;
         }
-      
+
         #endregion
     }
 }

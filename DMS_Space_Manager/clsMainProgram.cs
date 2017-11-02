@@ -39,7 +39,7 @@ namespace Space_Manager
             Exit_Restart_OK,
             Exit_No_Restart
         }
-        
+
         #endregion
 
         #region "Constants"
@@ -582,7 +582,7 @@ namespace Space_Manager
 
             return true;
         }
-        
+
         #endregion
 
         #region "clsEventNotifier events"
@@ -634,7 +634,7 @@ namespace Space_Manager
             m_StatusFile.CurrentOperation = progressMessage;
             m_StatusFile.UpdateAndWrite(percentComplete);
         }
-        
+
         #endregion
 
         #region "Event handlers"
