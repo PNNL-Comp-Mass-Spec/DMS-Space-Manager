@@ -83,7 +83,7 @@ namespace Space_Manager
         {
             if (value == null)
             {
-                value = String.Empty;
+                value = string.Empty;
             }
 
             if (m_JobParams.ContainsKey(keyName))

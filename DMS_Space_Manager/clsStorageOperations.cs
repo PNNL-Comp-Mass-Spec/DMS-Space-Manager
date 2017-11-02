@@ -485,7 +485,7 @@ namespace Space_Manager
 
             var diDatasetFolder = new DirectoryInfo(sambaDatasetNamePath);
 
-            int intFileCount;
+            int fileCount;
             try
             {
                 if (!diDatasetFolder.Exists)
@@ -493,7 +493,7 @@ namespace Space_Manager
                     LogDebug("  Dataset not in archive (" + sambaDatasetNamePath + ")");
                     return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
                 }
-                intFileCount = diDatasetFolder.GetFiles().Length;
+                fileCount = diDatasetFolder.GetFiles().Length;
             }
             catch (AccessViolationException)
             {
@@ -511,7 +511,7 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
             }
 
-            if (intFileCount > 0)
+            if (fileCount > 0)
             {
                 // The folder exists in the archive, but the file in question was not there
 
@@ -820,10 +820,10 @@ namespace Space_Manager
 
                 var fiServerFile = new FileInfo(serverFilePath);
                 var assumeEqual = false;
-                var dFileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
+                var fileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
-                if (dFileAgeDays >= AGED_FILE_DAYS ||
-                    dFileAgeDays >= 30 && diDatasetFolder.Name.StartsWith("blank", StringComparison.InvariantCultureIgnoreCase))
+                if (fileAgeDays >= AGED_FILE_DAYS ||
+                    fileAgeDays >= 30 && diDatasetFolder.Name.StartsWith("blank", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
                     {
@@ -1340,25 +1340,25 @@ namespace Space_Manager
         /// <summary>
         /// Generates MD5 hash of a file's contents
         /// </summary>
-        /// <param name="inpFileNamePath">Full path to file</param>
+        /// <param name="filePath">Full path to file</param>
         /// <returns>String representation of hash</returns>
-        private string GenerateMD5HashFromFile(string inpFileNamePath)
+        private string GenerateMD5HashFromFile(string filePath)
         {
             byte[] byteHash;
 
             //Verify input file exists
-            if (!File.Exists(inpFileNamePath))
+            if (!File.Exists(filePath))
             {
-                LogError("clsUpdateOps.GenerateMD5HashFromFile; File not found: " + inpFileNamePath);
+                LogError("clsUpdateOps.GenerateMD5HashFromFile; File not found: " + filePath);
                 return "";
             }
 
-            LogDebug("Generating MD5 hash for file " + inpFileNamePath);
 
             var hashTool = MD5.Create();
 
             var fi = new FileInfo(inpFileNamePath);
             Stream fStream = null;
+            LogDebug("Generating MD5 hash for file " + filePath);
 
             try
             {
@@ -1369,12 +1369,8 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                LogError("clsUpdateOps.GenerateMD5HashFromFile; Exception generating hash for file " + inpFileNamePath, ex);
+                LogError("clsUpdateOps.GenerateMD5HashFromFile; Exception generating hash for file " + filePath, ex);
                 return string.Empty;
-            }
-            finally
-            {
-                fStream?.Close();
             }
 
             // Convert hash array to hex string

@@ -14,8 +14,8 @@ namespace Space_Manager
     public interface IMgrParams
     {
 
-        string GetParam(string ItemKey);
-        void SetParam(string ItemKey, string ItemValue);
+        string GetParam(string itemKey);
+        void SetParam(string itemKey, string itemValue);
 
     }
 }
