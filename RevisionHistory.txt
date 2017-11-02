@@ -1,5 +1,9 @@
 Space Manager Change Log
 
+Version 2.0.6514; November 1, 2017
+	- Enable ReportMetadataURLs in the MyEMSLReader when TraceMode is enabled
+	- Updated MyEMSLReader.dll
+
 Version 2.0.6484; October 2, 2017
 	- No longer log "Dataset not in MyEMSL and folder not found" to the database since stored procedure SetPurgeTaskComplete also logs an error
 	- Remove obsolete classes and code
