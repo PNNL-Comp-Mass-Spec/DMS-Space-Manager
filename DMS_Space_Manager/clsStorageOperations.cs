@@ -1353,19 +1353,18 @@ namespace Space_Manager
                 return "";
             }
 
-
-            var hashTool = MD5.Create();
-
-            var fi = new FileInfo(inpFileNamePath);
-            Stream fStream = null;
             LogDebug("Generating MD5 hash for file " + filePath);
 
             try
             {
-                //Open the file as a stream for input to the hash class
-                fStream = fi.OpenRead();
-                //Get the file's hash
-                byteHash = hashTool.ComputeHash(fStream);
+                // Open file (as read-only)
+                using (Stream reader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    // Get the file's hash
+                    var hasher = new MD5CryptoServiceProvider();
+                    byteHash = hasher.ComputeHash(reader);
+                }
+
             }
             catch (Exception ex)
             {
