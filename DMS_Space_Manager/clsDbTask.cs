@@ -29,7 +29,7 @@ namespace Space_Manager
 
         protected readonly IMgrParams m_MgrParams;
         protected readonly Dictionary<string, string> m_JobParams =
-            new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         protected readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 

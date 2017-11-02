@@ -596,7 +596,7 @@ namespace Space_Manager
 
             // Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
             // File paths are not case sensitive
-            var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in lstFilesInMyEMSL)
             {
@@ -1101,7 +1101,7 @@ namespace Space_Manager
             }
             else
             {
-                m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+                m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 var hashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var waitingForMD5File);
 

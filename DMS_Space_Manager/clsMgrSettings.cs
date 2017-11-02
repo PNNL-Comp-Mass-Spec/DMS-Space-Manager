@@ -256,7 +256,7 @@ namespace Space_Manager
                 // Add the column heading and value to the dictionary
                 var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 
-                if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase))
+                if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.OrdinalIgnoreCase))
                 {
                     var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
