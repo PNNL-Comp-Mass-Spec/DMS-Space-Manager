@@ -1,71 +1,147 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
-// Copyright 2010, Battelle Memorial Institute
-// Created 09/08/2010
-//
+// Copyright 2009, Battelle Memorial Institute
+// Created 01/01/2009
 //*********************************************************************************************************
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using log4net;
 using System.Data;
-
-// Configure log4net using the .log4net file
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
+using log4net;
 using log4net.Appender;
 
+// This assembly attribute tells Log4Net where to find the config file
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 
 namespace Space_Manager
 {
     /// <summary>
-    /// Wraps Log4Net functions
+    /// Class for handling logging via Log4Net
     /// </summary>
+    /// <remarks>
+    /// Call method CreateFileLogger to define the log file name
+    /// </remarks>
     public static class clsLogTools
     {
 
-        #region "Contants"
+        #region "Constants"
 
+        /// <summary>
+        /// Name of the manager control database logger
+        /// </summary>
         public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
+
+        /// <summary>
+        /// Name of the logger before manager control parameters have been loaded
+        /// </summary>
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
 
         private const string LOG_FILE_APPENDER = "FileAppender";
+
+        /// <summary>
+        /// Date format for log file names
+        /// </summary>
+        public const string LOG_FILE_DATECODE = "MM-dd-yyyy";
+
+        private const string LOG_FILE_MATCH_SPEC = "??-??-????";
+
+        private const string LOG_FILE_DATE_REGEX = @"(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d{4,4})";
+
+        private const string LOG_FILE_EXTENSION = ".txt";
+
+        private const int OLD_LOG_FILE_AGE_THRESHOLD_DAYS = 32;
 
         #endregion
 
         #region "Enums"
 
+        /// <summary>
+        /// Log levels
+        /// </summary>
         public enum LogLevels
         {
+            /// <summary>
+            /// Debug message
+            /// </summary>
             DEBUG = 5,
+
+            /// <summary>
+            /// Informational message
+            /// </summary>
             INFO = 4,
+
+            /// <summary>
+            /// Warning message
+            /// </summary>
             WARN = 3,
+
+            /// <summary>
+            /// Error message
+            /// </summary>
             ERROR = 2,
+
+            /// <summary>
+            /// Fatal error message
+            /// </summary>
             FATAL = 1
         }
 
+        /// <summary>
+        /// Log types
+        /// </summary>
         public enum LoggerTypes
         {
+            /// <summary>
+            /// Log to a log file
+            /// </summary>
             LogFile,
+
+            /// <summary>
+            /// Log to the database and to the log file
+            /// </summary>
             LogDb,
+
+            /// <summary>
+            /// Log to the system event log and to the log file
+            /// </summary>
             LogSystem
         }
-        
+
         #endregion
 
         #region "Class variables"
 
+        /// <summary>
+        /// File Logger (RollingFileAppender)
+        /// </summary>
         private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
+        /// <summary>
+        /// Database logger
+        /// </summary>
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
+        /// <summary>
+        /// System event log logger
+        /// </summary>
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
-        private static string m_FileDate;
-        private static string m_BaseFileName;
-        private static log4net.Appender.FileAppender m_FileAppender;
+
+        private static string m_FileDate = "";
+        /// <summary>
+        /// Base log file name
+        /// </summary>
+        /// <remarks>This is updated by ChangeLogFileBaseName or CreateFileLogger</remarks>
+        private static string m_BaseFileName = "";
+        private static FileAppender m_FileAppender;
+
+        private static DateTime m_LastCheckOldLogs = DateTime.UtcNow.AddDays(-1);
 
         #endregion
 
         #region "Properties"
+
         /// <summary>
         /// File path for the current log file used by the FileAppender
         /// </summary>
@@ -74,19 +150,33 @@ namespace Space_Manager
             get
             {
                 if (string.IsNullOrEmpty(m_FileAppender?.File))
+                {
                     return string.Empty;
+                }
 
                 return m_FileAppender.File;
             }
         }
 
+        /// <summary>
+        /// Tells calling program file debug status
+        /// </summary>
+        /// <returns>TRUE if debug level enabled for file logger; FALSE otherwise</returns>
+        /// <remarks></remarks>
         public static bool FileLogDebugEnabled => m_FileLogger.IsDebugEnabled;
+
+        /// <summary>
+        /// Most recent error message
+        /// </summary>
+        /// <returns></returns>
+        public static string MostRecentErrorMessage { get; private set; } = string.Empty;
 
         #endregion
 
         #region "Methods"
+
         /// <summary>
-        /// Writes a message to the logging system
+        /// Write a message to the logging system
         /// </summary>
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
@@ -97,7 +187,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Overload to write a message and exception to the logging system
+        /// Write a message and exception to the logging system
         /// </summary>
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
@@ -124,11 +214,13 @@ namespace Space_Manager
             {
                 case LoggerTypes.LogDb:
                     myLogger = m_DbLogger;
+                    message = System.Net.Dns.GetHostName() + ": " + message;
                     break;
                 case LoggerTypes.LogFile:
                     myLogger = m_FileLogger;
+
                     // Check to determine if a new file should be started
-                    var testFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+                    var testFileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
                     if (!string.Equals(testFileDate, m_FileDate))
                     {
                         m_FileDate = testFileDate;
@@ -142,61 +234,116 @@ namespace Space_Manager
                     throw new Exception("Invalid logger type specified");
             }
 
-            //Update the status file data
-            clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
+            MessageLogged?.Invoke(message, logLevel);
 
-            //Send the log message
+            if (myLogger == null)
+                return;
+
+            // Send the log message
             switch (logLevel)
             {
                 case LogLevels.DEBUG:
                     if (myLogger.IsDebugEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Debug(message);
+                        }
                         else
+                        {
                             myLogger.Debug(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.ERROR:
-                    clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel);
                     if (myLogger.IsErrorEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Error(message);
+                        }
                         else
+                        {
                             myLogger.Error(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.FATAL:
                     if (myLogger.IsFatalEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Fatal(message);
+                        }
                         else
+                        {
                             myLogger.Fatal(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.INFO:
                     if (myLogger.IsInfoEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Info(message);
+                        }
                         else
+                        {
                             myLogger.Info(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.WARN:
                     if (myLogger.IsWarnEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Warn(message);
+                        }
                         else
+                        {
                             myLogger.Warn(message, ex);
+                        }
                     }
                     break;
                 default:
                     throw new Exception("Invalid log level specified");
             }
+
+            if (logLevel <= LogLevels.ERROR)
+            {
+                MostRecentErrorMessage = message;
+            }
+
+            if (DateTime.UtcNow.Subtract(m_LastCheckOldLogs).TotalHours > 24)
+            {
+                m_LastCheckOldLogs = DateTime.UtcNow;
+
+                if (!(m_FileLogger.Logger is log4net.Repository.Hierarchy.Logger curLogger))
+                    return;
+
+                foreach (var item in curLogger.Appenders)
+                {
+                    if (!(item is FileAppender curAppender))
+                        return;
+
+                    ArchiveOldLogs(curAppender.File);
+                    break;
+                }
+
+            }
+        }
+
+        /// <summary>
+        /// Update the log file's base name
+        /// </summary>
+        /// <param name="baseName"></param>
+        /// <remarks>Will append today's date to the base name</remarks>
+        public static void ChangeLogFileBaseName(string baseName)
+        {
+            m_BaseFileName = baseName;
+            ChangeLogFileName();
         }
 
         /// <summary>
@@ -204,7 +351,18 @@ namespace Space_Manager
         /// </summary>
         public static void ChangeLogFileName()
         {
-            //Get a list of appenders
+            m_FileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
+            ChangeLogFileName(m_BaseFileName + "_" + m_FileDate + LOG_FILE_EXTENSION);
+        }
+
+        /// <summary>
+        /// Changes the base log file name
+        /// </summary>
+        /// <param name="relativeFilePath">Log file base name and path (relative to program folder)</param>
+        /// <remarks>This method is called by the Mage, Ascore, and Multialign plugins</remarks>
+        public static void ChangeLogFileName(string relativeFilePath)
+        {
+            // Get a list of appenders
             var appendList = FindAppenders(LOG_FILE_APPENDER);
             if (appendList == null)
             {
@@ -214,16 +372,16 @@ namespace Space_Manager
 
             foreach (var selectedAppender in appendList)
             {
-                //Convert the IAppender object to a FileAppender
-                var AppenderToChange = selectedAppender as FileAppender;
-                if (AppenderToChange == null)
+                // Convert the IAppender object to a FileAppender instance
+                if (!(selectedAppender is FileAppender appenderToChange))
                 {
-                    WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender");
+                    WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender since not a FileAppender");
                     return;
                 }
-                //Change the file name and activate change
-                AppenderToChange.File = m_BaseFileName + "_" + m_FileDate + ".txt";
-                AppenderToChange.ActivateOptions();
+
+                // Change the file name and activate change
+                appenderToChange.File = relativeFilePath;
+                appenderToChange.ActivateOptions();
             }
         }
 
@@ -231,24 +389,27 @@ namespace Space_Manager
         /// Gets the specified appender
         /// </summary>
         /// <param name="appenderName">Name of appender to find</param>
-        /// <returns>List(IAppender) objects if found; NULL otherwise</returns>
+        /// <returns>List(IAppender) objects if found; null otherwise</returns>
         private static IEnumerable<IAppender> FindAppenders(string appenderName)
         {
-            //Get a list of the current loggers
-            var loggerList = LogManager.GetCurrentLoggers();
-            if (loggerList.GetLength(0) < 1) return null;
 
-            //Create a List of appenders matching the criteria for each logger
+            // Get a list of the current loggers
+            var loggerList = LogManager.GetCurrentLoggers();
+            if (loggerList.GetLength(0) < 1)
+                return null;
+
+            // Create a List of appenders matching the criteria for each logger
             var retList = new List<IAppender>();
             foreach (var testLogger in loggerList)
             {
                 foreach (var testAppender in testLogger.Logger.Repository.GetAppenders())
                 {
-                    if (testAppender.Name == appenderName) retList.Add(testAppender);
+                    if (testAppender.Name == appenderName)
+                        retList.Add(testAppender);
                 }
             }
 
-            //Return the list of appenders, if any found
+            // Return the list of appenders, if any found
             if (retList.Count > 0)
             {
                 return retList;
@@ -265,14 +426,14 @@ namespace Space_Manager
         {
             var logLevelEnumType = typeof(LogLevels);
 
-            //Verify input level is a valid log level
+            // Verify input level is a valid log level
             if (!Enum.IsDefined(logLevelEnumType, logLevel))
             {
                 WriteLog(LoggerTypes.LogFile, LogLevels.ERROR, "Invalid value specified for level: " + logLevel);
                 return;
             }
 
-            //Convert input integer into the associated enum
+            // Convert input integer into the associated enum
             var logLevelEnum = (LogLevels)Enum.Parse(logLevelEnumType, logLevel.ToString(CultureInfo.InvariantCulture));
 
             SetFileLogLevel(logLevelEnum);
@@ -307,14 +468,72 @@ namespace Space_Manager
         }
 
         /// <summary>
+        /// Look for log files over 32 days old that can be moved into a subdirectory
+        /// </summary>
+        /// <param name="logFilePath"></param>
+        private static void ArchiveOldLogs(string logFilePath)
+        {
+            var targetPath = "??";
+
+            try
+            {
+                var currentLogFile = new FileInfo(logFilePath);
+
+                var matchSpec = "*_" + LOG_FILE_MATCH_SPEC + LOG_FILE_EXTENSION;
+
+                var logDirectory = currentLogFile.Directory;
+                if (logDirectory == null)
+                {
+                    WriteLog(LoggerTypes.LogFile, LogLevels.WARN, "Error archiving old log files; cannot determine the parent directory of " + currentLogFile);
+                    return;
+                }
+
+                m_LastCheckOldLogs = DateTime.UtcNow;
+
+                var logFiles = logDirectory.GetFiles(matchSpec);
+
+                var matcher = new Regex(LOG_FILE_DATE_REGEX, RegexOptions.Compiled);
+
+                foreach (var logFile in logFiles)
+                {
+                    var match = matcher.Match(logFile.Name);
+
+                    if (!match.Success)
+                        continue;
+
+                    var logFileYear = int.Parse(match.Groups["Year"].Value);
+                    var logFileMonth = int.Parse(match.Groups["Month"].Value);
+                    var logFileDay = int.Parse(match.Groups["Day"].Value);
+
+                    var logDate = new DateTime(logFileYear, logFileMonth, logFileDay);
+
+                    if (DateTime.Now.Subtract(logDate).TotalDays <= OLD_LOG_FILE_AGE_THRESHOLD_DAYS)
+                        continue;
+
+                    var targetDirectory = new DirectoryInfo(Path.Combine(logDirectory.FullName, logFileYear.ToString()));
+                    if (!targetDirectory.Exists)
+                        targetDirectory.Create();
+
+                    targetPath = Path.Combine(targetDirectory.FullName, logFile.Name);
+
+                    logFile.MoveTo(targetPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog(LoggerTypes.LogFile, LogLevels.ERROR, "Error moving old log file to " + targetPath, ex);
+            }
+        }
+
+        /// <summary>
         /// Creates a file appender
         /// </summary>
-        /// <param name="logfileName">Log file name for the appender to use</param>
+        /// <param name="logFileNameBase">Base name for log file</param>
         /// <returns>A configured file appender</returns>
-        private static FileAppender CreateFileAppender(string logfileName)
+        private static FileAppender CreateFileAppender(string logFileNameBase)
         {
-            m_FileDate = DateTime.Now.ToString("MM-dd-yyyy");
-            m_BaseFileName = logfileName;
+            m_FileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
+            m_BaseFileName = logFileNameBase;
 
             var layout = new log4net.Layout.PatternLayout
             {
@@ -325,7 +544,7 @@ namespace Space_Manager
             var returnAppender = new FileAppender
             {
                 Name = LOG_FILE_APPENDER,
-                File = m_BaseFileName + "_" + m_FileDate + ".txt",
+                File = m_BaseFileName + "_" + m_FileDate + LOG_FILE_EXTENSION,
                 AppendToFile = true,
                 Layout = layout
             };
@@ -338,28 +557,31 @@ namespace Space_Manager
         /// <summary>
         /// Configures the file logger
         /// </summary>
-        /// <param name="logFileName">Base name for log file</param>
+        /// <param name="logFileNameBase">Base name for log file</param>
         /// <param name="logLevel">Debug level for file logger (1-5, 5 being most verbose)</param>
-        public static void CreateFileLogger(string logFileName, int logLevel)
+        public static void CreateFileLogger(string logFileNameBase, int logLevel)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
-            m_FileAppender = CreateFileAppender(logFileName);
+            m_FileAppender = CreateFileAppender(logFileNameBase);
             curLogger.AddAppender(m_FileAppender);
+
+            ArchiveOldLogs(m_FileAppender.File);
+
             SetFileLogLevel(logLevel);
         }
 
         /// <summary>
         /// Configures the file logger
         /// </summary>
-        /// <param name="logFileName">Base name for log file</param>
+        /// <param name="logFileNameBase">Base name for log file</param>
         /// <param name="logLevel">Debug level for file logger</param>
-        public static void CreateFileLogger(string logFileName, LogLevels logLevel)
+        public static void CreateFileLogger(string logFileNameBase, LogLevels logLevel)
         {
-            CreateFileLogger(logFileName, (int)logLevel);
+            CreateFileLogger(logFileNameBase, (int)logLevel);
         }
 
         /// <summary>
-        /// Configures the Db logger
+        /// Configures the database logger
         /// </summary>
         /// <param name="connStr">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
@@ -386,7 +608,7 @@ namespace Space_Manager
             var addFileAppender = true;
             foreach (var appender in curLogger.Appenders)
             {
-                if (appender == m_FileAppender)
+                if (ReferenceEquals(appender, m_FileAppender))
                 {
                     addFileAppender = false;
                     break;
@@ -436,7 +658,7 @@ namespace Space_Manager
                 Name = appenderName
             };
 
-            //Type parameter
+            // Type parameter
             var typeParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@type",
@@ -446,7 +668,7 @@ namespace Space_Manager
             };
             returnAppender.AddParameter(typeParam);
 
-            //Message parameter
+            // Message parameter
             var msgParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@message",
@@ -456,7 +678,7 @@ namespace Space_Manager
             };
             returnAppender.AddParameter(msgParam);
 
-            //PostedBy parameter
+            // PostedBy parameter
             var postByParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@postedBy",
@@ -486,8 +708,28 @@ namespace Space_Manager
             returnLayout.ActivateOptions();
 
             var retItem = (log4net.Layout.IRawLayout)layoutConvert.ConvertFrom(returnLayout);
+
+            if (retItem == null)
+            {
+                throw new log4net.Util.TypeConverters.ConversionNotSupportedException("Error converting a PatternLayout to IRawLayout");
+            }
+
             return retItem;
         }
+
+        #endregion
+
+        #region "Events"
+
+        /// <summary>
+        /// Delegate for event MessageLogged
+        /// </summary>
+        public delegate void MessageLoggedEventHandler(string message, LogLevels logLevel);
+
+        /// <summary>
+        /// This event is raised when a message is logged
+        /// </summary>
+        public static event MessageLoggedEventHandler MessageLogged;
 
         #endregion
     }

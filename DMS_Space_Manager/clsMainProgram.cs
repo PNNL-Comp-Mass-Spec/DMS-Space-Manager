@@ -136,11 +136,14 @@ namespace Space_Manager
             m_MgrName = m_MgrSettings.ManagerName;
 
             // Set up the loggers
-            var logFileName = m_MgrSettings.GetParam("logfilename");
+            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
+            if (string.IsNullOrWhiteSpace(logFileNameBase))
+                logFileNameBase = "SpaceMan";
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
-            clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
+            clsLogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
+
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             clsLogTools.RemoveDefaultDbLogger();
