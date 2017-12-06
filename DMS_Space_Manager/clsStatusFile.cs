@@ -195,7 +195,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Converts the manager status enum to a string value
+        /// Converts the task status enum to a string value
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumTaskStatusDetail object</param>
         /// <returns>String representation of input object</returns>
@@ -228,6 +228,7 @@ namespace Space_Manager
 
             return statusFileDirectory;
         }
+
         /// <summary>
         /// Writes the status to the message queue
         /// </summary>
