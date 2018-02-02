@@ -70,8 +70,9 @@ namespace Space_Manager
                 }
                 catch (Exception ex)
                 {
-                    const string errMsg = "Critical exception starting application";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
+                    var errMsg = "Critical exception starting application: " + ex.Message;
+                    ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
+                    ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
                     return;
                 }
                 Properties.Settings.Default.Reload();

@@ -95,7 +95,6 @@ namespace Space_Manager
             if (PreviewMode)
                 Console.WriteLine("Preview mode enabled");
 
-
             if (TraceMode)
                 Console.WriteLine("Trace mode enabled");
 
@@ -142,7 +141,9 @@ namespace Space_Manager
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
-            clsLogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
+
+            clsLogTools.SetFileLogLevel(m_DebugLevel);
+            clsLogTools.CreateFileLogger(logFileNameBase);
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
@@ -327,7 +328,7 @@ namespace Space_Manager
                 {
                     // Manager deactivated via manager config db
                     ReportStatus("Manager disabled via config db");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Space Manager =====");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "===== Closing Space Manager =====");
                     return RESTART_NOT_OK;
                 }
 
@@ -370,12 +371,12 @@ namespace Space_Manager
                 if (methodReturnCode == RESTART_NOT_OK)
                 {
                     // Program exit required
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "===== Closing Space Manager =====");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "===== Closing Space Manager =====");
                 }
                 else
                 {
                     // Program restart required
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Restarting manager");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Restarting manager");
                 }
 
             }

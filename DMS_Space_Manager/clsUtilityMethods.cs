@@ -205,7 +205,7 @@ namespace Space_Manager
             ConsoleMsgUtils.ShowError(errorMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.ERROR, errorMessage);
         }
 
         /// <summary>
@@ -228,7 +228,7 @@ namespace Space_Manager
             ConsoleMsgUtils.ShowWarning(warningMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
+            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.WARN, warningMessage);
         }
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace Space_Manager
                 return;
 
             var loggerType = clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.DEBUG, message);
+            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.DEBUG, message);
 
         }
 
@@ -257,7 +257,7 @@ namespace Space_Manager
         {
             var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, formattedError, ex);
         }
 
         /// <summary>
@@ -274,7 +274,7 @@ namespace Space_Manager
             }
 
             Console.WriteLine(statusMessage);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, statusMessage);
         }
 
         #endregion

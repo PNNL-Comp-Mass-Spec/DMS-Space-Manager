@@ -148,10 +148,10 @@ namespace Space_Manager
                 myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt)).Value = 0;
 
                 var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBconnectionString;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
 
                 msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
                 PrintCommandParams(myCmd);
 
                 //Execute the SP
