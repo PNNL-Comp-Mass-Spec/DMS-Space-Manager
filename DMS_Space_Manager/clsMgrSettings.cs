@@ -10,8 +10,6 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.IO;
-using System.Xml;
-using System.Windows.Forms;
 using PRISM;
 
 namespace Space_Manager
@@ -137,7 +135,7 @@ namespace Space_Manager
             }
 
             // Get directory for main executable
-            var appPath = Application.ExecutablePath;
+            var appPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
             var fi = new FileInfo(appPath);
             mParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
@@ -660,7 +658,8 @@ namespace Space_Manager
         /// <returns>String containing full name and path</returns>
         private string GetConfigFilePath()
         {
-            return Application.ExecutablePath + ".config";
+            var configFilePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath() + ".config";
+            return configFilePath;
         }
 
         #endregion

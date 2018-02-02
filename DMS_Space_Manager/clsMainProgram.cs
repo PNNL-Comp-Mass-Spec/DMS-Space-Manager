@@ -8,7 +8,7 @@
 
 using System;
 using System.IO;
-using System.Windows.Forms;
+using System.Reflection;
 using PRISM;
 
 namespace Space_Manager
@@ -151,7 +151,8 @@ namespace Space_Manager
             clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName, false);
 
             // Make initial log entry
-            ReportStatus("=== Started Space Manager V" + Application.ProductVersion + " ===== ");
+            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
+            ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
@@ -175,7 +176,8 @@ namespace Space_Manager
             }
 
             // Setup a file watcher for the config file
-            var fInfo = new FileInfo(Application.ExecutablePath);
+            var appPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
+            var fInfo = new FileInfo(appPath);
             m_FileWatcher = new FileSystemWatcher
             {
                 Path = fInfo.DirectoryName,
@@ -194,7 +196,7 @@ namespace Space_Manager
             // Set up the status file class
             if (fInfo.DirectoryName == null)
             {
-                LogError("Error determining the parent path for the executable, " + Application.ExecutablePath);
+                LogError("Error determining the parent path for the executable, " + appPath);
                 return false;
             }
 

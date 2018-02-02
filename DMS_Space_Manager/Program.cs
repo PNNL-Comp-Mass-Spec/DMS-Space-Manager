@@ -132,7 +132,7 @@ namespace Space_Manager
                 Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine();
 
-                Console.WriteLine("This is version " + System.Windows.Forms.Application.ProductVersion + " (" + PROGRAM_DATE + ")");
+                Console.WriteLine("This is version " + PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(PROGRAM_DATE));
                 Console.WriteLine();
 
                 Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");

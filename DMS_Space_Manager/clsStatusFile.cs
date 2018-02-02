@@ -148,15 +148,6 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Returns the folder path that contains the program .exe
-        /// </summary>
-        /// <returns></returns>
-        private string AppFolderPath()
-        {
-            return Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
-        }
-
-        /// <summary>
         /// Clears cached status info
         /// </summary>
         public void ClearCachedInfo()
