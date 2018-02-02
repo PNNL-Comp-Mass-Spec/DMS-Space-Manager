@@ -17,7 +17,7 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "December 6, 2017";
+        private const string PROGRAM_DATE = "February 1, 2018";
 
         private static clsMainProgram m_MainProgram;
 
@@ -108,7 +108,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                Console.WriteLine(@"Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+                ConsoleMsgUtils.ShowError("Error parsing the command line parameters: " + ex.Message, ex);
             }
         }
 
@@ -117,28 +117,26 @@ namespace Space_Manager
         {
             try
             {
-                Console.WriteLine(
-                    @"This program manages free space on Proto-x servers");
+                Console.WriteLine("This program manages free space on Proto-x servers");
                 Console.WriteLine();
-                Console.WriteLine(@"Program syntax:" + Environment.NewLine +
+                Console.WriteLine("Program syntax:" + Environment.NewLine +
                                   System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) +
-                                  @" [/Preview] [/Trace]");
+                                  " [/Preview] [/Trace]");
                 Console.WriteLine();
 
-                Console.WriteLine(@"Use /Preview to preview the files that would be purged to free up space");
+                Console.WriteLine("Use /Preview to preview the files that would be purged to free up space");
                 Console.WriteLine();
-                Console.WriteLine(@"Use /Trace to enable trace mode");
-                Console.WriteLine();
-
-                Console.WriteLine(@"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
+                Console.WriteLine("Use /Trace to enable trace mode");
                 Console.WriteLine();
 
-                Console.WriteLine(@"This is version " + System.Windows.Forms.Application.ProductVersion + @" (" +
-                                  PROGRAM_DATE + @")");
+                Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine();
 
-                Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine(@"Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("This is version " + System.Windows.Forms.Application.ProductVersion + " (" + PROGRAM_DATE + ")");
+                Console.WriteLine();
+
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
+                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
                 Console.WriteLine();
 
 
@@ -147,7 +145,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                Console.WriteLine(@"Error displaying the program syntax: " + ex.Message);
+                ConsoleMsgUtils.ShowError("Error displaying the program syntax: " + ex.Message, ex);
             }
         }
 
