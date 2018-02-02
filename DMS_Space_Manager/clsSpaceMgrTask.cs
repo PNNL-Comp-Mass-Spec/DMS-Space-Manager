@@ -113,7 +113,7 @@ namespace Space_Manager
 
             try
             {
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var myCmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -157,7 +157,7 @@ namespace Space_Manager
                 switch (retVal)
                 {
                     case RET_VAL_OK:
-                        //Step task was found; get the data for it
+                        // Step task was found; get the data for it
                         var paramSuccess = FillParamDict(queryResults);
                         if (paramSuccess)
                         {
@@ -165,12 +165,12 @@ namespace Space_Manager
                         }
                         else
                         {
-                            //There was an error
+                            // There was an error
                             outcome = EnumRequestTaskResult.ResultError;
                         }
                         break;
                     case RET_VAL_TASK_NOT_AVAILABLE:
-                        //No jobs found
+                        // No jobs found
                         outcome = EnumRequestTaskResult.NoTaskFound;
                         break;
                     default:
@@ -225,7 +225,7 @@ namespace Space_Manager
         public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
         {
 
-            //Setup for execution of the stored procedure
+            // Setup for execution of the stored procedure
             var myCmd = new SqlCommand
             {
                 CommandType = CommandType.StoredProcedure,

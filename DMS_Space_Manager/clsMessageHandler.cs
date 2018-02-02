@@ -17,7 +17,6 @@ namespace Space_Manager
 
     /// <summary>
     /// Handles sending and receiving of control and status messages
-    /// Base code provided by Gary Kiebel
     /// </summary>
     class clsMessageHandler : clsLoggerBase, IDisposable
     {
@@ -195,7 +194,7 @@ namespace Space_Manager
             {
                 m_Connection.Dispose();
                 m_HasConnection = false;
-                ReportStatus("Message connection closed");
+                LogDebug("Message connection closed");
             }
         }
 
