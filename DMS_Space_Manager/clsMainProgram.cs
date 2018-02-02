@@ -104,8 +104,7 @@ namespace Space_Manager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(),
-                                       true);
+            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName());
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -137,7 +136,7 @@ namespace Space_Manager
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             clsLogTools.RemoveDefaultDbLogger();
-            clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName, false);
+            clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
 
             // Make initial log entry
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
