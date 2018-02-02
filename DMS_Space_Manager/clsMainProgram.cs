@@ -21,17 +21,6 @@ namespace Space_Manager
 
         #region "Enums"
 
-        //private enum LoopExitCode
-        //{
-        //    NoTaskFound,
-        //    ConfigChanged,
-        //    ExceededMaxTaskCount,
-        //    DisabledMC,
-        //    DisabledLocally,
-        //    ExcessiveErrors,
-        //    InvalidWorkDir,
-        //    ShutdownCmdReceived
-        //}
 
         private enum DriveOpStatus
         {

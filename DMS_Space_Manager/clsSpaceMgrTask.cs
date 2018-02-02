@@ -111,9 +111,6 @@ namespace Space_Manager
         {
             EnumRequestTaskResult outcome;
 
-            //string strProductVersion = Application.ProductVersion;
-            //if (strProductVersion == null) strProductVersion = "??";
-
             try
             {
                 //Set up the command object prior to SP execution
