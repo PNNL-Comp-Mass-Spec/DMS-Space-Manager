@@ -17,7 +17,7 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "February 1, 2018";
+        private const string PROGRAM_DATE = "February 2, 2018";
 
         private static clsMainProgram m_MainProgram;
 
@@ -36,16 +36,16 @@ namespace Space_Manager
             mPreviewMode = false;
             mTraceMode = false;
 
-            var objParseCommandLine = new clsParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
 
             // Look for /T or /Test on the command line
             // If present, this means "code test mode" is enabled
-            if (objParseCommandLine.ParseCommandLine())
+            if (commandLineParser.ParseCommandLine())
             {
-                SetOptionsUsingCommandLineParameters(objParseCommandLine);
+                SetOptionsUsingCommandLineParameters(commandLineParser);
             }
 
-            if (objParseCommandLine.NeedToShowHelp)
+            if (commandLineParser.NeedToShowHelp)
             {
                 ShowProgramHelp();
                 return;
@@ -80,7 +80,7 @@ namespace Space_Manager
         }
 
 
-        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
@@ -89,19 +89,19 @@ namespace Space_Manager
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
+                if (commandLineParser.InvalidParametersPresent(strValidParameters))
                 {
                     return;
                 }
 
 
                 // Query objParseCommandLine to see if various parameters are present
-                if (objParseCommandLine.IsParameterPresent("Preview"))
+                if (commandLineParser.IsParameterPresent("Preview"))
                 {
                     mPreviewMode = true;
                 }
 
-                if (objParseCommandLine.IsParameterPresent("Trace"))
+                if (commandLineParser.IsParameterPresent("Trace"))
                 {
                     mTraceMode = true;
                 }

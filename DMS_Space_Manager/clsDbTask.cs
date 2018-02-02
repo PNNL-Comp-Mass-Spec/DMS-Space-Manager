@@ -28,10 +28,22 @@ namespace Space_Manager
         #region "Class variables"
 
         protected readonly IMgrParams m_MgrParams;
-        protected readonly Dictionary<string, string> m_JobParams =
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        protected readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
+        protected readonly int m_DebugLevel;
+
+        /// <summary>
+        /// Job parameters
+        /// </summary>
+        protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Stored procedure executor
+        /// </summary>
+        protected readonly PRISM.clsExecuteDatabaseSP m_DMSProcedureExecutor;
 
         #endregion
 
@@ -43,7 +55,7 @@ namespace Space_Manager
 
         #endregion
 
-        #region "Constructors"
+        #region "Constructor"
 
         /// <summary>
         /// Class constructor
@@ -58,7 +70,13 @@ namespace Space_Manager
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(connectionString);
+            m_DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(connectionString);
+
+            m_DMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
+
+            // Cache the log level
+            // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+            m_DebugLevel = mgrParams.GetParam("debuglevel", 4);
         }
 
         #endregion
@@ -82,21 +100,22 @@ namespace Space_Manager
         /// <param name="inpCmd">SQL command object containing params</param>
         protected void PrintCommandParams(SqlCommand inpCmd)
         {
-            //Verify there really are command paramters
+            // Verify there really are command paramters
             if (inpCmd == null)
                 return;
 
             if (inpCmd.Parameters.Count < 1)
                 return;
 
-            var myMsg = "";
+            var msg = "";
 
             foreach (SqlParameter myParam in inpCmd.Parameters)
             {
-                myMsg += Environment.NewLine + "Name= " + myParam.ParameterName + "\t, Value= " + DbCStr(myParam.Value);
+                msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Parameter list:" + myMsg);
+            var writeToLog = m_DebugLevel >= 5;
+            LogDebug("Parameter list:" + msg, writeToLog);
         }
 
         /// <summary>
@@ -240,5 +259,18 @@ namespace Space_Manager
 
         #endregion
 
+        #region "Event handlers"
+
+        void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
+        {
+            var logToDb = message.Contains("permission was denied");
+
+            if (logToDb)
+                LogError(message, logToDb: true);
+            else
+                LogError(message, ex);
+        }
+
+        #endregion
     }
 }

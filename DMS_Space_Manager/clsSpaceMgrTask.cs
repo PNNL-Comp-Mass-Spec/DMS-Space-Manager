@@ -147,15 +147,15 @@ namespace Space_Manager
                 // Thus, pass 0 for this parameter instead of 1
                 myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt)).Value = 0;
 
-                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + DMSProcedureExecutor.DBconnectionString;
+                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.DBconnectionString;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
 
                 msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
                 PrintCommandParams(myCmd);
 
-                //Execute the SP
-                var retVal = DMSProcedureExecutor.ExecuteSP(myCmd, out var queryResults);
+                // Execute the SP
+                var retVal = m_DMSProcedureExecutor.ExecuteSP(myCmd, out var queryResults);
 
                 switch (retVal)
                 {
@@ -253,7 +253,7 @@ namespace Space_Manager
             // Execute the SP
             // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call
             // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
-            var resCode = DMSProcedureExecutor.ExecuteSP(myCmd);
+            var resCode = m_DMSProcedureExecutor.ExecuteSP(myCmd);
 
             if (resCode == 0)
             {
