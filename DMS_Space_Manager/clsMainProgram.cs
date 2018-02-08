@@ -10,6 +10,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using PRISM;
+using PRISM.Logging;
 
 namespace Space_Manager
 {
@@ -104,7 +105,7 @@ namespace Space_Manager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName());
+            LogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName());
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -130,15 +131,22 @@ namespace Space_Manager
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
 
-            clsLogTools.SetFileLogLevel(m_DebugLevel);
-            clsLogTools.CreateFileLogger(logFileNameBase);
+            var logLevel = (BaseLogger.LogLevels)m_DebugLevel;
 
+            LogTools.CreateFileLogger(logFileNameBase, logLevel);
+
+            // Typically
+            // Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
-            clsLogTools.RemoveDefaultDbLogger();
-            clsLogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
+            LogTools.RemoveDefaultDbLogger();
+            LogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
 
-            // Make initial log entry
+            // Make the initial log entry
+            var relativeLogFilePath = LogTools.CurrentLogFilePath;
+            var logFile = new FileInfo(relativeLogFilePath);
+            ConsoleMsgUtils.ShowDebug("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
+
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
@@ -300,7 +308,6 @@ namespace Space_Manager
 
         }
 
-
         /// <summary>
         /// Performs space management for all drives on specified server
         /// </summary>
@@ -318,7 +325,7 @@ namespace Space_Manager
                 {
                     // Manager deactivated via manager config db
                     ReportStatus("Manager disabled via config db");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "===== Closing Space Manager =====");
+                    LogTools.LogMessage("===== Closing Space Manager =====");
                     return RESTART_NOT_OK;
                 }
 
@@ -329,7 +336,6 @@ namespace Space_Manager
                     // Problem with drive spec. Error reporting handled by GetDriveList
                     return RESTART_NOT_OK;
                 }
-
 
                 // Set drive operation state to Keep Running
                 var opStatus = DriveOpStatus.KeepRunning;
@@ -361,12 +367,12 @@ namespace Space_Manager
                 if (methodReturnCode == RESTART_NOT_OK)
                 {
                     // Program exit required
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "===== Closing Space Manager =====");
+                    LogTools.LogMessage("===== Closing Space Manager =====");
                 }
                 else
                 {
                     // Program restart required
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Restarting manager");
+                    LogTools.LogMessage("Restarting manager");
                 }
 
             }
@@ -443,7 +449,7 @@ namespace Space_Manager
                         break;
                     }
 
-                    if (PRISM.clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out var pendingWindowsUpdateMessage))
+                    if (clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out var pendingWindowsUpdateMessage))
                     {
                         ReportStatus("Exiting: " + pendingWindowsUpdateMessage);
                         break;

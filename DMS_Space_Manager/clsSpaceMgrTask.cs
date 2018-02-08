@@ -9,6 +9,7 @@
 using System;
 using System.Data.SqlClient;
 using System.Data;
+using PRISM.Logging;
 
 namespace Space_Manager
 {
@@ -145,10 +146,10 @@ namespace Space_Manager
                 myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt)).Value = 0;
 
                 var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.DBconnectionString;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
+                LogTools.LogDebug(msg);
 
                 msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, msg);
+                LogTools.LogDebug(msg);
                 PrintCommandParams(myCmd);
 
                 // Execute the SP

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -86,7 +86,6 @@
     <Compile Include="clsPurgeableFileSearcher.cs" />
     <Compile Include="clsSpaceMgrTask.cs" />
     <Compile Include="clsDbTask.cs" />
-    <Compile Include="clsLogTools.cs" />
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
     <Compile Include="clsMgrSettings.cs" />
@@ -120,7 +119,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="TRFFC17.ICO" />
@@ -130,7 +131,7 @@
       <Version>0.9.16530.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.58</Version>
+      <Version>2.4.68</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

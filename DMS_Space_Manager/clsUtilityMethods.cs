@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Management;
 using PRISM;
+using PRISM.Logging;
 
 namespace Space_Manager
 {
@@ -202,10 +203,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogError(string errorMessage, bool logToDb = false)
         {
-            ConsoleMsgUtils.ShowError(errorMessage);
-
-            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.ERROR, errorMessage);
+            LogTools.LogError(errorMessage, null, logToDb);
         }
 
         /// <summary>
@@ -225,10 +223,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            ConsoleMsgUtils.ShowWarning(warningMessage);
-
-            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.WARN, warningMessage);
+            LogTools.LogWarning(warningMessage, logToDb);
         }
 
         /// <summary>
@@ -238,14 +233,10 @@ namespace Space_Manager
         /// <param name="writeToLog"></param>
         public static void ReportDebug(string message, bool writeToLog = false)
         {
-            ConsoleMsgUtils.ShowDebug(message);
-
-            if (!writeToLog)
-                return;
-
-            var loggerType = clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, PRISM.Logging.BaseLogger.LogLevels.DEBUG, message);
-
+            if (writeToLog)
+                LogTools.LogDebug(message);
+            else
+                ConsoleMsgUtils.ShowDebug(message);
         }
 
         /// <summary>
@@ -255,9 +246,7 @@ namespace Space_Manager
         /// <param name="ex">Exception</param>
         public static void ReportStatus(string errorMessage, Exception ex)
         {
-            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, formattedError, ex);
+            LogTools.LogError(errorMessage, ex);
         }
 
         /// <summary>
@@ -273,8 +262,7 @@ namespace Space_Manager
                 return;
             }
 
-            Console.WriteLine(statusMessage);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, statusMessage);
+            LogTools.LogMessage(statusMessage);
         }
 
         #endregion
