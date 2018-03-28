@@ -34,8 +34,12 @@ namespace Space_Manager
 
         #region "Constants"
 
+        private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\SpaceMan";
+
         private const int MAX_ERROR_COUNT = 55; // Zero-based, so will give 56 tries
+
         private const bool RESTART_OK = true;
+
         private const bool RESTART_NOT_OK = false;
 
         #endregion
@@ -100,12 +104,16 @@ namespace Space_Manager
         /// <returns>TRUE for success; FALSE otherwise</returns>
         public bool InitMgr()
         {
+            // Define the default logging info
+            // This will get updated below
+            LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
+
             // Create a database logger connected to DMS5
             // Once the initial parameters have been successfully read,
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            LogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName());
+            LogTools.CreateDbLogger(defaultDmsConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -124,9 +132,7 @@ namespace Space_Manager
             m_MgrName = m_MgrSettings.ManagerName;
 
             // Set up the loggers
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
-            if (string.IsNullOrWhiteSpace(logFileNameBase))
-                logFileNameBase = "SpaceMan";
+            var logFileNameBase = m_MgrSettings.GetParam("logfilename", "SpaceMan");
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
