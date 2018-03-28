@@ -22,7 +22,6 @@ namespace Space_Manager
 
         #region "Enums"
 
-
         private enum DriveOpStatus
         {
             KeepRunning,
@@ -54,7 +53,6 @@ namespace Space_Manager
         private IStatusFile m_StatusFile;
 
         private clsMessageHandler m_MsgHandler;
-        private bool m_MsgQueueInitSuccess;
 
         private string m_MgrName = "Unknown";
 
@@ -157,7 +155,6 @@ namespace Space_Manager
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue
-            m_MsgQueueInitSuccess = false;
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
 
@@ -269,7 +266,7 @@ namespace Space_Manager
             return true;
         }
 
-        private bool InitializeMessageQueue()
+        private void InitializeMessageQueue()
         {
             const int MAX_WAIT_TIME_SECONDS = 60;
 
@@ -282,9 +279,8 @@ namespace Space_Manager
             if (!worker.Join(MAX_WAIT_TIME_SECONDS * 1000))
             {
                 worker.Abort();
-                m_MsgQueueInitSuccess = false;
                 LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
-                return m_MsgQueueInitSuccess;
+                return;
             }
 
             var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
@@ -294,7 +290,6 @@ namespace Space_Manager
                 ReportStatus("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
             }
 
-            return m_MsgQueueInitSuccess;
         }
 
         private void InitializeMessageQueueWork()
@@ -304,12 +299,10 @@ namespace Space_Manager
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
                 LogDebug("Message handler init error");
-                m_MsgQueueInitSuccess = false;
             }
             else
             {
                 LogDebug("Message handler initialized");
-                m_MsgQueueInitSuccess = true;
             }
 
         }

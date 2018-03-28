@@ -17,7 +17,7 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "February 7, 2018";
+        private const string PROGRAM_DATE = "Marh 27, 2018";
 
         private static clsMainProgram m_MainProgram;
 
@@ -72,7 +72,7 @@ namespace Space_Manager
                 catch (Exception ex)
                 {
                     var errMsg = "Critical exception starting application: " + ex.Message;
-                    ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
+                    ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex));
                     ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
                     PRISM.Logging.FileLogger.FlushPendingMessages();
                     return;
