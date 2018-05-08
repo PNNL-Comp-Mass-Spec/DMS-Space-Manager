@@ -17,7 +17,7 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "Marh 27, 2018";
+        private const string PROGRAM_DATE = "May 8, 2018";
 
         private static clsMainProgram m_MainProgram;
 
@@ -139,8 +139,8 @@ namespace Space_Manager
                 Console.WriteLine("This is version " + PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(PROGRAM_DATE));
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
+                Console.WriteLine("Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov");
                 Console.WriteLine();
 
 
