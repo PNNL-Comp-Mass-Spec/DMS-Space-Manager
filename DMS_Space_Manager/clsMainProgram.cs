@@ -155,11 +155,12 @@ namespace Space_Manager
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue
-            m_MsgHandler = new clsMessageHandler();
-            m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-
-            m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
-            m_MsgHandler.MgrSettings = m_MgrSettings;
+            m_MsgHandler = new clsMessageHandler
+            {
+                BrokerUri = m_MgrSettings.GetParam("MessageQueueURI"),
+                StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),
+                MgrSettings = m_MgrSettings
+            };
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
