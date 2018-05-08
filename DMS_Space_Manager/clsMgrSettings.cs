@@ -321,10 +321,10 @@ namespace Space_Manager
         private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors,
                                                bool returnErrorIfNoParameters, int retryCount = 3)
         {
-            var DBConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
+            var dbConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
             dtSettings = null;
 
-            if (string.IsNullOrEmpty(DBConnectionString))
+            if (string.IsNullOrEmpty(dbConnectionString))
             {
                 mErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING +
                            " parameter not found in mParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
@@ -339,7 +339,7 @@ namespace Space_Manager
             {
                 try
                 {
-                    using (var cn = new SqlConnection(DBConnectionString))
+                    using (var cn = new SqlConnection(dbConnectionString))
                     {
                         var cmd = new SqlCommand
                         {
@@ -365,7 +365,7 @@ namespace Space_Manager
                     retryCount -= 1;
                     var msg = string.Format("LoadMgrSettingsFromDB; Exception getting manager settings from database: {0}; " +
                                             "ConnectionString: {1}, RetryCount = {2}",
-                                            ex.Message, DBConnectionString, retryCount);
+                                            ex.Message, dbConnectionString, retryCount);
 
                     if (logConnectionErrors)
                         WriteErrorMsg(msg, allowLogToDB: false);
@@ -394,8 +394,7 @@ namespace Space_Manager
             if (dtSettings == null)
             {
                 // Data table not initialized
-                mErrMsg = "LoadMgrSettingsFromDB; dtSettings datatable is null; using " +
-                           DBConnectionString;
+                mErrMsg = "LoadMgrSettingsFromDB; dtSettings datatable is null; using " + dbConnectionString;
                 if (logConnectionErrors)
                     WriteErrorMsg(mErrMsg);
 
@@ -406,7 +405,7 @@ namespace Space_Manager
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
                 // Wrong number of rows returned
-                mErrMsg = "LoadMgrSettingsFromDB; Manager " + managerName + " not defined in the manager control database; using " + DBConnectionString;
+                mErrMsg = "LoadMgrSettingsFromDB; Manager " + managerName + " not defined in the manager control database; using " + dbConnectionString;
                 WriteErrorMsg(mErrMsg);
                 dtSettings.Dispose();
                 return false;
