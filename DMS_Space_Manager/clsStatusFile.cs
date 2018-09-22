@@ -17,7 +17,7 @@ namespace Space_Manager
     /// <summary>
     /// Class to handle status file updates
     /// </summary>
-    public class clsStatusFile : clsEventNotifier, IStatusFile
+    public class clsStatusFile : EventNotifier, IStatusFile
     {
 
         #region "Class variables"

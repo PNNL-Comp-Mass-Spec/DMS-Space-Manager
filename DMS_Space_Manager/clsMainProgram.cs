@@ -149,7 +149,7 @@ namespace Space_Manager
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
-            ConsoleMsgUtils.ShowDebug("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
+            ConsoleMsgUtils.ShowDebug("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
@@ -207,7 +207,7 @@ namespace Space_Manager
                 MgrStatus = EnumMgrStatus.Running
             };
 
-            RegisterEvents((clsEventNotifier)m_StatusFile);
+            RegisterEvents((EventNotifier)m_StatusFile);
 
             var logStatusToMessageQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue");
             var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
@@ -449,7 +449,7 @@ namespace Space_Manager
                         break;
                     }
 
-                    if (clsWindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out var pendingWindowsUpdateMessage))
+                    if (WindowsUpdateStatus.ServerUpdatesArePending(DateTime.Now, out var pendingWindowsUpdateMessage))
                     {
                         ReportStatus("Exiting: " + pendingWindowsUpdateMessage);
                         break;
@@ -585,9 +585,9 @@ namespace Space_Manager
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
-        private void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

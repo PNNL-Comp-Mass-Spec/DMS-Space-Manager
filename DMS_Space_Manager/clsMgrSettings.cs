@@ -381,7 +381,7 @@ namespace Space_Manager
             if (retryCount < 0)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
-                var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
+                var allowLogToDB = !WindowsUpdateStatus.ServerUpdatesArePending();
 
                 mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
                 if (logConnectionErrors)

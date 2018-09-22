@@ -43,7 +43,7 @@ namespace Space_Manager
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISM.clsExecuteDatabaseSP m_DMSProcedureExecutor;
+        protected readonly PRISM.ExecuteDatabaseSP m_DMSProcedureExecutor;
 
         #endregion
 
@@ -70,7 +70,7 @@ namespace Space_Manager
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(connectionString);
+            m_DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(connectionString);
 
             m_DMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
 
