@@ -80,12 +80,10 @@
     <Compile Include="clsDbTask.cs" />
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
-    <Compile Include="clsMgrSettings.cs" />
     <Compile Include="clsStatusData.cs" />
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsStorageOperations.cs" />
     <Compile Include="clsUtilityMethods.cs" />
-    <Compile Include="IMgrParams.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
     <Compile Include="Program.cs" />
@@ -126,7 +124,7 @@
       <Version>0.9.16530.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.93</Version>
+      <Version>2.5.11</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
