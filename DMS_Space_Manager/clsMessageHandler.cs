@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
+using PRISM.AppSettings;
 
 namespace Space_Manager
 {
@@ -26,7 +27,7 @@ namespace Space_Manager
         private string m_BrokerUri;
 
         private string m_StatusTopicName;	// Used for status output
-        private clsMgrSettings m_MgrSettings;
+        private MgrSettings m_MgrSettings;
 
         private IConnection m_Connection;
         private ISession m_StatusSession;
@@ -39,7 +40,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        public clsMgrSettings MgrSettings
+        public MgrSettings MgrSettings
         {
             set => m_MgrSettings = value;
         }

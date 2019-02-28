@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Security.Cryptography;
+using PRISM.AppSettings;
 
 namespace Space_Manager
 {
@@ -126,7 +127,7 @@ namespace Space_Manager
 
         #region "Class variables"
 
-        readonly IMgrParams m_MgrParams;
+        readonly MgrSettings m_MgrParams;
         readonly bool m_ClientPerspective;
 
         string m_MD5ResultsFileDatasetName = string.Empty;
@@ -158,7 +159,7 @@ namespace Space_Manager
 
         #region "Constructors"
 
-        public clsStorageOperations(IMgrParams mgrParams)
+        public clsStorageOperations(MgrSettings mgrParams)
         {
             m_MgrParams = mgrParams;
 

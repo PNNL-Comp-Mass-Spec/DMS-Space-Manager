@@ -9,6 +9,7 @@
 using System;
 using System.Data.SqlClient;
 using System.Data;
+using PRISM.AppSettings;
 using PRISM.Logging;
 
 namespace Space_Manager
@@ -31,7 +32,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
         /// <param name="traceMode">True to show additional debug messages</param>
-        public clsSpaceMgrTask(IMgrParams mgrParams, bool traceMode)
+        public clsSpaceMgrTask(MgrSettings mgrParams, bool traceMode)
             : base(mgrParams, traceMode)
         {
             m_JobParams.Clear();

@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using PRISM.AppSettings;
 
 namespace Space_Manager
 {
@@ -27,7 +28,7 @@ namespace Space_Manager
 
         #region "Class variables"
 
-        protected readonly IMgrParams m_MgrParams;
+        protected readonly MgrSettings m_MgrParams;
 
         /// <summary>
         /// Debug level
@@ -62,7 +63,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
         /// <param name="traceMode">True to show additional debug messages</param>
-        protected clsDbTask(IMgrParams mgrParams, bool traceMode)
+        protected clsDbTask(MgrSettings mgrParams, bool traceMode)
         {
             m_MgrParams = mgrParams;
 

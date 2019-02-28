@@ -7,9 +7,11 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using PRISM;
+using PRISM.AppSettings;
 using PRISM.Logging;
 
 namespace Space_Manager
@@ -35,6 +37,8 @@ namespace Space_Manager
 
         private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\SpaceMan";
 
+        private const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
+
         private const int MAX_ERROR_COUNT = 55; // Zero-based, so will give 56 tries
 
         private const bool RESTART_OK = true;
@@ -45,7 +49,7 @@ namespace Space_Manager
 
         #region "Class variables"
 
-        private clsMgrSettings m_MgrSettings;
+        private MgrSettings m_MgrSettings;
         private clsSpaceMgrTask m_Task;
         private FileSystemWatcher m_FileWatcher;
         private bool m_ConfigChanged;
@@ -118,11 +122,34 @@ namespace Space_Manager
             //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
             try
             {
-                m_MgrSettings = new clsMgrSettings();
+                var localSettings = new Dictionary<string, string>
+                {
+                    {MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr},
+                    {MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString()},
+                    {MgrSettings.MGR_PARAM_MGR_NAME, Properties.Settings.Default.MgrName},
+                    {MgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString()},
+                    {MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString},
+                };
+
+                m_MgrSettings = new MgrSettings();
+                RegisterEvents(m_MgrSettings);
+                m_MgrSettings.CriticalErrorEvent += ErrorEventHandler;
+
+                var success = m_MgrSettings.LoadSettings(localSettings, true);
+                if (!success)
+                {
+                    if (string.Equals(m_MgrSettings.ErrMsg, MgrSettings.DEACTIVATED_LOCALLY))
+                        throw new ApplicationException(MgrSettings.DEACTIVATED_LOCALLY);
+
+                    throw new ApplicationException("Unable to initialize manager settings class: " + m_MgrSettings.ErrMsg);
+                }
+
+                ReportStatus("Loaded manager settings from Manager Control Database");
+
             }
             catch
             {
-                // Failures are logged by clsMgrSettings
+                // Failures are logged by MgrSettings
                 return false;
             }
 
@@ -130,10 +157,10 @@ namespace Space_Manager
             m_MgrName = m_MgrSettings.ManagerName;
 
             // Set up the loggers
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename", "SpaceMan");
+            var logFileNameBase = m_MgrSettings.GetParam("LogFileName", "SpaceMan");
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
-            m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
+            m_DebugLevel = m_MgrSettings.GetParam("DebugLevel", 4);
 
             var logLevel = (BaseLogger.LogLevels)m_DebugLevel;
 
@@ -141,7 +168,7 @@ namespace Space_Manager
 
             // Typically
             // Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;
-            var logCnStr = m_MgrSettings.GetParam("connectionstring");
+            var logCnStr = m_MgrSettings.GetParam("ConnectionString");
 
             LogTools.RemoveDefaultDbLogger();
             LogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
@@ -166,17 +193,17 @@ namespace Space_Manager
             // Start this in a separate thread so that we can abort the initialization if necessary
             InitializeMessageQueue();
 
-            var configFileName = m_MgrSettings.GetParam("configfilename");
+            var configFileName = m_MgrSettings.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
-                LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters. " +
+                LogError("Manager parameter 'ConfigFileName' is undefined; this likely indicates a problem retrieving manager parameters. " +
                          "Shutting down the manager");
                 return false;
             }
 
             // Setup a file watcher for the config file
-            var appPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
+            var appPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
             var fInfo = new FileInfo(appPath);
             m_FileWatcher = new FileSystemWatcher
             {
@@ -209,7 +236,7 @@ namespace Space_Manager
 
             RegisterEvents((EventNotifier)m_StatusFile);
 
-            var logStatusToMessageQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue");
+            var logStatusToMessageQueue = m_MgrSettings.GetParam("LogStatusToMessageQueue", true);
             var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
             var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
@@ -318,10 +345,10 @@ namespace Space_Manager
 
             try
             {
-                var maxReps = m_MgrSettings.GetParam("maxrepetitions", 25);
+                var maxReps = m_MgrSettings.GetParam("MaxRepetitions", 25);
 
                 // Check if manager has been disabled via manager config db
-                if (!m_MgrSettings.GetBooleanParam("mgractive"))
+                if (!m_MgrSettings.GetParam("MgrActive", false))
                 {
                     // Manager deactivated via manager config db
                     ReportStatus("Manager disabled via config db");
@@ -435,7 +462,7 @@ namespace Space_Manager
                     }
 
                     // Check available space on server drive and compare it with min allowed space
-                    var serverName = m_MgrSettings.GetParam("machname");
+                    var serverName = m_MgrSettings.GetParam("MachName");
                     var perspective = m_MgrSettings.GetParam("perspective");
                     var checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
                                                                         perspective,
