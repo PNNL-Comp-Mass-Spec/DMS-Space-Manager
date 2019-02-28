@@ -8,7 +8,7 @@ namespace Space_Manager
     class clsPurgeableFileSearcher
     {
         /// <summary>
-        /// Look for files in diFolder matching filterSpec; do not recruse
+        /// Look for files in diFolder matching filterSpec; do not recurse
         /// Matching files are added to serverFilesToPurge
         /// </summary>
         /// <param name="diFolder"></param>
