@@ -27,7 +27,6 @@ namespace Space_Manager
         #region "Constants"
 
         const string RESULT_FILE_NAME_PREFIX = "results.";
-        // Obsolete: const string STAGED_FILE_NAME_PREFIX = "stagemd5.";
         const string WAITING_FOR_HASH_FILE = "(HASH)";
         const string HASH_NOT_FOUND = "(HASH NOT FOUND)";
         const string HASH_MISMATCH = "#HashMismatch#";
