@@ -1119,12 +1119,12 @@ namespace Space_Manager
             // Search the hash file contents for a file that matches the input file
             var filePathUnix = fileNamePath.Replace(@"\", @"/");
 
-            var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
-            var fileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, subfolderTofind);
+            var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+            var fileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, subdirectoryToFind);
 
             if (string.IsNullOrEmpty(fileNameTrimmed))
             {
-                LogWarning("  Did not find " + subfolderTofind + " in path " + filePathUnix + " (original path " + fileNamePath + ")");
+                LogWarning("  Did not find " + subdirectoryToFind + " in path " + filePathUnix + " (original path " + fileNamePath + ")");
             }
             else
             {
@@ -1294,13 +1294,13 @@ namespace Space_Manager
                         if (lstPathAndFileID.Count > 1)
                             myEmslFileID = lstPathAndFileID[1];
 
-                        var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                        var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
-                        var fileNameTrimmed = TrimPathAfterSubfolder(fileNamePath, subfolderTofind);
+                        var fileNameTrimmed = TrimPathAfterSubfolder(fileNamePath, subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
-                            LogWarning("Did not find " + subfolderTofind + " in line " + inputLine + " in results file " + md5ResultsFilePath);
+                            LogWarning("Did not find " + subdirectoryToFind + " in line " + inputLine + " in results file " + md5ResultsFilePath);
                         }
                         else
                         {
@@ -1455,27 +1455,27 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Looks for subfolderTofind in fileNamePath
-        /// If found, returns the text that occurs after subfolderTofind
+        /// Looks for subdirectoryToFind in fileNamePath
+        /// If found, returns the text that occurs after subdirectoryToFind
         /// If not found, then returns an empty string
         /// </summary>
         /// <param name="fileNamePath"></param>
-        /// <param name="subfolderTofind"></param>
+        /// <param name="subdirectoryToFind"></param>
         /// <returns></returns>
-        private string TrimPathAfterSubfolder(string fileNamePath, string subfolderTofind)
+        private string TrimPathAfterSubfolder(string fileNamePath, string subdirectoryToFind)
         {
-            var startIndex = fileNamePath.IndexOf(subfolderTofind, StringComparison.InvariantCultureIgnoreCase);
+            var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
 
             if (startIndex < 0)
             {
                 // Try again using lowercase
-                startIndex = fileNamePath.IndexOf(subfolderTofind, StringComparison.InvariantCultureIgnoreCase);
+                startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
             }
 
             if (startIndex >= 0)
             {
-                if (startIndex + subfolderTofind.Length < fileNamePath.Length)
-                    return fileNamePath.Substring(startIndex + subfolderTofind.Length);
+                if (startIndex + subdirectoryToFind.Length < fileNamePath.Length)
+                    return fileNamePath.Substring(startIndex + subdirectoryToFind.Length);
 
                 return string.Empty;
             }
@@ -1511,7 +1511,7 @@ namespace Space_Manager
 
                 var splitChars = new[] { ' ' };
 
-                var subfolderTofind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
 
                 currentStep = "Read master MD5 results file";
 
@@ -1537,7 +1537,7 @@ namespace Space_Manager
                         }
 
                         // Look for the unix file path in m_HashFileContents
-                        var fileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], subfolderTofind);
+                        var fileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
