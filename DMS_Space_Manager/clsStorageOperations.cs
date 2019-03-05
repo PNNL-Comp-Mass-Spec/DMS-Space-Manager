@@ -1221,7 +1221,7 @@ namespace Space_Manager
                         //}
                         //else
                         //{
-                        //    // DatasetPurgeArchiveHelper needs to create a stagemd5 file for this datatset
+                        //    // DatasetPurgeArchiveHelper needs to create a stagemd5 file for this dataset
                         //    // Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
                         //    //   eventually we should get MD5 result files and then we should be able to purge this dataset
                         //    LogWarning("  Stagemd5 file not found");
@@ -1253,6 +1253,8 @@ namespace Space_Manager
 
                     // Extract the hash values value from the data line
 
+                    // ReSharper disable CommentTypo
+
                     // Old data not in MyEMSL:
                     //    MD5Hash<SPACE>ArchiveFilePath
                     //
@@ -1272,6 +1274,7 @@ namespace Space_Manager
                     //    796d99bcc6f1824dfe1c36cc9a61636dd1b07625 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/Default_2008-08-22.xml	915636
                     //    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic	915648
 
+                    // ReSharper restore CommentTypo
 
                     var lstHashAndPathInfo = inputLine.Split(new[] { ' ' }, 2).ToList();
                     if (lstHashAndPathInfo.Count > 1)

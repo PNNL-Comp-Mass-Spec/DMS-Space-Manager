@@ -77,7 +77,7 @@ namespace Space_Manager
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = mgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
 
         #endregion
@@ -101,7 +101,7 @@ namespace Space_Manager
         /// <param name="inpCmd">SQL command object containing params</param>
         protected void PrintCommandParams(SqlCommand inpCmd)
         {
-            // Verify there really are command paramters
+            // Verify there really are command parameters
             if (inpCmd == null)
                 return;
 

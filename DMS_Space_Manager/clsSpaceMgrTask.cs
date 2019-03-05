@@ -124,6 +124,7 @@ namespace Space_Manager
 
                 myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
+                // ReSharper disable once StringLiteralTypo
                 myCmd.Parameters.Add(new SqlParameter("@StorageServerName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("machname");
 
                 string serverDisk;
@@ -223,7 +224,7 @@ namespace Space_Manager
         ///  8 = Archive offline
         /// </param>
         /// <param name="datasetName">Dataset name</param>
-        /// <returns>TRUE for sucesss; FALSE for failure</returns>
+        /// <returns>TRUE for success; FALSE for failure</returns>
         public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
         {
 

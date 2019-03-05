@@ -44,7 +44,7 @@ namespace Space_Manager
                 eSearchOption = SearchOption.TopDirectoryOnly;
 
             // If filterSpec is "*.baf" then .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
-            // We instead want the beahvior to be like DOS, in that "*.baf" should only match analysis.baf
+            // We instead want the behavior to be like DOS, in that "*.baf" should only match analysis.baf
             if (filterSpec.StartsWith("*.") && char.IsLetterOrDigit(filterSpec[filterSpec.Length - 1]))
                 requiredFileSuffix = filterSpec.Substring(1);
 

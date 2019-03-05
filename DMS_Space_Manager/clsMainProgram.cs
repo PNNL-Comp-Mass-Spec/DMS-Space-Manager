@@ -311,11 +311,11 @@ namespace Space_Manager
                 return;
             }
 
-            var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
+            var elapsedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
 
-            if (elaspedTime > 25)
+            if (elapsedTime > 25)
             {
-                ReportStatus("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
+                ReportStatus("Connection to the message queue was slow, taking " + (int)elapsedTime + " seconds");
             }
 
         }
