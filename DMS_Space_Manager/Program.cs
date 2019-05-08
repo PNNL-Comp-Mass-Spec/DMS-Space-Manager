@@ -17,7 +17,7 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "March 5, 2019";
+        private const string PROGRAM_DATE = "May 7, 2019";
 
         private static clsMainProgram m_MainProgram;
 
@@ -112,10 +112,9 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("Error parsing the command line parameters: " + ex.Message, ex);
+                ConsoleMsgUtils.ShowError("Error parsing the command line parameters", ex);
             }
         }
-
 
         private static void ShowProgramHelp()
         {
@@ -149,7 +148,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("Error displaying the program syntax: " + ex.Message, ex);
+                ConsoleMsgUtils.ShowError("Error displaying the program syntax", ex);
             }
         }
 
