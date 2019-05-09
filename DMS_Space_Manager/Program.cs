@@ -17,9 +17,9 @@ namespace Space_Manager
     static class Program
     {
 
-        private const string PROGRAM_DATE = "May 7, 2019";
+        private const string PROGRAM_DATE = "May 9, 2019";
 
-        private static clsMainProgram m_MainProgram;
+        private static clsMainProgram mMainProgram;
 
         private static bool mPreviewMode;
 
@@ -55,19 +55,19 @@ namespace Space_Manager
             {
                 try
                 {
-                    if (m_MainProgram == null)
+                    if (mMainProgram == null)
                     {
                         //Initialize the main execution class
-                        m_MainProgram = new clsMainProgram(mPreviewMode, mTraceMode);
+                        mMainProgram = new clsMainProgram(mPreviewMode, mTraceMode);
 
-                        if (!m_MainProgram.InitMgr())
+                        if (!mMainProgram.InitMgr())
                         {
                             PRISM.Logging.FileLogger.FlushPendingMessages();
                             return;
                         }
                     }
-                    restart = m_MainProgram.PerformSpaceManagement();
-                    m_MainProgram = null;
+                    restart = mMainProgram.PerformSpaceManagement();
+                    mMainProgram = null;
                 }
                 catch (Exception ex)
                 {
