@@ -577,16 +577,15 @@ namespace Space_Manager
                             break;
                     }
 
-#if DoDelete
+                    var simulateMode = false;
+#if !(DoDelete)
+                    simulateMode = true;
+#endif
                     // Close the purge task
-                    if (PreviewMode)
+                    if (PreviewMode || simulateMode)
                         m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
                     else
                         m_Task.CloseTask(purgeResult);
-#else
-                    // Close the purge task
-                    m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
-#endif
 
                     if (purgeResult == EnumCloseOutType.CLOSEOUT_DRIVE_MISSING)
                     {
@@ -600,10 +599,7 @@ namespace Space_Manager
                         opStatus = DriveOpStatus.Exit_No_Restart;
                         break;
                     }
-
-
                 }
-
             }
             catch (Exception ex)
             {

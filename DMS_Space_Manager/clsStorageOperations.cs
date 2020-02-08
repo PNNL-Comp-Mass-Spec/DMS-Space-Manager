@@ -289,15 +289,17 @@ namespace Space_Manager
             var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) +
                 " for dataset " + udtDatasetInfo.ServerFolderPath;
 
-#if DoDelete
+            var simulateMode = false;
+#if !(DoDelete)
+                simulateMode = true;
+#endif
             // Purge the dataset folder by deleting contents
             if (PreviewMode)
                 ReportStatus("Preview: " + purgeMessage);
+            else if (simulateMode)
+                ReportStatus("SIMULATE: " + purgeMessage);
             else
                 ReportStatus(purgeMessage);
-#else
-            ReportStatus("SIMULATE: " + purgeMessage);
-#endif
 
             // This list keeps track of the folders that we are processing
             var lstServerFolders = new SortedSet<string>();
@@ -320,11 +322,10 @@ namespace Space_Manager
                         continue;
                     }
 
-#if DoDelete
-                    // This code will only be reached if conditional compilation symbol DoDelete is defined
+                    // This code will only delete files if conditional compilation symbol DoDelete is defined
                     try
                     {
-                        if (!PreviewMode)
+                        if (!PreviewMode && !simulateMode)
                             fiFile.Delete();
                     }
                     catch
@@ -335,7 +336,7 @@ namespace Space_Manager
 
                         try
                         {
-                            if (!PreviewMode)
+                            if (!PreviewMode && !simulateMode)
                                 fiFile.Delete();
                         }
                         catch
@@ -343,12 +344,11 @@ namespace Space_Manager
                             // Perform garbage collection, then try again
                             PRISM.ProgRunner.GarbageCollectNow();
 
-                            if (!PreviewMode)
+                            if (!PreviewMode && !simulateMode)
                                 fiFile.Delete();
                         }
 
                     }
-#endif
                     filesDeleted += 1;
                 }
                 catch (Exception ex)
@@ -361,18 +361,12 @@ namespace Space_Manager
             // Log debug message
             purgeMessage = filesDeleted + " file" + CheckPlural(filesDeleted);
 
-#if DoDelete
             if (PreviewMode)
                 LogDebug("Previewed deletion of " + purgeMessage);
+            else if (simulateMode)
+                LogDebug("Simulated deletion of " + purgeMessage);
             else
                 ReportStatus("Deleted " + purgeMessage);
-#else
-            if (PreviewMode)
-                LogDebug("Previewed deletion of " + purgeMessage);
-            else
-                LogDebug("Simulated deletion of " + purgeMessage);
-
-#endif
 
             // Look for empty folders that can now be deleted
             foreach (var serverFolder in lstServerFolders)
@@ -420,12 +414,10 @@ namespace Space_Manager
                 udtDatasetInfo.PurgePolicy = PurgePolicyConstants.PurgeAll;
             }
 
-#if DoDelete
             if (PreviewMode)
                 purgeMessage = "Preview: " + purgeMessage;
-#else
-            purgeMessage = "SIMULATE: " + purgeMessage;
-#endif
+            else if (simulateMode)
+                purgeMessage = "SIMULATE: " + purgeMessage;
 
             ReportStatus(purgeMessage);
 
@@ -980,10 +972,13 @@ namespace Space_Manager
 
             if (diFolder.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
             {
-#if DoDelete
+#if !(DoDelete)
+                foldersDeleted += 1;
+                return true;
+#endif
+
                 // This code will only be reached if conditional compilation symbol DoDelete is defined
                 DeleteFolderRecurse(diFolder.FullName);
-#endif
                 foldersDeleted += 1;
 
                 return true;
@@ -992,7 +987,6 @@ namespace Space_Manager
             return false;
         }
 
-#if DoDelete
         /// <summary>
         /// Deletes a folder, including all files and subfolders
         /// Assures that the ReadOnly bit is turned off for each folder
@@ -1001,6 +995,10 @@ namespace Space_Manager
         /// <returns></returns>
         private void DeleteFolderRecurse(string folderPath)
         {
+#if !(DoDelete)
+            // Debug mode: don't actually delete anything.
+            return;
+#endif
             var diFolder = new DirectoryInfo(folderPath);
 
             if (!diFolder.Exists)
@@ -1037,8 +1035,6 @@ namespace Space_Manager
             }
 
         }
-
-#endif
 
         /// <summary>
         /// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
@@ -1406,8 +1402,11 @@ namespace Space_Manager
                         jobs = job.ToString(CultureInfo.InvariantCulture);
                 }
 
-#if DoDelete
-                if (PreviewMode)
+                var simulateMode = false;
+#if !(DoDelete)
+                simulateMode = true;
+#endif
+                if (PreviewMode || simulateMode)
                 {
                     var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
                     LogDebug(msg);
@@ -1440,11 +1439,6 @@ namespace Space_Manager
 
                     LogError(msg);
                 }
-#else
-                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
-                LogDebug(msg);
-#endif
-
             }
         }
 
