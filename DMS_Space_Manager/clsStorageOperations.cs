@@ -15,6 +15,7 @@ using System.Text;
 using System.IO;
 using System.Security.Cryptography;
 using PRISM.AppSettings;
+using PRISMDatabaseUtils;
 
 namespace Space_Manager
 {
@@ -1418,20 +1419,15 @@ namespace Space_Manager
                 const int maxRetryCount = 3;
 
                 //Setup for execution of the stored procedure
-                var myCmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_MARK_PURGED_JOBS
-                };
+                var dbTools = DMSProcedureExecutor;
+                var cmd = dbTools.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
-                myCmd.Parameters.Add(new SqlParameter("@JobList", SqlDbType.VarChar, 4000)).Value = jobs;
-
-                myCmd.Parameters.Add(new SqlParameter("@InfoOnly", SqlDbType.TinyInt)).Value = 0;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
+                dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt, value: 0);
 
                 //Execute the SP
-                var resCode = DMSProcedureExecutor.ExecuteSP(myCmd, maxRetryCount, out var errorMessage);
+                var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
                 if (resCode == 0)
                 {
                     ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
