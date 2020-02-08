@@ -8,7 +8,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using PRISM.AppSettings;
 
 namespace Space_Manager
@@ -44,7 +44,7 @@ namespace Space_Manager
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISM.ExecuteDatabaseSP m_DMSProcedureExecutor;
+        protected readonly PRISMDatabaseUtils.IDBTools m_DMSProcedureExecutor;
 
         #endregion
 
@@ -71,7 +71,7 @@ namespace Space_Manager
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(connectionString);
+            m_DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
 
             m_DMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
 
@@ -99,7 +99,7 @@ namespace Space_Manager
         /// Debugging routine for printing SP calling params
         /// </summary>
         /// <param name="inpCmd">SQL command object containing params</param>
-        protected void PrintCommandParams(SqlCommand inpCmd)
+        protected void PrintCommandParams(DbCommand inpCmd)
         {
             // Verify there really are command parameters
             if (inpCmd == null)
@@ -110,7 +110,7 @@ namespace Space_Manager
 
             var msg = "";
 
-            foreach (SqlParameter myParam in inpCmd.Parameters)
+            foreach (DbParameter myParam in inpCmd.Parameters)
             {
                 msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }

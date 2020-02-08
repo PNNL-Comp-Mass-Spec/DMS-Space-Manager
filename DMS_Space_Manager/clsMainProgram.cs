@@ -13,6 +13,7 @@ using System.Reflection;
 using PRISM;
 using PRISM.AppSettings;
 using PRISM.Logging;
+using PRISMDatabaseUtils.AppSettings;
 
 namespace Space_Manager
 {
@@ -122,7 +123,7 @@ namespace Space_Manager
             //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
             try
             {
-                var localSettings = new Dictionary<string, string>
+                var defaultSettings = new Dictionary<string, string>
                 {
                     {MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr},
                     {MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString()},
@@ -131,9 +132,29 @@ namespace Space_Manager
                     {MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString},
                 };
 
-                m_MgrSettings = new MgrSettings();
+                m_MgrSettings = new MgrSettingsDB();
                 RegisterEvents(m_MgrSettings);
                 m_MgrSettings.CriticalErrorEvent += ErrorEventHandler;
+
+                var mgrExePath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
+                var localSettings = m_MgrSettings.LoadMgrSettingsFromFile(mgrExePath + ".config");
+
+                if (localSettings == null)
+                {
+                    localSettings = defaultSettings;
+                }
+                else
+                {
+                    // Make sure the default settings exist and have valid values
+                    foreach (var setting in defaultSettings)
+                    {
+                        if (!localSettings.TryGetValue(setting.Key, out var existingValue) ||
+                            string.IsNullOrWhiteSpace(existingValue))
+                        {
+                            localSettings[setting.Key] = setting.Value;
+                        }
+                    }
+                }
 
                 var success = m_MgrSettings.LoadSettings(localSettings, true);
                 if (!success)

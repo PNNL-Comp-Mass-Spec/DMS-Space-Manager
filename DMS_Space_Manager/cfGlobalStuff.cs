@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.Data.SqlClient;
 
 namespace Space_Manager
 {
@@ -147,22 +146,6 @@ namespace Space_Manager
                 return fValue;
 
             return fValue;
-        }
-
-        public static int GetDbValue(SqlDataReader reader, int fieldIndex, int valueIfNull)
-        {
-            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
-                return valueIfNull;
-
-            return (int)reader.GetValue(fieldIndex);
-        }
-
-        public static string GetDbValue(SqlDataReader reader, int fieldIndex, string valueIfNull)
-        {
-            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
-                return valueIfNull;
-
-            return (string)reader.GetValue(fieldIndex);
         }
 
         public static string PossiblyQuotePath(string strPath)

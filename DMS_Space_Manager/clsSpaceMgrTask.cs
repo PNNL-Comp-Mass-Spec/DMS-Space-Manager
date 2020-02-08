@@ -7,10 +7,10 @@
 //*********************************************************************************************************
 
 using System;
-using System.Data.SqlClient;
 using System.Data;
 using PRISM.AppSettings;
 using PRISM.Logging;
+using PRISMDatabaseUtils;
 
 namespace Space_Manager
 {
@@ -19,7 +19,6 @@ namespace Space_Manager
     /// </summary>
     class clsSpaceMgrTask : clsDbTask, ITaskParams
     {
-
         #region "Constants"
 
         private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
@@ -53,7 +52,6 @@ namespace Space_Manager
             }
 
             return string.Empty;
-
         }
 
         /// <summary>
@@ -92,7 +90,6 @@ namespace Space_Manager
                 m_JobParams[keyName] = value;
             else
                 m_JobParams.Add(keyName, value);
-
         }
 
         /// <summary>
@@ -115,47 +112,40 @@ namespace Space_Manager
 
             try
             {
-                // Set up the command object prior to SP execution
-                var myCmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_NAME_REQUEST_TASK
-                };
+                var dbTools = m_DMSProcedureExecutor;
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                // Set up the command object prior to SP execution
+                var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
-                myCmd.Parameters.Add(new SqlParameter("@StorageServerName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("machname");
+                dbTools.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, m_MgrParams.GetParam("machname"));
 
-                string serverDisk;
-
+                var serverDisk = driveLetter;
                 if (driveLetter.EndsWith(":"))
                 {
                     // Append back slash to drive letter
                     serverDisk = driveLetter + @"\";
                 }
-                else
-                    serverDisk = driveLetter;
 
-                myCmd.Parameters.Add(new SqlParameter("@ServerDisk", SqlDbType.VarChar, 128)).Value = serverDisk;
-
-                myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-
-                myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+                dbTools.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
                 // We stopped creating stagemd5 files in January 2016
                 // Thus, pass 0 for this parameter instead of 1
-                myCmd.Parameters.Add(new SqlParameter("@ExcludeStageMD5RequiredDatasets", SqlDbType.TinyInt)).Value = 0;
+                dbTools.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt, value: 0);
 
-                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.DBconnectionString;
+                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.ConnectStr;
                 LogTools.LogDebug(msg);
 
                 msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
                 LogTools.LogDebug(msg);
-                PrintCommandParams(myCmd);
+                PrintCommandParams(cmd);
 
                 // Execute the SP
-                var retVal = m_DMSProcedureExecutor.ExecuteSP(myCmd, out var queryResults);
+                var retVal = m_DMSProcedureExecutor.ExecuteSPData(cmd, out var queryResults);
 
                 switch (retVal)
                 {
@@ -179,7 +169,7 @@ namespace Space_Manager
                     default:
                         // There was an SP error
                         LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
-                            "; Msg text = " + (string)myCmd.Parameters["@message"].Value);
+                            "; Msg text = " + (string)cmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
@@ -227,21 +217,14 @@ namespace Space_Manager
         /// <returns>TRUE for success; FALSE for failure</returns>
         public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
         {
-
             // Setup for execution of the stored procedure
-            var myCmd = new SqlCommand
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandText = spName
-            };
+            var dbTools = m_DMSProcedureExecutor;
+            var cmd = dbTools.CreateCommand(spName, CommandType.StoredProcedure);
 
-            myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
-            myCmd.Parameters.Add(new SqlParameter("@datasetNum", SqlDbType.VarChar, 128)).Value = datasetName;
-
-            myCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = completionCode;
-
-            myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+            dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+            dbTools.AddParameter(cmd, "@datasetNum", SqlType.VarChar, 128, datasetName);
+            dbTools.AddParameter(cmd, "@completionCode", SqlType.Int, value: completionCode);
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
             if (TraceMode)
             {
@@ -253,7 +236,7 @@ namespace Space_Manager
             // Execute the SP
             // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call
             // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
-            var resCode = m_DMSProcedureExecutor.ExecuteSP(myCmd);
+            var resCode = m_DMSProcedureExecutor.ExecuteSP(cmd);
 
             if (resCode == 0)
             {
@@ -261,7 +244,6 @@ namespace Space_Manager
             }
 
             return false;
-
         }
 
         #endregion

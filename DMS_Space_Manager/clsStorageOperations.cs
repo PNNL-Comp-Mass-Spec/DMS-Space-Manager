@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -148,7 +147,7 @@ namespace Space_Manager
 
         #region "Properties"
 
-        private readonly PRISM.ExecuteDatabaseSP DMSProcedureExecutor;
+        private readonly PRISMDatabaseUtils.IDBTools DMSProcedureExecutor;
 
         public bool PreviewMode { get; set; }
 
@@ -167,7 +166,7 @@ namespace Space_Manager
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
 
-            DMSProcedureExecutor = new PRISM.ExecuteDatabaseSP(connectionString);
+            DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
         }
 
         #endregion
