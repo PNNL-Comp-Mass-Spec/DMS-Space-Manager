@@ -84,6 +84,7 @@
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsStorageOperations.cs" />
     <Compile Include="clsUtilityMethods.cs" />
+    <Compile Include="CommandLineOptions.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
     <Compile Include="Program.cs" />

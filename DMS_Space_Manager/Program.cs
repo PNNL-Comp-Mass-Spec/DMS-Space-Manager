@@ -16,38 +16,35 @@ namespace Space_Manager
     /// </summary>
     static class Program
     {
-
-        private const string PROGRAM_DATE = "February 7, 2020";
+        private const string PROGRAM_DATE = "February 10, 2020";
 
         private static clsMainProgram mMainProgram;
-
-        private static bool mPreviewMode;
-
-        private static bool mTraceMode;
 
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             bool restart;
 
-            mPreviewMode = false;
-            mTraceMode = false;
-
-            var commandLineParser = new clsParseCommandLine();
-
-            // Look for /T or /Test on the command line
-            // If present, this means "code test mode" is enabled
-            if (commandLineParser.ParseCommandLine())
+            var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "";
+            var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName,
+                PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
             {
-                SetOptionsUsingCommandLineParameters(commandLineParser);
-            }
+                ProgramInfo = "This program manages free space on Proto-x servers",
+                ContactInfo =
+                    "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
+                    Environment.NewLine +
+                    "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
+                    "Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov"
+            };
 
-            if (commandLineParser.NeedToShowHelp)
+            var parsed = cmdLineParser.ParseArgs(args);
+            var options = parsed.ParsedResults;
+            if (!parsed.Success)
             {
-                ShowProgramHelp();
+                System.Threading.Thread.Sleep(1500);
                 return;
             }
 
@@ -58,7 +55,7 @@ namespace Space_Manager
                     if (mMainProgram == null)
                     {
                         //Initialize the main execution class
-                        mMainProgram = new clsMainProgram(mPreviewMode, mTraceMode);
+                        mMainProgram = new clsMainProgram(options.PreviewMode, options.TraceMode);
 
                         if (!mMainProgram.InitMgr())
                         {
@@ -82,76 +79,5 @@ namespace Space_Manager
 
             PRISM.Logging.FileLogger.FlushPendingMessages();
         }
-
-
-        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
-        {
-            // Returns True if no problems; otherwise, returns false
-
-            var strValidParameters = new[] { "Preview", "Trace" };
-
-            try
-            {
-                // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(strValidParameters))
-                {
-                    return;
-                }
-
-
-                // Query objParseCommandLine to see if various parameters are present
-                if (commandLineParser.IsParameterPresent("Preview"))
-                {
-                    mPreviewMode = true;
-                }
-
-                if (commandLineParser.IsParameterPresent("Trace"))
-                {
-                    mTraceMode = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowError("Error parsing the command line parameters", ex);
-            }
-        }
-
-        private static void ShowProgramHelp()
-        {
-            try
-            {
-                Console.WriteLine("This program manages free space on Proto-x servers");
-                Console.WriteLine();
-                Console.WriteLine("Program syntax:" + Environment.NewLine +
-                                  System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) +
-                                  " [/Preview] [/Trace]");
-                Console.WriteLine();
-
-                Console.WriteLine("Use /Preview to preview the files that would be purged to free up space");
-                Console.WriteLine();
-                Console.WriteLine("Use /Trace to enable trace mode");
-                Console.WriteLine();
-
-                Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
-                Console.WriteLine();
-
-                Console.WriteLine("This is version " + PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE));
-                Console.WriteLine();
-
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
-                Console.WriteLine("Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov");
-                Console.WriteLine();
-
-
-                // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                System.Threading.Thread.Sleep(750);
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowError("Error displaying the program syntax", ex);
-            }
-        }
-
-
     }
 }
