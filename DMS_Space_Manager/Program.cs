@@ -40,7 +40,7 @@ namespace Space_Manager
                     "Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov"
             };
 
-            var parsed = cmdLineParser.ParseArgs(args);
+            var parsed = cmdLineParser.ParseArgs(args, false);
             var options = parsed.ParsedResults;
             if (args.Length > 0 && !parsed.Success)
             {
