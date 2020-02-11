@@ -42,7 +42,7 @@ namespace Space_Manager
 
             var parsed = cmdLineParser.ParseArgs(args);
             var options = parsed.ParsedResults;
-            if (!parsed.Success)
+            if (args.Length > 0 && !parsed.Success)
             {
                 System.Threading.Thread.Sleep(1500);
                 return;
