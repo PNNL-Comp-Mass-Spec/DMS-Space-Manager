@@ -130,7 +130,7 @@ namespace Space_Manager
                 }
 
                 dbTools.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
                 dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
                 // We stopped creating stagemd5 files in January 2016
@@ -169,7 +169,7 @@ namespace Space_Manager
                     default:
                         // There was an SP error
                         LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
-                            "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+                            "; Msg text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
