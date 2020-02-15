@@ -16,7 +16,7 @@ namespace Space_Manager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "February 10, 2020";
+        private const string PROGRAM_DATE = "February 15, 2020";
 
         private static clsMainProgram mMainProgram;
 

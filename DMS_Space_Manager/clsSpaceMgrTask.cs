@@ -117,7 +117,7 @@ namespace Space_Manager
                 // Set up the command object prior to SP execution
                 var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
                 dbTools.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, m_MgrParams.GetParam("machname"));
@@ -130,12 +130,12 @@ namespace Space_Manager
                 }
 
                 dbTools.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
-                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
-                dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
 
                 // We stopped creating stagemd5 files in January 2016
                 // Thus, pass 0 for this parameter instead of 1
-                dbTools.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt, value: 0);
+                dbTools.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
 
                 var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.ConnectStr;
                 LogTools.LogDebug(msg);
@@ -221,10 +221,10 @@ namespace Space_Manager
             var dbTools = m_DMSProcedureExecutor;
             var cmd = dbTools.CreateCommand(spName, CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+            dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
             dbTools.AddParameter(cmd, "@datasetNum", SqlType.VarChar, 128, datasetName);
-            dbTools.AddParameter(cmd, "@completionCode", SqlType.Int, value: completionCode);
-            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+            dbTools.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
             if (TraceMode)
             {

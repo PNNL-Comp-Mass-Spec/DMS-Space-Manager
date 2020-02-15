@@ -1421,9 +1421,9 @@ namespace Space_Manager
                 var dbTools = DMSProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
-                dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt, value: 0);
+                dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
 
                 //Execute the SP
                 var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
