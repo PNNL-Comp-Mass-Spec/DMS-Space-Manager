@@ -18,6 +18,7 @@ namespace Space_Manager
     /// </summary>
     internal abstract class clsDbTask : clsLoggerBase
     {
+        // Ignore Spelling: dmsarch
 
         #region "Constants"
 

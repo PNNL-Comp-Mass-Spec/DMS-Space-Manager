@@ -24,6 +24,8 @@ namespace Space_Manager
     /// </summary>
     public class clsStorageOperations : clsLoggerBase
     {
+        // Ignore Spelling: dmsarch, frodo, purgeable, myemsl
+
         #region "Constants"
 
         private const string RESULT_FILE_NAME_PREFIX = "results.";
@@ -133,12 +135,12 @@ namespace Space_Manager
         private string m_MD5ResultsFilePath = string.Empty;
 
         /// <summary>
-        /// Tracks the full path to a file as the key and the MD5 or Sha-1 hash as the value
+        /// Tracks the full path to a file as the key and the MD5 or SHA-1 hash as the value
         /// </summary>
         /// <remarks>
         /// File paths are not case sensitive
         /// MD5 hash values are 32 characters long
-        /// Sha-1 hash values are 40 characters long
+        /// SHA-1 hash values are 40 characters long
         /// </remarks>
         private Dictionary<string, clsHashInfo> m_HashFileContents;
 
@@ -650,7 +652,7 @@ namespace Space_Manager
                     return comparisonResult;
                 }
 
-            } // foreach File in lstServerFilesToPurge
+            } // for each file in lstServerFilesToPurge
 
             switch (eCompResultOverall)
             {
@@ -749,14 +751,14 @@ namespace Space_Manager
             if (TraceMode)
             {
                 LogDebug(
-                    string.Format("Computing sha-1 hash for {0:F2} GB file {1}",
+                    string.Format("Computing SHA-1 hash for {0:F2} GB file {1}",
                                   clsUtilityMethods.BytesToGB(serverFile.Length), relativeFilePath));
             }
 
             fileInMyEMSL = true;
             var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFilePath);
 
-            // Compute the sha-1 hash value of the file
+            // Compute the SHA-1 hash value of the file
             if (string.Equals(serverFileHash, archiveFileHash))
             {
                 if (TraceMode)
@@ -1092,7 +1094,7 @@ namespace Space_Manager
         /// <param name="fileNamePath">File on storage server to find a matching archive hatch for</param>
         /// <param name="udtDatasetInfo">Dataset being purged</param>
         /// <param name="filePathInDictionary"></param>
-        /// <returns>MD5 or Sha-1 Hash value for success; otherwise return (HASH) or an empty string</returns>
+        /// <returns>MD5 or SHA-1 Hash value for success; otherwise return (HASH) or an empty string</returns>
         private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string filePathInDictionary)
         {
             // Archive should have a results.DatasetName file for the purge candidate dataset. If present, the file
@@ -1319,7 +1321,7 @@ namespace Space_Manager
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
                             if (m_HashFileContents.ContainsKey(fileNameTrimmed))
                             {
-                                // Preferentially use the newer value, unless the older value is a MyEMSL Sha-1 hash but the newer value is an MD5 hash
+                                // Preferentially use the newer value, unless the older value is a MyEMSL SHA-1 hash but the newer value is an MD5 hash
                                 if (!(hashCode.Length < 40 && m_HashFileContents[fileNameTrimmed].HashCode.Length >= 40))
                                 {
 

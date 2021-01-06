@@ -7,6 +7,8 @@ namespace Space_Manager
 {
     internal class clsPurgeableFileSearcher
     {
+        // Ignore Spelling: idx, wiff, maldi, uimf, tof, baf, ser, fid, xtr
+
         /// <summary>
         /// Look for files in targetDirectory matching filterSpec; do not recurse
         /// Matching files are added to serverFilesToPurge

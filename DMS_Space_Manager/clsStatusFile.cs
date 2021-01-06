@@ -19,6 +19,7 @@ namespace Space_Manager
     /// </summary>
     public class clsStatusFile : EventNotifier, IStatusFile
     {
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
         #region "Class variables"
 
@@ -220,7 +221,7 @@ namespace Space_Manager
         /// <summary>
         /// Writes the status to the message queue
         /// </summary>
-        /// <param name="statusXML">A string contiaining the XML to write</param>
+        /// <param name="statusXML">A string containing the XML to write</param>
         private void LogStatusToMessageQueue(string statusXML)
         {
             MonitorUpdateRequired?.Invoke(statusXML);
