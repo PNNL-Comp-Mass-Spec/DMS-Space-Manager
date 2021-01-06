@@ -50,9 +50,9 @@ namespace Space_Manager
             Compare_Not_Equal_or_Missing,
 
             /// <summary>
-            /// The storage server folder was not found
+            /// The storage server directory was not found
             /// </summary>
-            Compare_Storage_Server_Folder_Missing,
+            Compare_Storage_Server_Directory_Missing,
 
             /// <summary>
             /// Comparison error
@@ -67,7 +67,7 @@ namespace Space_Manager
             Hash_Not_Found_For_File,
 
             /// <summary>
-            /// Folder not found: \\agate.emsl.pnl.gov\dmsarch
+            /// Directory not found: \\agate.emsl.pnl.gov\dmsarch
             /// </summary>
             /// <remarks>
             /// Previous SAMBA bridge hosts:
@@ -78,10 +78,10 @@ namespace Space_Manager
             Compare_Archive_Samba_Share_Missing,
 
             /// <summary>
-            /// \\agate.emsl.pnl.gov\dmsarch exists but the dataset does not have a folder in the archive
+            /// \\agate.emsl.pnl.gov\dmsarch exists but the dataset does not have a directory in the archive
             /// </summary>
             /// <remarks>This will be true for all datasets added to DMS after September 2013</remarks>
-            Compare_Archive_Samba_DatasetFolder_Missing
+            Compare_Archive_Samba_Dataset_Directory_Missing
         }
 
         public enum PurgePolicyConstants
@@ -92,7 +92,7 @@ namespace Space_Manager
             Auto = 0,
 
             /// <summary>
-            /// Purge all except the QC folder
+            /// Purge all except the QC directory
             /// </summary>
             PurgeAllExceptQC = 1,
 
@@ -109,14 +109,14 @@ namespace Space_Manager
         public struct udtDatasetInfoType
         {
             public string DatasetName;
-            public string DatasetFolderName;
+            public string DatasetDirectoryName;
             public string Instrument;
             public string YearQuarter;
 
             /// <summary>
-            /// Folder path of this dataset on the storage server
+            /// Full path to the dataset directory on the storage server
             /// </summary>
-            public string ServerFolderPath;
+            public string DatasetDirectoryPath;
 
             public PurgePolicyConstants PurgePolicy;
             public string RawDataType;
@@ -175,7 +175,7 @@ namespace Space_Manager
         #region "Methods"
 
         /// <summary>
-        /// Deletes the contents of a dataset folder
+        /// Deletes the contents of a dataset directory
         /// </summary>
         /// <param name="purgeParams">Parameters for purge operation</param>
         /// <returns>Enum representing state of task</returns>
@@ -186,36 +186,36 @@ namespace Space_Manager
             var udtDatasetInfo = new udtDatasetInfoType
             {
                 DatasetName = purgeParams.GetParam("dataset"),
-                DatasetFolderName = purgeParams.GetParam("Folder"),
+                DatasetDirectoryName = purgeParams.GetParam("Folder"),
                 Instrument = purgeParams.GetParam("Instrument"),
                 YearQuarter = purgeParams.GetParam("DatasetYearQuarter"),
-                ServerFolderPath = string.Empty,
+                DatasetDirectoryPath = string.Empty,
                 PurgePolicy = GetPurgePolicyEnum(purgeParams.GetParam("PurgePolicy")),
                 RawDataType = purgeParams.GetParam("RawDataType")
             };
 
-            // Get path to dataset folder on server
+            // Get path to dataset directory on server
             {
                 if (m_ClientPerspective)
                 {
                     // Manager is running on a client
-                    udtDatasetInfo.ServerFolderPath = purgeParams.GetParam("StorageVolExternal");
+                    udtDatasetInfo.DatasetDirectoryPath = purgeParams.GetParam("StorageVolExternal");
                 }
                 else
                 {
                     //Manager is running on storage server
-                    udtDatasetInfo.ServerFolderPath = purgeParams.GetParam("StorageVol");
+                    udtDatasetInfo.DatasetDirectoryPath = purgeParams.GetParam("StorageVol");
                 }
-                udtDatasetInfo.ServerFolderPath = Path.Combine(udtDatasetInfo.ServerFolderPath, purgeParams.GetParam("storagePath"));
-                udtDatasetInfo.ServerFolderPath = Path.Combine(udtDatasetInfo.ServerFolderPath, udtDatasetInfo.DatasetFolderName);
+                udtDatasetInfo.DatasetDirectoryPath = Path.Combine(udtDatasetInfo.DatasetDirectoryPath, purgeParams.GetParam("storagePath"));
+                udtDatasetInfo.DatasetDirectoryPath = Path.Combine(udtDatasetInfo.DatasetDirectoryPath, udtDatasetInfo.DatasetDirectoryName);
 
-                // Get path to dataset folder in archive
-                datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetFolderName);
+                // Get path to dataset directory in archive
+                datasetPathSamba = Path.Combine(purgeParams.GetParam("SambaStoragePath"), udtDatasetInfo.DatasetDirectoryName);
             }
 
-            ReportStatus("Verifying integrity vs. archive, dataset " + udtDatasetInfo.ServerFolderPath);
+            ReportStatus("Verifying integrity vs. archive, dataset " + udtDatasetInfo.DatasetDirectoryPath);
 
-            var compResult = CompareDatasetFolders(udtDatasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge);
+            var compResult = CompareDatasetDirectories(udtDatasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge);
 
             switch (compResult)
             {
@@ -223,9 +223,9 @@ namespace Space_Manager
                     // Everything matches up
                     break;
 
-                case ArchiveCompareResults.Compare_Storage_Server_Folder_Missing:
+                case ArchiveCompareResults.Compare_Storage_Server_Directory_Missing:
                     // Confirm that the share for the dataset actual exists on the storage server
-                    if (ValidateDatasetShareExists(udtDatasetInfo.ServerFolderPath))
+                    if (ValidateDatasetShareExists(udtDatasetInfo.DatasetDirectoryPath))
                     {
                         // Share exists; return Failed since we likely need to update the database
                         return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -246,13 +246,13 @@ namespace Space_Manager
 
                 case ArchiveCompareResults.Compare_Archive_Samba_Share_Missing:
                     // Archive share is missing
-                    // Newer instruments will not have folders on the Samba share because all of their data is in MyEMSL
+                    // Newer instruments will not have directories on the Samba share because all of their data is in MyEMSL
                     return EnumCloseOutType.CLOSEOUT_ARCHIVE_OFFLINE;
 
-                case ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing:
-                    // Dataset folder not found in the archive
-                    // This is typically a folder permissions error and we thus do not want to re-archive the folder, since any newly archived files would still be inaccessible
-                    return EnumCloseOutType.CLOSEOUT_DATASET_FOLDER_MISSING_IN_ARCHIVE;
+                case ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing:
+                    // Dataset directory not found in the archive
+                    // This is typically a directory permissions error and we thus do not want to re-archive the directory, since any newly archived files would still be inaccessible
+                    return EnumCloseOutType.CLOSEOUT_DATASET_DIRECTORY_MISSING_IN_ARCHIVE;
 
                 default:
                     // Unrecognized result code
@@ -287,13 +287,13 @@ namespace Space_Manager
             }
 
             var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) +
-                " for dataset " + udtDatasetInfo.ServerFolderPath;
+                " for dataset " + udtDatasetInfo.DatasetDirectoryPath;
 
             var simulateMode = false;
 #if !(DoDelete)
                 simulateMode = true;
 #endif
-            // Purge the dataset folder by deleting contents
+            // Purge the dataset directory by deleting contents
             if (PreviewMode)
                 ReportStatus("Preview: " + purgeMessage);
             else if (simulateMode)
@@ -301,11 +301,11 @@ namespace Space_Manager
             else
                 ReportStatus(purgeMessage);
 
-            // This list keeps track of the folders that we are processing
-            var lstServerFolders = new SortedSet<string>();
+            // This list keeps track of the directories that we are processing
+            var lstServerDirectories = new SortedSet<string>();
 
             var filesDeleted = 0;
-            var foldersDeleted = 0;
+            var directoriesDeleted = 0;
 
             // Delete the files listed in lstServerFilesToPurge
             // If the PurgePolicy is AutoPurge or Delete All Except QC, the files in lstServerFilesToPurge could be a subset of the actual files present
@@ -314,8 +314,8 @@ namespace Space_Manager
                 try
                 {
                     var fiFile = new FileInfo(fileToDelete);
-                    if (fiFile.Directory != null && !lstServerFolders.Contains(fiFile.Directory.FullName))
-                        lstServerFolders.Add(fiFile.Directory.FullName);
+                    if (fiFile.Directory != null && !lstServerDirectories.Contains(fiFile.Directory.FullName))
+                        lstServerDirectories.Add(fiFile.Directory.FullName);
 
                     if (!fiFile.Exists)
                     {
@@ -368,49 +368,49 @@ namespace Space_Manager
             else
                 ReportStatus("Deleted " + purgeMessage);
 
-            // Look for empty folders that can now be deleted
-            foreach (var serverFolder in lstServerFolders)
+            // Look for empty directories that can now be deleted
+            foreach (var serverDirectory in lstServerDirectories)
             {
                 try
                 {
-                    if (serverFolder != udtDatasetInfo.ServerFolderPath)
-                        // Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
-                        DeleteFolderIfEmpty(serverFolder, ref foldersDeleted);
+                    if (serverDirectory != udtDatasetInfo.DatasetDirectoryPath)
+                        // Note that this function will only delete the directory if conditional compilation symbol DoDelete is defined and if the directory is empty
+                        DeleteDirectoryIfEmpty(serverDirectory, ref directoriesDeleted);
                 }
                 catch (Exception ex)
                 {
-                    LogError("Exception deleting folder " + serverFolder, ex);
+                    LogError("Exception deleting directory " + serverDirectory, ex);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             // Log debug message
-            LogDebug("Deleted " + foldersDeleted + " empty folder" + CheckPlural(foldersDeleted));
+            LogDebug("Deleted " + directoriesDeleted + " empty directory" + CheckPlural(directoriesDeleted));
 
-            // Delete the dataset folder if it is empty
-            bool datasetFolderDeleted;
+            // Delete the dataset directory if it is empty
+            bool datasetDirectoryDeleted;
             try
             {
-                // Note that this function will only delete the folder if conditional compilation symbol DoDelete is defined and if the folder is empty
-                datasetFolderDeleted = DeleteFolderIfEmpty(udtDatasetInfo.ServerFolderPath, ref foldersDeleted);
+                // Note that this function will only delete the directory if conditional compilation symbol DoDelete is defined and if the directory is empty
+                datasetDirectoryDeleted = DeleteDirectoryIfEmpty(udtDatasetInfo.DatasetDirectoryPath, ref directoriesDeleted);
             }
             catch (Exception ex)
             {
-                LogError("Exception deleting dataset folder " + udtDatasetInfo.ServerFolderPath, ex);
+                LogError("Exception deleting dataset directory " + udtDatasetInfo.DatasetDirectoryPath, ex);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Log debug message
-            LogDebug("Purged files and folders from dataset folder " + udtDatasetInfo.ServerFolderPath);
+            LogDebug("Purged files and directories from dataset directory " + udtDatasetInfo.DatasetDirectoryPath);
 
             // Mark the jobs in lstJobsToPurge as purged
             MarkPurgedJobs(lstJobsToPurge);
 
             // If we got to here, then log success and exit
             purgeMessage = "Purged dataset " + udtDatasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(udtDatasetInfo.PurgePolicy);
-            if (datasetFolderDeleted)
+            if (datasetDirectoryDeleted)
             {
-                purgeMessage += ", Dataset folder deleted since now empty";
+                purgeMessage += ", Dataset directory deleted since now empty";
                 udtDatasetInfo.PurgePolicy = PurgePolicyConstants.PurgeAll;
             }
 
@@ -471,59 +471,59 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
             }
 
-            // Make sure the archive folder has at least one file
+            // Make sure the archive directory has at least one file
             // If it doesn't have any files, then we could have a permissions error,
             // or we could be dealing with an instrument whose files are only in MyEMSL
 
-            var diDatasetFolder = new DirectoryInfo(sambaDatasetNamePath);
+            var datasetDirectory = new DirectoryInfo(sambaDatasetNamePath);
 
             int fileCount;
             try
             {
-                if (!diDatasetFolder.Exists)
+                if (!datasetDirectory.Exists)
                 {
                     LogDebug("  Dataset not in archive (" + sambaDatasetNamePath + ")");
-                    return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                    return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
                 }
-                fileCount = diDatasetFolder.GetFiles().Length;
+                fileCount = datasetDirectory.GetFiles().Length;
             }
             catch (AccessViolationException)
             {
-                LogWarning("  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
-                return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                LogWarning("  Dataset directory in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
+                return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
             }
             catch (UnauthorizedAccessException)
             {
-                LogWarning("  Dataset folder in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
-                return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                LogWarning("  Dataset directory in archive is not accessible, likely a permissions error: " + sambaDatasetNamePath);
+                return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
             }
             catch (Exception ex)
             {
-                LogWarning("  Exception examining Dataset folder in archive (" + sambaDatasetNamePath + "): " + ex.Message);
-                return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                LogWarning("  Exception examining Dataset directory in archive (" + sambaDatasetNamePath + "): " + ex.Message);
+                return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
             }
 
             if (fileCount > 0)
             {
-                // The folder exists in the archive, but the file in question was not there
+                // The directory exists in the archive, but the file in question was not there
 
                 LogWarning("  Update required. Server file not found in archive: " + serverFilePath);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
-            LogWarning("  Dataset folder in archive is empty (either a permissions error or the dataset is only in MyEMSL): " + sambaDatasetNamePath);
-            return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+            LogWarning("  Dataset directory in archive is empty (either a permissions error or the dataset is only in MyEMSL): " + sambaDatasetNamePath);
+            return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
         }
 
         /// <summary>
-        /// Compares the contents of two dataset folders
+        /// Compares the contents of two dataset directories
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
-        /// <param name="sambaDatasetNamePath">Location of dataset folder in archive (samba)</param>
+        /// <param name="sambaDatasetNamePath">Location of dataset directory in archive (samba)</param>
         /// <param name="lstServerFilesToPurge"></param>
         /// <param name="lstJobsToPurge"></param>
         /// <returns></returns>
-        public ArchiveCompareResults CompareDatasetFolders(udtDatasetInfoType udtDatasetInfo, string sambaDatasetNamePath,
+        public ArchiveCompareResults CompareDatasetDirectories(udtDatasetInfoType udtDatasetInfo, string sambaDatasetNamePath,
             out SortedSet<string> lstServerFilesToPurge,
             out List<int> lstJobsToPurge)
         {
@@ -533,13 +533,13 @@ namespace Space_Manager
             // Set this to true for now
             var eCompResultOverall = ArchiveCompareResults.Compare_Equal;
 
-            // Verify server dataset folder exists. If it doesn't, either we're getting Access Denied or the folder was manually purged
-            var diDatasetFolder = new DirectoryInfo(udtDatasetInfo.ServerFolderPath);
-            if (!diDatasetFolder.Exists)
+            // Verify server dataset directory exists. If it doesn't, either we're getting Access Denied or the directory was manually purged
+            var datasetDirectory = new DirectoryInfo(udtDatasetInfo.DatasetDirectoryPath);
+            if (!datasetDirectory.Exists)
             {
-                LogError("Folder " + udtDatasetInfo.ServerFolderPath + " not found; " +
-                         "either the folder was manually purged or Access is Denied");
-                return ArchiveCompareResults.Compare_Storage_Server_Folder_Missing;
+                LogError("Directory " + udtDatasetInfo.DatasetDirectoryPath + " not found; " +
+                         "either the directory was manually purged or Access is Denied");
+                return ArchiveCompareResults.Compare_Storage_Server_Directory_Missing;
             }
 
             // First look for this dataset's files in MyEMSL
@@ -548,7 +548,7 @@ namespace Space_Manager
 
             if (lstFilesInMyEMSL.Count == 0)
             {
-                // Verify Samba dataset folder exists
+                // Verify Samba dataset directory exists
                 if (!Directory.Exists(sambaDatasetNamePath))
                 {
                     string msg;
@@ -559,30 +559,30 @@ namespace Space_Manager
                     }
                     else
                     {
-                        msg = "Dataset not in MyEMSL and folder " + sambaDatasetNamePath +
+                        msg = "Dataset not in MyEMSL and directory " + sambaDatasetNamePath +
                               " not found; unable to verify files prior to purge";
                     }
 
                     LogError(msg);
 
-                    // Check whether the parent folder exists
+                    // Check whether the parent directory exists
                     if (ValidateDatasetShareExists(sambaDatasetNamePath, 2))
-                        return ArchiveCompareResults.Compare_Archive_Samba_DatasetFolder_Missing;
+                        return ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing;
 
                     return ArchiveCompareResults.Compare_Archive_Samba_Share_Missing;
                 }
             }
 
-            // If the dataset folder is empty yet the parent folder exists, then assume it was manually purged; just update the database
-            if (diDatasetFolder.GetFileSystemInfos().Length == 0 && diDatasetFolder.Parent != null && diDatasetFolder.Parent.Exists)
+            // If the dataset directory is empty yet the parent directory exists, then assume it was manually purged; just update the database
+            if (datasetDirectory.GetFileSystemInfos().Length == 0 && datasetDirectory.Parent != null && datasetDirectory.Parent.Exists)
             {
-                LogWarning("Folder " + udtDatasetInfo.ServerFolderPath + " is empty; assuming manually purged");
+                LogWarning("Directory " + udtDatasetInfo.DatasetDirectoryPath + " is empty; assuming manually purged");
                 return ArchiveCompareResults.Compare_Equal;
             }
 
             // Find files to purge based on the purge policy
             var oPurgeableFileSearcher = new clsPurgeableFileSearcher();
-            lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(diDatasetFolder, udtDatasetInfo, out lstJobsToPurge);
+            lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, udtDatasetInfo, out lstJobsToPurge);
 
             var mismatchMessage = string.Empty;
 
@@ -617,7 +617,7 @@ namespace Space_Manager
                 if (!fileInMyEMSL)
                 {
                     // Look for the file using Samba
-                    comparisonResult = CompareFileUsingSamba(sambaDatasetNamePath, serverFilePath, udtDatasetInfo, diDatasetFolder);
+                    comparisonResult = CompareFileUsingSamba(sambaDatasetNamePath, serverFilePath, udtDatasetInfo, datasetDirectory);
                 }
 
                 if (comparisonResult == ArchiveCompareResults.Compare_Equal)
@@ -700,7 +700,7 @@ namespace Space_Manager
             fileInMyEMSL = false;
 
             // Convert the file name on the storage server to its equivalent relative path
-            var relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, string.Empty, serverFilePath);
+            var relativeFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.DatasetDirectoryPath, string.Empty, serverFilePath);
             relativeFilePath = relativeFilePath.TrimStart('\\');
 
             if (relativeFilePath.Length == 0)
@@ -764,10 +764,10 @@ namespace Space_Manager
             string sambaDatasetNamePath,
             string serverFilePath,
             udtDatasetInfoType udtDatasetInfo,
-            FileSystemInfo diDatasetFolder)
+            FileSystemInfo datasetDirectory)
         {
             // Convert the file name on the storage server to its equivalent in the archive
-            var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.ServerFolderPath, sambaDatasetNamePath, serverFilePath);
+            var archFilePath = ConvertServerPathToArchivePath(udtDatasetInfo.DatasetDirectoryPath, sambaDatasetNamePath, serverFilePath);
             if (archFilePath.Length == 0)
             {
                 LogError("File name not returned when converting from server path to archive path for file" + serverFilePath);
@@ -796,12 +796,14 @@ namespace Space_Manager
 
             if (comparisonResult == ArchiveCompareResults.Compare_Equal ||
                 comparisonResult == ArchiveCompareResults.Compare_Not_Equal_or_Missing)
+            {
                 return comparisonResult;
+            }
 
             if (comparisonResult == ArchiveCompareResults.Hash_Not_Found_For_File)
             {
 
-                // If this file is over AGED_FILE_DAYS days old and is in a subfolder then only compare file dates
+                // If this file is over AGED_FILE_DAYS days old and is in a subdirectory then only compare file dates
                 // If the file in the archive is newer than this file, then assume the archive copy is valid
                 // Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
                 // Due to the slow speed of restoring files to tape we have switched to simply comparing dates
@@ -815,7 +817,7 @@ namespace Space_Manager
                 var fileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
                 if (fileAgeDays >= AGED_FILE_DAYS ||
-                    fileAgeDays >= 30 && diDatasetFolder.Name.StartsWith("blank", StringComparison.InvariantCultureIgnoreCase))
+                    fileAgeDays >= 30 && datasetDirectory.Name.StartsWith("blank", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
                     {
@@ -827,7 +829,7 @@ namespace Space_Manager
 
                 if (assumeEqual)
                 {
-                    LogDebug("    archive file size match: " + fiServerFile.FullName.Replace(diDatasetFolder.FullName, "").Substring(1));
+                    LogDebug("    archive file size match: " + fiServerFile.FullName.Replace(datasetDirectory.FullName, "").Substring(1));
                     return ArchiveCompareResults.Compare_Equal;
                 }
 
@@ -955,31 +957,31 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Delete the given folder if it is empty (no files, and all subfolders are empty)
+        /// Delete the given directory if it is empty (no files, and all subdirectories are empty)
         /// </summary>
-        /// <param name="serverFolder"></param>
-        /// <param name="foldersDeleted"></param>
-        /// <returns>True if the folder was empty and was deleted; otherwise false</returns>
-        private bool DeleteFolderIfEmpty(string serverFolder, ref int foldersDeleted)
+        /// <param name="directoryPath"></param>
+        /// <param name="directoriesDeleted"></param>
+        /// <returns>True if the directory was empty and was deleted; otherwise false</returns>
+        private bool DeleteDirectoryIfEmpty(string directoryPath, ref int directoriesDeleted)
         {
 
-            var diFolder = new DirectoryInfo(serverFolder);
+            var targetDirectory = new DirectoryInfo(directoryPath);
 
-            if (!diFolder.Exists)
+            if (!targetDirectory.Exists)
             {
                 return false;
             }
 
-            if (diFolder.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
+            if (targetDirectory.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
             {
 #if !(DoDelete)
-                foldersDeleted += 1;
+                directoriesDeleted += 1;
                 return true;
 #endif
 
                 // This code will only be reached if conditional compilation symbol DoDelete is defined
-                DeleteFolderRecurse(diFolder.FullName);
-                foldersDeleted += 1;
+                DeleteDirectoryRecurse(targetDirectory.FullName);
+                directoriesDeleted += 1;
 
                 return true;
             }
@@ -988,66 +990,66 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Deletes a folder, including all files and subfolders
-        /// Assures that the ReadOnly bit is turned off for each folder
+        /// Deletes a directory, including all files and subdirectories
+        /// Assures that the ReadOnly bit is turned off for each directory
         /// </summary>
-        /// <param name="folderPath"></param>
+        /// <param name="directoryPath"></param>
         /// <returns></returns>
-        private void DeleteFolderRecurse(string folderPath)
+        private void DeleteDirectoryRecurse(string directoryPath)
         {
 #if !(DoDelete)
             // Debug mode: don't actually delete anything.
             return;
 #endif
-            var diFolder = new DirectoryInfo(folderPath);
+            var targetDirectory = new DirectoryInfo(directoryPath);
 
-            if (!diFolder.Exists)
+            if (!targetDirectory.Exists)
             {
-                // Folder not found; nothing to delete
+                // Directory not found; nothing to delete
                 return;
             }
 
-            foreach (var diSubFolder in diFolder.GetDirectories())
+            foreach (var subdirectory in targetDirectory.GetDirectories())
             {
-                // Check whether the folder is marked as Read-Only
-                if ((diSubFolder.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                    diSubFolder.Attributes = diSubFolder.Attributes & ~FileAttributes.ReadOnly;
+                // Check whether the subdirectory is marked as Read-Only
+                if ((subdirectory.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    subdirectory.Attributes = subdirectory.Attributes & ~FileAttributes.ReadOnly;
 
-                DeleteFolderRecurse(diSubFolder.FullName);
+                DeleteDirectoryRecurse(subdirectory.FullName);
             }
 
             try
             {
                 if (PreviewMode)
-                    Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                    Console.WriteLine("Preview: Delete " + targetDirectory.FullName);
                 else
-                    diFolder.Delete(true);
+                    targetDirectory.Delete(true);
             }
             catch
             {
-                // The folder might have readonly files
+                // The directory might have read-only files
                 // Manually delete each file
-                DeleteFilesCheckReadonly(diFolder);
+                DeleteFilesCheckReadonly(targetDirectory);
                 if (PreviewMode)
-                    Console.WriteLine("Preview: Delete " + diFolder.FullName);
+                    Console.WriteLine("Preview: Delete " + targetDirectory.FullName);
                 else
-                    diFolder.Delete(true);
+                    targetDirectory.Delete(true);
             }
 
         }
 
         /// <summary>
-        /// Deletes all files in a folder, assuring that the ReadOnly bit is turned off for each file
+        /// Deletes all files in a directory, assuring that the ReadOnly bit is turned off for each file
         /// </summary>
-        /// <param name="diFolder"></param>
-        private void DeleteFilesCheckReadonly(DirectoryInfo diFolder)
+        /// <param name="targetDirectory"></param>
+        private void DeleteFilesCheckReadonly(DirectoryInfo targetDirectory)
         {
-            foreach (var fiFile in diFolder.GetFiles("*", SearchOption.AllDirectories))
+            foreach (var targetFile in targetDirectory.GetFiles("*", SearchOption.AllDirectories))
             {
-                if ((fiFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                    fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly;
+                if ((targetFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    targetFile.Attributes &= ~FileAttributes.ReadOnly;
 
-                fiFile.Delete();
+                targetFile.Delete();
             }
         }
 
@@ -1062,9 +1064,9 @@ namespace Space_Manager
         /// \\proto-7\MD5Results\VOrbiETD04\2015_4\results.QC_Shew_15_02_500ng_CID-1_4Nov15_Samwise_15-07-19</returns>
         private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
         {
-            var hashFileFolder = m_MgrParams.GetParam("MD5ResultsFolderPath");
+            var hashFileDirectory = m_MgrParams.GetParam("MD5ResultsFolderPath");
 
-            var md5ResultsFilePath = Path.Combine(hashFileFolder, udtDatasetInfo.Instrument);
+            var md5ResultsFilePath = Path.Combine(hashFileDirectory, udtDatasetInfo.Instrument);
             md5ResultsFilePath = Path.Combine(md5ResultsFilePath, udtDatasetInfo.YearQuarter);
             md5ResultsFilePath = Path.Combine(md5ResultsFilePath, RESULT_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
 
@@ -1114,8 +1116,8 @@ namespace Space_Manager
             // Search the hash file contents for a file that matches the input file
             var filePathUnix = fileNamePath.Replace(@"\", @"/");
 
-            var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
-            var fileNameTrimmed = TrimPathAfterSubfolder(filePathUnix, subdirectoryToFind);
+            var subdirectoryToFind = "/" + udtDatasetInfo.DatasetDirectoryName + "/";
+            var fileNameTrimmed = TrimPathAfterSubdirectory(filePathUnix, subdirectoryToFind);
 
             if (string.IsNullOrEmpty(fileNameTrimmed))
             {
@@ -1144,9 +1146,9 @@ namespace Space_Manager
                 case PurgePolicyConstants.Auto:
                     return "Auto";
                 case PurgePolicyConstants.PurgeAllExceptQC:
-                    return "Auto all except the QC folder";
+                    return "Auto all except the QC directory";
                 case PurgePolicyConstants.PurgeAll:
-                    return "Purge all files and folders";
+                    return "Purge all files and directories";
                 default:
                     return "??";
 
@@ -1207,9 +1209,9 @@ namespace Space_Manager
                         // Check to see if a stagemd5 file exists for this dataset.
                         // This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
 
-                        //var hashFileFolder = m_MgrParams.GetParam("HashFileLocation");
+                        //var hashFileDirectory = m_MgrParams.GetParam("HashFileLocation");
 
-                        //var stagedFileNamePath = Path.Combine(hashFileFolder, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
+                        //var stagedFileNamePath = Path.Combine(hashFileDirectory, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
                         //if (File.Exists(stagedFileNamePath))
                         //{
                         //    ReportStatus("  Found stagemd5 file: " + stagedFileNamePath);
@@ -1289,9 +1291,9 @@ namespace Space_Manager
                         if (lstPathAndFileID.Count > 1)
                             myEmslFileID = lstPathAndFileID[1];
 
-                        var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                        var subdirectoryToFind = "/" + udtDatasetInfo.DatasetDirectoryName + "/";
 
-                        var fileNameTrimmed = TrimPathAfterSubfolder(fileNamePath, subdirectoryToFind);
+                        var fileNameTrimmed = TrimPathAfterSubdirectory(fileNamePath, subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
@@ -1450,7 +1452,7 @@ namespace Space_Manager
         /// <param name="fileNamePath"></param>
         /// <param name="subdirectoryToFind"></param>
         /// <returns></returns>
-        private string TrimPathAfterSubfolder(string fileNamePath, string subdirectoryToFind)
+        private string TrimPathAfterSubdirectory(string fileNamePath, string subdirectoryToFind)
         {
             var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
 
@@ -1499,7 +1501,7 @@ namespace Space_Manager
 
                 var splitChars = new[] { ' ' };
 
-                var subdirectoryToFind = "/" + udtDatasetInfo.DatasetFolderName + "/";
+                var subdirectoryToFind = "/" + udtDatasetInfo.DatasetDirectoryName + "/";
 
                 currentStep = "Read master MD5 results file";
 
@@ -1525,7 +1527,7 @@ namespace Space_Manager
                         }
 
                         // Look for the unix file path in m_HashFileContents
-                        var fileNameTrimmed = TrimPathAfterSubfolder(lineParts[1], subdirectoryToFind);
+                        var fileNameTrimmed = TrimPathAfterSubdirectory(lineParts[1], subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
                         {
@@ -1606,16 +1608,19 @@ namespace Space_Manager
         /// <summary>
         /// Validate that the share for the dataset actually exists
         /// </summary>
-        /// <param name="datasetFolderPath"></param>
-        /// <param name="maxParentDepth">Maximum number of parent folders to examine when looking for a valid folder; -1 means parse all parent folders until a valid one is found</param>
-        /// <returns>True if the dataset folder or the share that should have the dataset folder exists, other wise false</returns>
-        private bool ValidateDatasetShareExists(string datasetFolderPath, int maxParentDepth = -1)
+        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="maxParentDepth">
+        /// Maximum number of parent directories to examine when looking for a valid directory
+        /// -1 means parse all parent directories until a valid one is found
+        /// </param>
+        /// <returns>True if the dataset directory or the share that should have the dataset directory exists, other wise false</returns>
+        private bool ValidateDatasetShareExists(string datasetDirectoryPath, int maxParentDepth = -1)
         {
             try
             {
-                var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
+                var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
-                if (diDatasetFolder.Exists)
+                if (datasetDirectory.Exists)
                     return true;
 
                 if (maxParentDepth == 0)
@@ -1623,10 +1628,10 @@ namespace Space_Manager
 
                 var parentDepth = 0;
 
-                while (diDatasetFolder.Parent != null)
+                while (datasetDirectory.Parent != null)
                 {
-                    diDatasetFolder = diDatasetFolder.Parent;
-                    if (diDatasetFolder.Exists)
+                    datasetDirectory = datasetDirectory.Parent;
+                    if (datasetDirectory.Exists)
                         return true;
 
                     parentDepth += 1;
@@ -1638,7 +1643,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                LogError("Exception validating that folder " + datasetFolderPath + " exists", ex);
+                LogError("Exception validating that directory " + datasetDirectoryPath + " exists", ex);
                 return false;
             }
         }

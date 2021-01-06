@@ -207,7 +207,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Get the folder path for the status file tracked by FileNamePath
+        /// Get the directory path for the status file tracked by FileNamePath
         /// </summary>
         /// <returns></returns>
         private string GetStatusFileDirectory()

@@ -209,8 +209,8 @@ namespace Space_Manager
         ///  3 = Stage MD5 file required
         ///  4 = Drive Missing
         ///  5 = Purged Instrument Data (and any other auto-purge items)
-        ///  6 = Purged all data except QC folder
-        ///  7 = Dataset folder missing in archive
+        ///  6 = Purged all data except QC directory
+        ///  7 = Dataset directory missing in archive
         ///  8 = Archive offline
         /// </param>
         /// <param name="datasetName">Dataset name</param>
