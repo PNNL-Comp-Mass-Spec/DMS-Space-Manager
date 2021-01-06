@@ -83,8 +83,8 @@ namespace Space_Manager
         /// For local drives, uses DriveInfo
         /// </summary>
         /// <param name="machine">Name of server to check</param>
-        /// <param name="driveData">Data for drive to be checked</param>
         /// <param name="perspective">Client/Server setting for manager.  "Client" means checking a remote drive; "Server" means running on a Proto-x server </param>
+        /// <param name="driveData">Data for drive to be checked</param>
         /// <param name="driveFreeSpaceGB">Actual drive free space in GB</param>
         /// <returns>Enum indicating space status</returns>
         public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
@@ -93,7 +93,7 @@ namespace Space_Manager
 
             driveFreeSpaceGB = -1;
 
-            if (perspective.StartsWith("client", StringComparison.InvariantCultureIgnoreCase))
+            if (perspective.StartsWith("client", StringComparison.OrdinalIgnoreCase))
             {
                 // Checking a remote drive
                 // Get WMI object representing drive
@@ -126,7 +126,7 @@ namespace Space_Manager
                 {
                     var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
 
-                    var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase);
+                    var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase);
                     LogError(msg, postToDB);
 
                     if (driveFreeSpaceGB > 0)

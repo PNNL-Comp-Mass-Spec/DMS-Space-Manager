@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -85,6 +85,7 @@
     <Compile Include="clsStorageOperations.cs" />
     <Compile Include="clsUtilityMethods.cs" />
     <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
     <Compile Include="Program.cs" />

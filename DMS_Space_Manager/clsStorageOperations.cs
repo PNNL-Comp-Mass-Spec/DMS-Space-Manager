@@ -26,12 +26,12 @@ namespace Space_Manager
     {
         #region "Constants"
 
-        const string RESULT_FILE_NAME_PREFIX = "results.";
-        const string WAITING_FOR_HASH_FILE = "(HASH)";
-        const string HASH_NOT_FOUND = "(HASH NOT FOUND)";
-        const string HASH_MISMATCH = "#HashMismatch#";
+        private const string RESULT_FILE_NAME_PREFIX = "results.";
+        private const string WAITING_FOR_HASH_FILE = "(HASH)";
+        private const string HASH_NOT_FOUND = "(HASH NOT FOUND)";
+        private const string HASH_MISMATCH = "#HashMismatch#";
 
-        const string PATH_CONVERSION_ERROR = "Error";
+        private const string PATH_CONVERSION_ERROR = "Error";
 
         #endregion
 
@@ -126,11 +126,11 @@ namespace Space_Manager
 
         #region "Class variables"
 
-        readonly MgrSettings m_MgrParams;
-        readonly bool m_ClientPerspective;
+        private readonly MgrSettings m_MgrParams;
+        private readonly bool m_ClientPerspective;
 
-        string m_MD5ResultsFileDatasetName = string.Empty;
-        string m_MD5ResultsFilePath = string.Empty;
+        private string m_MD5ResultsFileDatasetName = string.Empty;
+        private string m_MD5ResultsFilePath = string.Empty;
 
         /// <summary>
         /// Tracks the full path to a file as the key and the MD5 or Sha-1 hash as the value
@@ -140,9 +140,9 @@ namespace Space_Manager
         /// MD5 hash values are 32 characters long
         /// Sha-1 hash values are 40 characters long
         /// </remarks>
-        Dictionary<string, clsHashInfo> m_HashFileContents;
+        private Dictionary<string, clsHashInfo> m_HashFileContents;
 
-        string m_LastMD5WarnDataset = string.Empty;
+        private string m_LastMD5WarnDataset = string.Empty;
 
         #endregion
 
@@ -295,11 +295,17 @@ namespace Space_Manager
 #endif
             // Purge the dataset directory by deleting contents
             if (PreviewMode)
+            {
                 ReportStatus("Preview: " + purgeMessage);
+            }
             else if (simulateMode)
+            {
                 ReportStatus("SIMULATE: " + purgeMessage);
+            }
             else
+            {
                 ReportStatus(purgeMessage);
+            }
 
             // This list keeps track of the directories that we are processing
             var lstServerDirectories = new SortedSet<string>();
@@ -332,7 +338,7 @@ namespace Space_Manager
                     {
                         // Update the ReadOnly flag, then try again
                         if ((fiFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                            fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly;
+                            fiFile.Attributes &= ~FileAttributes.ReadOnly;
 
                         try
                         {
@@ -349,7 +355,7 @@ namespace Space_Manager
                         }
 
                     }
-                    filesDeleted += 1;
+                    filesDeleted++;
                 }
                 catch (Exception ex)
                 {
@@ -374,8 +380,10 @@ namespace Space_Manager
                 try
                 {
                     if (serverDirectory != udtDatasetInfo.DatasetDirectoryPath)
+                    {
                         // Note that this function will only delete the directory if conditional compilation symbol DoDelete is defined and if the directory is empty
                         DeleteDirectoryIfEmpty(serverDirectory, ref directoriesDeleted);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -415,9 +423,13 @@ namespace Space_Manager
             }
 
             if (PreviewMode)
+            {
                 purgeMessage = "Preview: " + purgeMessage;
+            }
             else if (simulateMode)
+            {
                 purgeMessage = "SIMULATE: " + purgeMessage;
+            }
 
             ReportStatus(purgeMessage);
 
@@ -574,7 +586,7 @@ namespace Space_Manager
             }
 
             // If the dataset directory is empty yet the parent directory exists, then assume it was manually purged; just update the database
-            if (datasetDirectory.GetFileSystemInfos().Length == 0 && datasetDirectory.Parent != null && datasetDirectory.Parent.Exists)
+            if (datasetDirectory.GetFileSystemInfos().Length == 0 && datasetDirectory.Parent?.Exists == true)
             {
                 LogWarning("Directory " + udtDatasetInfo.DatasetDirectoryPath + " is empty; assuming manually purged");
                 return ArchiveCompareResults.Compare_Equal;
@@ -672,10 +684,10 @@ namespace Space_Manager
                 };
 
                 // Attach events
-                reader.DebugEvent += reader_DebugEvent;
-                reader.ErrorEvent += reader_ErrorEvent;
-                reader.StatusEvent += reader_MessageEvent;
-                reader.ProgressUpdate += reader_ProgressEvent;
+                reader.DebugEvent += Reader_DebugEvent;
+                reader.ErrorEvent += Reader_ErrorEvent;
+                reader.StatusEvent += Reader_MessageEvent;
+                reader.ProgressUpdate += Reader_ProgressEvent;
 
                 var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName);
 
@@ -817,7 +829,7 @@ namespace Space_Manager
                 var fileAgeDays = DateTime.UtcNow.Subtract(fiServerFile.LastWriteTimeUtc).TotalDays;
 
                 if (fileAgeDays >= AGED_FILE_DAYS ||
-                    fileAgeDays >= 30 && datasetDirectory.Name.StartsWith("blank", StringComparison.InvariantCultureIgnoreCase))
+                    fileAgeDays >= 30 && datasetDirectory.Name.StartsWith("blank", StringComparison.OrdinalIgnoreCase))
                 {
                     if (fiServerFile.Length == fiArchiveFile.Length && fiServerFile.LastWriteTimeUtc <= fiArchiveFile.LastWriteTimeUtc)
                     {
@@ -833,6 +845,7 @@ namespace Space_Manager
                     return ArchiveCompareResults.Compare_Equal;
                 }
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (comparisonResult == ArchiveCompareResults.Hash_Not_Found_For_File)
                 {
 
@@ -975,13 +988,13 @@ namespace Space_Manager
             if (targetDirectory.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
             {
 #if !(DoDelete)
-                directoriesDeleted += 1;
+                directoriesDeleted++;
                 return true;
 #endif
 
                 // This code will only be reached if conditional compilation symbol DoDelete is defined
                 DeleteDirectoryRecurse(targetDirectory.FullName);
-                directoriesDeleted += 1;
+                directoriesDeleted++;
 
                 return true;
             }
@@ -1013,7 +1026,7 @@ namespace Space_Manager
             {
                 // Check whether the subdirectory is marked as Read-Only
                 if ((subdirectory.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                    subdirectory.Attributes = subdirectory.Attributes & ~FileAttributes.ReadOnly;
+                    subdirectory.Attributes &= ~FileAttributes.ReadOnly;
 
                 DeleteDirectoryRecurse(subdirectory.FullName);
             }
@@ -1074,7 +1087,7 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Gets the hash value for a file from the results.datasetname file in the archive
+        /// Gets the hash value for a file from the results.DatasetName file in the archive
         /// </summary>
         /// <param name="fileNamePath">File on storage server to find a matching archive hatch for</param>
         /// <param name="udtDatasetInfo">Dataset being purged</param>
@@ -1082,7 +1095,7 @@ namespace Space_Manager
         /// <returns>MD5 or Sha-1 Hash value for success; otherwise return (HASH) or an empty string</returns>
         private string GetArchiveFileHash(string fileNamePath, udtDatasetInfoType udtDatasetInfo, out string filePathInDictionary)
         {
-            // Archive should have a results.datasetname file for the purge candidate dataset. If present, the file
+            // Archive should have a results.DatasetName file for the purge candidate dataset. If present, the file
             // will have pre-calculated hash's for the files to be deleted. The manager will look for this result file,
             // and extract the file hash if found. If the hash file is not found, return an empty string,
             // telling the manager to request result file creation
@@ -1114,7 +1127,7 @@ namespace Space_Manager
             }
 
             // Search the hash file contents for a file that matches the input file
-            var filePathUnix = fileNamePath.Replace(@"\", @"/");
+            var filePathUnix = fileNamePath.Replace(@"\", "/");
 
             var subdirectoryToFind = "/" + udtDatasetInfo.DatasetDirectoryName + "/";
             var fileNameTrimmed = TrimPathAfterSubdirectory(filePathUnix, subdirectoryToFind);
@@ -1314,7 +1327,9 @@ namespace Space_Manager
                                 }
                             }
                             else
+                            {
                                 m_HashFileContents.Add(fileNameTrimmed, newHashInfo);
+                            }
                         }
                     }
                     else
@@ -1634,7 +1649,7 @@ namespace Space_Manager
                     if (datasetDirectory.Exists)
                         return true;
 
-                    parentDepth += 1;
+                    parentDepth++;
                     if (maxParentDepth > -1 && parentDepth > maxParentDepth)
                         break;
                 }
@@ -1652,24 +1667,24 @@ namespace Space_Manager
 
         #region "Event Handlers"
 
-        private void reader_DebugEvent(string message)
+        private void Reader_DebugEvent(string message)
         {
             LogDebug(message);
         }
 
-        void reader_ErrorEvent(string message, Exception ex)
+        private void Reader_ErrorEvent(string message, Exception ex)
         {
             LogError("MyEMSLReader: " + message);
         }
 
-        void reader_MessageEvent(string message)
+        private void Reader_MessageEvent(string message)
         {
             ReportStatus(message);
         }
 
-        void reader_ProgressEvent(string progressMessage, float percentComplete)
+        private void Reader_ProgressEvent(string progressMessage, float percentComplete)
         {
-            var msg = "Percent complete: " + percentComplete.ToString("0.0") + "%";
+            _ = "Percent complete: " + percentComplete.ToString("0.0") + "%";
 
             /*
              * Logging of percent progress is disabled since we're only using the Reader to query for file information and not to download files from MyEMSL

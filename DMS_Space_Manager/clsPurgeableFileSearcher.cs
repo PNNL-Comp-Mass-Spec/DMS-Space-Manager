@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Space_Manager
 {
-    class clsPurgeableFileSearcher
+    internal class clsPurgeableFileSearcher
     {
         /// <summary>
         /// Look for files in targetDirectory matching filterSpec; do not recurse
@@ -50,7 +50,7 @@ namespace Space_Manager
 
             foreach (var candidateFile in targetDirectory.GetFiles(filterSpec, eSearchOption))
             {
-                if (requiredFileSuffix.Length == 0 || candidateFile.Name.EndsWith(requiredFileSuffix, StringComparison.InvariantCultureIgnoreCase))
+                if (requiredFileSuffix.Length == 0 || candidateFile.Name.EndsWith(requiredFileSuffix, StringComparison.OrdinalIgnoreCase))
                 {
                     if (minSizeKB <= 0 || (candidateFile.Length / 1024.0) >= minSizeKB)
                     {
@@ -59,7 +59,7 @@ namespace Space_Manager
                             serverFilesToPurge.Add(candidateFile.FullName);
                         }
 
-                        filesMatched += 1;
+                        filesMatched++;
                     }
                 }
             }
@@ -223,13 +223,13 @@ namespace Space_Manager
             // Construct a list of the directories that exist at the dataset directory level
             foreach (var subdirectory in datasetDirectory.GetDirectories())
             {
-                var subDirNameUpper = subdirectory.Name.ToUpper();
-
-                if (subdirectory.Name == "QC")
+                if (subdirectory.Name.Equals("QC", StringComparison.OrdinalIgnoreCase))
+                {
                     // Do not purge the QC directory
                     continue;
+                }
 
-                if (subDirNameUpper.EndsWith(".D"))
+                if (subdirectory.Name.EndsWith(".D", StringComparison.OrdinalIgnoreCase))
                 {
                     // Instrument data directory
                     AddFilesToPurge(subdirectory, "*.yep", 0, true, serverFilesToPurge);				// bruker_ft and bruker_tof_baf
@@ -246,7 +246,7 @@ namespace Space_Manager
                     continue;
                 }
 
-                if (subDirNameUpper.EndsWith(".RAW"))
+                if (subdirectory.Name.EndsWith(".raw", StringComparison.OrdinalIgnoreCase))
                 {
                     AddFilesToPurge(subdirectory, "*.raw", 0, true, serverFilesToPurge);
 
@@ -255,13 +255,14 @@ namespace Space_Manager
                     continue;
                 }
 
-                if (subDirNameUpper.StartsWith("MSXML_GEN"))
+                if (subdirectory.Name.StartsWith("MSXML_GEN", StringComparison.OrdinalIgnoreCase))
                 {
                     AddFilesToPurgeDateThreshold(subdirectory, 90, serverFilesToPurge);
                     continue;
                 }
 
-                if (subDirNameUpper.StartsWith("DTA_GEN") || subDirNameUpper.StartsWith("DTA_REF"))
+                if (subdirectory.Name.StartsWith("DTA_GEN", StringComparison.OrdinalIgnoreCase) ||
+                    subdirectory.Name.StartsWith("DTA_REF", StringComparison.OrdinalIgnoreCase))
                 {
                     // Purge after 1.5 years
                     AddFilesToPurgeDateThreshold(subdirectory, 548, serverFilesToPurge);
@@ -272,7 +273,7 @@ namespace Space_Manager
                 if (match.Success)
                 {
                     // This is an analysis job directory
-                    if (subdirectory.Name.StartsWith("SIC"))
+                    if (subdirectory.Name.StartsWith("SIC", StringComparison.OrdinalIgnoreCase))
                     {
                         // This is a MASIC directory
                         AddFilesToPurge(subdirectory, "*.zip", serverFilesToPurge);

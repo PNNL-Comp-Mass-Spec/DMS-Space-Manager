@@ -17,7 +17,7 @@ namespace Space_Manager
     /// <summary>
     /// Provides database access and tools for one capture task
     /// </summary>
-    class clsSpaceMgrTask : clsDbTask, ITaskParams
+    internal class clsSpaceMgrTask : clsDbTask, ITaskParams
     {
         #region "Constants"
 
@@ -86,10 +86,8 @@ namespace Space_Manager
                 value = string.Empty;
             }
 
-            if (m_JobParams.ContainsKey(keyName))
-                m_JobParams[keyName] = value;
-            else
-                m_JobParams.Add(keyName, value);
+            // Add/update the dictionary
+            m_JobParams[keyName] = value;
         }
 
         /// <summary>
@@ -238,12 +236,7 @@ namespace Space_Manager
             // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
             var resCode = m_DMSProcedureExecutor.ExecuteSP(cmd);
 
-            if (resCode == 0)
-            {
-                return true;
-            }
-
-            return false;
+            return resCode == 0;
         }
 
         #endregion

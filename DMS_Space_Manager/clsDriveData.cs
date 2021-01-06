@@ -42,8 +42,8 @@ namespace Space_Manager
         {
             if (!inpDrive.Contains(":"))
                 return inpDrive + ":";
-            else
-                return inpDrive;
+
+            return inpDrive;
         }
 
         public override string ToString()

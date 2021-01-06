@@ -16,7 +16,7 @@ namespace Space_Manager
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
-    abstract class clsDbTask : clsLoggerBase
+    internal abstract class clsDbTask : clsLoggerBase
     {
 
         #region "Constants"
@@ -262,9 +262,9 @@ namespace Space_Manager
 
         #region "Event handlers"
 
-        void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
+        private void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
-            var logToDb = message.Contains("permission was denied");
+            var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0;
 
             if (logToDb)
                 LogError(message, logToDb: true);

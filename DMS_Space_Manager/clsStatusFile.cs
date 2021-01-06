@@ -71,7 +71,7 @@ namespace Space_Manager
         public float Progress { get; set; }
 
         /// <summary>
-        // Current task
+        /// Current task
         /// </summary>
         public string CurrentOperation { get; set; }
 
@@ -214,10 +214,7 @@ namespace Space_Manager
         {
             var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
 
-            if (statusFileDirectory == null)
-                return ".";
-
-            return statusFileDirectory;
+            return statusFileDirectory ?? ".";
         }
 
         /// <summary>
@@ -428,7 +425,7 @@ namespace Space_Manager
             catch (Exception ex)
             {
                 // Increment the error counter
-                m_WritingErrorCountSaved += 1;
+                m_WritingErrorCountSaved++;
 
                 if (m_WritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD)
                 {

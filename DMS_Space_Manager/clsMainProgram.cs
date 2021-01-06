@@ -20,7 +20,7 @@ namespace Space_Manager
     /// <summary>
     /// Main program execution loop for application
     /// </summary>
-    class clsMainProgram : clsLoggerBase
+    internal class clsMainProgram : clsLoggerBase
     {
 
         #region "Enums"
@@ -272,27 +272,29 @@ namespace Space_Manager
                 Enabled = false,
                 Interval = 60 * 1000
             };
-            m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
+            m_StatusTimer.Elapsed += StatusTimer_Elapsed;
 
             // Get the most recent job history
-            var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-            if (File.Exists(historyFile))
+            var historyFilePath = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+
+            if (File.Exists(historyFilePath))
             {
                 try
                 {
                     // Create an instance of StreamReader to read from a file.
-                    // The using statement also closes the StreamReader.
-                    using (var sr = new StreamReader(historyFile))
+                    using (var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        String line;
                         // Read and display lines from the file until the end of
                         // the file is reached.
-                        while ((line = sr.ReadLine()) != null)
+                        while (!reader.EndOfStream)
                         {
-                            if (line.Contains("RecentJob: "))
+                            var dataLine = reader.ReadLine();
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                                continue;
+
+                            if (dataLine.Contains("RecentJob: "))
                             {
-                                var tmpStr = line.Replace("RecentJob: ", "");
-                                m_StatusFile.MostRecentJobInfo = tmpStr;
+                                m_StatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
                                 break;
                             }
                         }
@@ -631,7 +633,7 @@ namespace Space_Manager
 
         #region "EventNotifier events"
 
-        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private void RegisterEvents(IEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {
@@ -700,7 +702,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             m_StatusFile.WriteStatusFile();
         }

@@ -14,7 +14,7 @@ namespace Space_Manager
     /// Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
     ///	status file class to the log tools class
     /// </summary>
-    static class clsStatusData
+    internal static class clsStatusData
     {
 
         private static string m_MostRecentLogMessage;

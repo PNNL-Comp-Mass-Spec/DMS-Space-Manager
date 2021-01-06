@@ -19,7 +19,7 @@ namespace Space_Manager
     /// <summary>
     /// Handles sending and receiving of control and status messages
     /// </summary>
-    class clsMessageHandler : clsLoggerBase, IDisposable
+    internal class clsMessageHandler : clsLoggerBase, IDisposable
     {
 
         #region "Class variables"

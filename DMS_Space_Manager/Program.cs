@@ -14,9 +14,9 @@ namespace Space_Manager
     /// <summary>
     /// Application startup class
     /// </summary>
-    static class Program
+    internal static class Program
     {
-        private const string PROGRAM_DATE = "February 15, 2020";
+        private const string PROGRAM_DATE = "January 6, 2021";
 
         private static clsMainProgram mMainProgram;
 
@@ -24,11 +24,11 @@ namespace Space_Manager
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             bool restart;
 
-            var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? "";
+            var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
             var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName,
                 PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
             {
