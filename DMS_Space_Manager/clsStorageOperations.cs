@@ -756,7 +756,7 @@ namespace Space_Manager
             }
 
             fileInMyEMSL = true;
-            var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFilePath);
+            var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFile);
 
             // Compute the SHA-1 hash value of the file
             if (string.Equals(serverFileHash, archiveFileHash))
