@@ -20,9 +20,6 @@ namespace Space_Manager
     /// </summary>
     internal class clsMessageHandler : clsLoggerBase, IDisposable
     {
-        private string m_BrokerUri;
-
-        private string m_StatusTopicName;	// Used for status output
         private MgrSettings m_MgrSettings;
 
         private IConnection m_Connection;
@@ -37,18 +34,9 @@ namespace Space_Manager
             set => m_MgrSettings = value;
         }
 
-        public string BrokerUri
-        {
-            get => m_BrokerUri;
-            set => m_BrokerUri = value;
-        }
+        public string BrokerUri { get; set; }
 
-        public string StatusTopicName
-        {
-            get => m_StatusTopicName;
-            set => m_StatusTopicName = value;
-        }
-
+        public string StatusTopicName { get; set; }
 
         /// <summary>
         /// Create set of NMS connection objects necessary to talk to the ActiveMQ broker
@@ -74,7 +62,7 @@ namespace Space_Manager
             {
                 try
                 {
-                    IConnectionFactory connectionFactory = new ConnectionFactory(m_BrokerUri);
+                    IConnectionFactory connectionFactory = new ConnectionFactory(BrokerUri);
                     m_Connection = connectionFactory.CreateConnection();
                     m_Connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
                     m_Connection.Start();
@@ -97,7 +85,7 @@ namespace Space_Manager
                     System.Threading.Thread.Sleep(3000);
                 }
 
-                retriesRemaining -= 1;
+                retriesRemaining--;
             }
 
             // If we get here, we never could connect to the message broker
@@ -124,7 +112,7 @@ namespace Space_Manager
                 if (!m_HasConnection)
                     return false;
 
-                if (string.IsNullOrWhiteSpace(m_StatusTopicName))
+                if (string.IsNullOrWhiteSpace(StatusTopicName))
                 {
                     LogWarning("Status topic queue name is undefined");
                 }
@@ -132,7 +120,7 @@ namespace Space_Manager
                 {
                     // topic for the capture tool manager to send status information over
                     m_StatusSession = m_Connection.CreateSession();
-                    m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+                    m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(StatusTopicName));
                     LogDebug("Status sender established");
                 }
 
