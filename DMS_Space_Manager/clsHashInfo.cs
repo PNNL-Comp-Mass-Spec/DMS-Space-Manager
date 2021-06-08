@@ -24,11 +24,11 @@ namespace Space_Manager
             set => mMyEMSLFileID = value ?? string.Empty;
         }
 
-        // Constructor
-        public clsHashInfo() :
-            this(string.Empty, string.Empty)
-        { }
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="hashCode"></param>
+        /// <param name="myEmslFileID"></param>
         public clsHashInfo(string hashCode, string myEmslFileID)
         {
             Clear();
