@@ -16,9 +16,9 @@ namespace Space_Manager
     /// </summary>
     internal static class clsStatusData
     {
-
         private static string m_MostRecentLogMessage;
-        private static readonly Queue<string> m_ErrorQueue = new Queue<string>();
+
+        private static readonly Queue<string> m_ErrorQueue = new();
 
         public static string MostRecentLogMessage
         {
