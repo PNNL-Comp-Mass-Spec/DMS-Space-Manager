@@ -1111,38 +1111,28 @@ namespace Space_Manager
             return string.Empty;
         }
 
-        private string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
+        private string GetPurgePolicyDescription(PurgePolicyConstants purgePolicy)
         {
-            switch (ePurgePolicy)
+            return purgePolicy switch
             {
-                case PurgePolicyConstants.Auto:
-                    return "Auto";
-                case PurgePolicyConstants.PurgeAllExceptQC:
-                    return "Auto all except the QC directory";
-                case PurgePolicyConstants.PurgeAll:
-                    return "Purge all files and directories";
-                default:
-                    return "??";
-
-            }
+                PurgePolicyConstants.Auto => "Auto",
+                PurgePolicyConstants.PurgeAllExceptQC => "Auto all except the QC directory",
+                PurgePolicyConstants.PurgeAll => "Purge all files and directories",
+                _ => "??"
+            };
         }
 
         private PurgePolicyConstants GetPurgePolicyEnum(string purgePolicy)
         {
             if (int.TryParse(purgePolicy, out var purgePolicyValue))
             {
-                switch (purgePolicyValue)
+                return purgePolicyValue switch
                 {
-                    case 0:
-                        return PurgePolicyConstants.Auto;
-                    case 1:
-                        return PurgePolicyConstants.PurgeAllExceptQC;
-                    case 2:
-                        return PurgePolicyConstants.PurgeAll;
-                    default:
-                        return PurgePolicyConstants.Auto;
-
-                }
+                    0 => PurgePolicyConstants.Auto,
+                    1 => PurgePolicyConstants.PurgeAllExceptQC,
+                    2 => PurgePolicyConstants.PurgeAll,
+                    _ => PurgePolicyConstants.Auto
+                };
             }
 
             return PurgePolicyConstants.Auto;
