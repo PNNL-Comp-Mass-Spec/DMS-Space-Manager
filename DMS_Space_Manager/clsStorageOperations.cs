@@ -1465,12 +1465,11 @@ namespace Space_Manager
                 currentStep = "Read master MD5 results file";
 
                 // Open the master MD5 results file and read each line
-                using (var srMD5ResultsFileMaster = new StreamReader(new FileStream(md5ResultsFileMasterPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var hashFileReader = new StreamReader(new FileStream(md5ResultsFileMasterPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
-                    while (!srMD5ResultsFileMaster.EndOfStream)
+                    while (!hashFileReader.EndOfStream)
                     {
-                        var inputLine = srMD5ResultsFileMaster.ReadLine();
+                        var inputLine = hashFileReader.ReadLine();
                         if (string.IsNullOrWhiteSpace(inputLine))
                             continue;
 
@@ -1530,14 +1529,14 @@ namespace Space_Manager
                     var md5ResultsFilePathTemp = md5ResultsFileMasterPath + ".updated";
 
                     currentStep = "Create " + md5ResultsFilePathTemp;
-                    var swUpdatedMD5Results = new StreamWriter(new FileStream(md5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                    foreach (var outputLine in updatedMD5Info)
+                    using (var hashFileWriter = new StreamWriter(new FileStream(md5ResultsFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        swUpdatedMD5Results.WriteLine(outputLine);
+                        foreach (var outputLine in updatedMD5Info)
+                        {
+                            hashFileWriter.WriteLine(outputLine);
+                        }
                     }
 
-                    swUpdatedMD5Results.Close();
                     System.Threading.Thread.Sleep(100);
 
                     currentStep = "Overwrite master MD5 results file with " + md5ResultsFilePathTemp;
@@ -1629,7 +1628,7 @@ namespace Space_Manager
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
-                    LogDebug(msg);
+                    LogDebug(message);
                     mPercentComplete = e.PercentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }
