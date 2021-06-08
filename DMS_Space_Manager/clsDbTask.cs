@@ -20,14 +20,8 @@ namespace Space_Manager
     {
         // Ignore Spelling: dmsarch
 
-        #region "Constants"
-
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
-
-        #endregion
-
-        #region "Class variables"
 
         protected readonly MgrSettings m_MgrParams;
 
@@ -47,17 +41,9 @@ namespace Space_Manager
         /// </summary>
         protected readonly PRISMDatabaseUtils.IDBTools m_DMSProcedureExecutor;
 
-        #endregion
-
-        #region "Properties"
-
         public Dictionary<string, string> TaskDictionary => m_JobParams;
 
         public bool TraceMode { get; }
-
-        #endregion
-
-        #region "Constructor"
 
         /// <summary>
         /// Class constructor
@@ -81,9 +67,6 @@ namespace Space_Manager
             m_DebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
 
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Requests a task
         /// </summary>
@@ -259,10 +242,6 @@ namespace Space_Manager
             return (short)InpObj;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -272,7 +251,5 @@ namespace Space_Manager
             else
                 LogError(message, ex);
         }
-
-        #endregion
     }
 }

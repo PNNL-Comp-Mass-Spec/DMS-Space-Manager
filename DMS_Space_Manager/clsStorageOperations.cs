@@ -26,7 +26,6 @@ namespace Space_Manager
     {
         // Ignore Spelling: dmsarch, frodo, purgeable, myemsl
 
-        #region "Constants"
 
         private const string RESULT_FILE_NAME_PREFIX = "results.";
         private const string WAITING_FOR_HASH_FILE = "(HASH)";
@@ -34,10 +33,6 @@ namespace Space_Manager
         private const string HASH_MISMATCH = "#HashMismatch#";
 
         private const string PATH_CONVERSION_ERROR = "Error";
-
-        #endregion
-
-        #region "Enums"
 
         public enum ArchiveCompareResults
         {
@@ -104,10 +99,6 @@ namespace Space_Manager
             PurgeAll = 2
         }
 
-        #endregion
-
-        #region "Structures"
-
         public struct udtDatasetInfoType
         {
             public string DatasetName;
@@ -123,10 +114,6 @@ namespace Space_Manager
             public PurgePolicyConstants PurgePolicy;
             public string RawDataType;
         }
-
-        #endregion
-
-        #region "Class variables"
 
         private readonly MgrSettings m_MgrParams;
         private readonly bool m_ClientPerspective;
@@ -146,19 +133,11 @@ namespace Space_Manager
 
         private string m_LastMD5WarnDataset = string.Empty;
 
-        #endregion
-
-        #region "Properties"
-
         private readonly PRISMDatabaseUtils.IDBTools DMSProcedureExecutor;
 
         public bool PreviewMode { get; set; }
 
         public bool TraceMode { get; set; }
-
-        #endregion
-
-        #region "Constructors"
 
         public clsStorageOperations(MgrSettings mgrParams)
         {
@@ -171,10 +150,6 @@ namespace Space_Manager
 
             DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Deletes the contents of a dataset directory
@@ -1665,10 +1640,6 @@ namespace Space_Manager
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void Reader_DebugEvent(string message)
         {
             LogDebug(message);
@@ -1702,8 +1673,5 @@ namespace Space_Manager
             }
             */
         }
-
-        #endregion
-
     }
 }

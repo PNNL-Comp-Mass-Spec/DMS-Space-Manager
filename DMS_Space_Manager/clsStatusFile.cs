@@ -21,15 +21,10 @@ namespace Space_Manager
     {
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
-        #region "Class variables"
 
         private DateTime m_LastFileWriteTime;
 
         private int m_WritingErrorCountSaved;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Status file path
@@ -115,10 +110,6 @@ namespace Space_Manager
         /// When true, the status XML is being sent to the manager status message queue
         /// </summary>
         public bool LogToMsgQueue { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -541,13 +532,6 @@ namespace Space_Manager
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
         }
 
-        #endregion
-
-        #region "Events"
-
         public event StatusMonitorUpdateReceived MonitorUpdateRequired;
-
-        #endregion
-
     }
 }

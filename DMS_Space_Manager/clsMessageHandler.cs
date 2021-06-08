@@ -21,9 +21,6 @@ namespace Space_Manager
     /// </summary>
     internal class clsMessageHandler : clsLoggerBase, IDisposable
     {
-
-        #region "Class variables"
-
         private string m_BrokerUri;
 
         private string m_StatusTopicName;	// Used for status output
@@ -35,10 +32,6 @@ namespace Space_Manager
 
         private bool m_IsDisposed;
         private bool m_HasConnection;
-
-        #endregion
-
-        #region "Properties"
 
         public MgrSettings MgrSettings
         {
@@ -57,9 +50,6 @@ namespace Space_Manager
             set => m_StatusTopicName = value;
         }
 
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Create set of NMS connection objects necessary to talk to the ActiveMQ broker
@@ -184,10 +174,6 @@ namespace Space_Manager
             }
         }
 
-        #endregion
-
-        #region "Cleanup"
-
         /// <summary>
         /// Cleans up a connection after error or when closing
         /// </summary>
@@ -212,7 +198,5 @@ namespace Space_Manager
             DestroyConnection();
             m_IsDisposed = true;
         }
-
-        #endregion
     }
 }

@@ -16,13 +16,8 @@ namespace Space_Manager
     public interface IStatusFile
     {
 
-        #region "Events"
 
         event StatusMonitorUpdateReceived MonitorUpdateRequired;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Status file path
@@ -110,10 +105,6 @@ namespace Space_Manager
         /// </summary>
         bool LogToMsgQueue { get; }
 
-        #endregion
-
-        #region "Methods"
-
         void ClearCachedInfo();
 
         void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus);
@@ -144,7 +135,5 @@ namespace Space_Manager
         /// </summary>
         /// <remarks></remarks>
         void WriteStatusFile();
-
-        #endregion
     }
 }

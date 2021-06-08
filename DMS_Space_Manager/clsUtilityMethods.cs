@@ -20,9 +20,6 @@ namespace Space_Manager
     /// </summary>
     public static class clsUtilityMethods
     {
-
-        #region "Methods"
-
         /// <summary>
         /// Convert bytes to Gigabytes
         /// </summary>
@@ -264,7 +261,5 @@ namespace Space_Manager
 
             LogTools.LogMessage(statusMessage);
         }
-
-        #endregion
     }
 }

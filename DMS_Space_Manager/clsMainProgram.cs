@@ -22,19 +22,12 @@ namespace Space_Manager
     /// </summary>
     internal class clsMainProgram : clsLoggerBase
     {
-
-        #region "Enums"
-
         private enum DriveOpStatus
         {
             KeepRunning,
             Exit_Restart_OK,
             Exit_No_Restart
         }
-
-        #endregion
-
-        #region "Constants"
 
         private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\SpaceMan";
 
@@ -45,10 +38,6 @@ namespace Space_Manager
         private const bool RESTART_OK = true;
 
         private const bool RESTART_NOT_OK = false;
-
-        #endregion
-
-        #region "Class variables"
 
         private MgrSettings m_MgrSettings;
         private clsSpaceMgrTask m_Task;
@@ -69,17 +58,9 @@ namespace Space_Manager
         private System.Timers.Timer m_StatusTimer;
         private clsStorageOperations m_StorageOps;
 
-        #endregion
-
-        #region "Properties"
-
         public bool PreviewMode { get; }
 
         public bool TraceMode { get; }
-
-        #endregion
-
-        #region "Constructors"
 
         /// <summary>
         /// Constructor
@@ -94,12 +75,7 @@ namespace Space_Manager
 
             if (TraceMode)
                 Console.WriteLine("Trace mode enabled");
-
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Initializes the manager
@@ -166,7 +142,6 @@ namespace Space_Manager
                 }
 
                 ReportStatus("Loaded manager settings from Manager Control Database");
-
             }
             catch
             {
@@ -629,10 +604,6 @@ namespace Space_Manager
             return true;
         }
 
-        #endregion
-
-        #region "EventNotifier events"
-
         private void RegisterEvents(IEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
@@ -681,9 +652,6 @@ namespace Space_Manager
             m_StatusFile.UpdateAndWrite(percentComplete);
         }
 
-        #endregion
-
-        #region "Event handlers"
         /// <summary>
         /// Config file has been updated
         /// </summary>
@@ -706,7 +674,5 @@ namespace Space_Manager
         {
             m_StatusFile.WriteStatusFile();
         }
-
-        #endregion
     }
 }

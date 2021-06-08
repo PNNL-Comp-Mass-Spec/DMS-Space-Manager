@@ -19,12 +19,9 @@ namespace Space_Manager
     /// </summary>
     internal class clsSpaceMgrTask : clsDbTask, ITaskParams
     {
-        #region "Constants"
 
         private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
         private const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
-
-        #endregion
 
         /// <summary>
         /// Constructor
@@ -36,8 +33,6 @@ namespace Space_Manager
         {
             m_JobParams.Clear();
         }
-
-        #region "Methods"
 
         /// <summary>
         /// Gets a stored parameter
@@ -238,7 +233,5 @@ namespace Space_Manager
 
             return resCode == 0;
         }
-
-        #endregion
     }
 }

@@ -8,10 +8,6 @@
 
 namespace Space_Manager
 {
-    // Namespace level values for application
-
-    #region "Enums"
-
     /// <summary>
     /// Manager status constants
     /// </summary>
@@ -88,11 +84,5 @@ namespace Space_Manager
         Below_Threshold = 0
     }
 
-    #endregion
-
-    #region "Delegates"
-
     public delegate void StatusMonitorUpdateReceived(string msg);
-
-    #endregion
 }
