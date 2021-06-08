@@ -15,7 +15,7 @@ namespace Space_Manager
     /// </summary>
     public interface IStatusFile
     {
-
+        // Ignore Spelling: tcp
 
         event StatusMonitorUpdateReceived MonitorUpdateRequired;
 

@@ -19,8 +19,7 @@ namespace Space_Manager
     /// </summary>
     public class clsStatusFile : EventNotifier, IStatusFile
     {
-        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
-
+        // Ignore Spelling: tcp, yyyy-MM-dd, hh:mm:ss tt
 
         private DateTime m_LastFileWriteTime;
 

@@ -19,6 +19,8 @@ namespace Space_Manager
     /// </summary>
     internal class clsSpaceMgrTask : clsDbTask, ITaskParams
     {
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: machname
 
         private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
         private const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
