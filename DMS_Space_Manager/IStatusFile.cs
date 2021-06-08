@@ -8,6 +8,9 @@
 
 using System;
 
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedMemberInSuper.Global
+
 namespace Space_Manager
 {
     /// <summary>
