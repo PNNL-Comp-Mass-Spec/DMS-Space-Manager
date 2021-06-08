@@ -249,7 +249,6 @@ namespace Space_Manager
                 // Send the XML text to a message queue
                 LogStatusToMessageQueue(xmlText);
             }
-
         }
 
         private string GenerateStatusXML(
@@ -370,7 +369,6 @@ namespace Space_Manager
                     // Log a warning that the file copy failed
                     OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(tempStatusFilePath) +
                                    " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
-
                 }
 
                 try
@@ -383,7 +381,6 @@ namespace Space_Manager
                     // Log a warning that the file delete failed
                     OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(tempStatusFilePath) + "): " + ex.Message);
                 }
-
             }
             else
             {
@@ -411,7 +408,6 @@ namespace Space_Manager
                 m_WritingErrorCountSaved = 0;
 
                 success = true;
-
             }
             catch (Exception ex)
             {
@@ -432,7 +428,6 @@ namespace Space_Manager
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -444,7 +439,6 @@ namespace Space_Manager
         {
             Progress = percentComplete;
             WriteStatusFile();
-
         }
 
         /// <summary>

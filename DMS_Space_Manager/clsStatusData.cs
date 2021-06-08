@@ -26,7 +26,7 @@ namespace Space_Manager
             set
             {
                 //Filter out routine startup and shutdown messages
-                if (value.Contains("=== Started") || (value.Contains("===== Closing")))
+                if (value.Contains("=== Started") || value.Contains("===== Closing"))
                 {
                     //Do nothing
                 }
@@ -50,6 +50,5 @@ namespace Space_Manager
                 m_ErrorQueue.Dequeue();
             }
         }
-
     }
 }

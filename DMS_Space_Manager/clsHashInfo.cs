@@ -61,6 +61,5 @@ namespace Space_Manager
 
             return description;
         }
-
     }
 }

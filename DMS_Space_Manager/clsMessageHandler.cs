@@ -15,7 +15,6 @@ using PRISM.AppSettings;
 
 namespace Space_Manager
 {
-
     /// <summary>
     /// Handles sending and receiving of control and status messages
     /// </summary>

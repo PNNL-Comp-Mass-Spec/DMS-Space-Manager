@@ -238,7 +238,6 @@ namespace Space_Manager
 
             m_StatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
 
-
             m_StatusFile.WriteStatusFile();
 
             // Set up the status reporting time
@@ -314,12 +313,10 @@ namespace Space_Manager
             {
                 ReportStatus("Connection to the message queue was slow, taking " + (int)elapsedTime + " seconds");
             }
-
         }
 
         private void InitializeMessageQueueWork()
         {
-
             if (!m_MsgHandler.Init())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
@@ -329,7 +326,6 @@ namespace Space_Manager
             {
                 LogDebug("Message handler initialized");
             }
-
         }
 
         /// <summary>
@@ -366,7 +362,6 @@ namespace Space_Manager
 
                 foreach (var testDrive in driveList)
                 {
-
                     // Check drive operation state
                     if (opStatus != DriveOpStatus.KeepRunning)
                     {
@@ -384,7 +379,6 @@ namespace Space_Manager
                     }
 
                     opStatus = ProcessDrive(maxReps, testDrive);
-
                 }	// End drive loop
 
                 // Set status and exit method
@@ -398,7 +392,6 @@ namespace Space_Manager
                     // Program restart required
                     LogTools.LogMessage("Restarting manager");
                 }
-
             }
             catch (Exception ex)
             {
@@ -406,7 +399,6 @@ namespace Space_Manager
             }
 
             return methodReturnCode;
-
         }
 
         private DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
@@ -419,7 +411,6 @@ namespace Space_Manager
 
             try
             {
-
                 // Start a purge loop for the current drive
                 var bDriveInfoLogged = false;
                 while (true)
@@ -554,7 +545,7 @@ namespace Space_Manager
                     }
 
                     var simulateMode = false;
-#if !(DoDelete)
+#if !DoDelete
                     simulateMode = true;
 #endif
                     // Close the purge task
@@ -583,7 +574,6 @@ namespace Space_Manager
             }
 
             return opStatus;
-
         }
 
         /// <summary>

@@ -63,6 +63,5 @@ namespace Space_Manager
         {
             clsUtilityMethods.ReportStatus(statusMessage, isDebug);
         }
-
     }
 }

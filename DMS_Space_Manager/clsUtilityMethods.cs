@@ -166,7 +166,6 @@ namespace Space_Manager
                     if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
                         driveFreeSpaceGB = -1;
                 }
-
             }
 
             if (driveFreeSpaceGB < 0)
@@ -187,7 +186,6 @@ namespace Space_Manager
                 ReportStatus("Drive " + driveData.DriveLetter +
                     " Space Threshold: " + driveData.MinDriveSpace +
                     ", Avail space: " + driveFreeSpaceGB.ToString("####0.0"), true);
-
             }
 
             return testResult;

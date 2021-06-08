@@ -79,7 +79,6 @@ namespace Space_Manager
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
         private bool AddFilesToPurgeDateThreshold(DirectoryInfo targetDirectory, int ageThresholdDays, ISet<string> serverFilesToPurge)
         {
-
             var lstFiles = FindFilesAndNewestDate(targetDirectory, out var dtMostRecentUpdate);
 
             if (ageThresholdDays < 1)
@@ -91,13 +90,11 @@ namespace Space_Manager
                 {
                     if (!serverFilesToPurge.Contains(file))
                         serverFilesToPurge.Add(file);
-
                 }
                 return true;
             }
 
             return false;
-
         }
 
         /// <summary>
@@ -112,7 +109,6 @@ namespace Space_Manager
             clsStorageOperations.udtDatasetInfoType udtDatasetInfo,
             out List<int> lstJobsToPurge)
         {
-
             var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
             if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAll)
@@ -141,7 +137,6 @@ namespace Space_Manager
 
             // Auto-purge files for this dataset
             return FindDatasetFilesToAutoPurge(udtDatasetInfo, out lstJobsToPurge);
-
         }
 
         private List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime dtMostRecentUpdate)
@@ -161,7 +156,6 @@ namespace Space_Manager
             }
 
             return lstFiles;
-
         }
 
         /// <summary>
@@ -173,7 +167,6 @@ namespace Space_Manager
         /// <returns>List of files that are safe to delete</returns>
         public SortedSet<string> FindDatasetFilesToAutoPurge(clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
         {
-
             var serverFilesToPurge = new SortedSet<string>();
             lstJobsToPurge = new List<int>();
 
@@ -294,7 +287,6 @@ namespace Space_Manager
                             // Files are not yet 3 years old
                             // If all of the files are 1 year old, then purge files over 50 MB
 
-
                             var lstFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
 
                             if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
@@ -315,7 +307,6 @@ namespace Space_Manager
                                     lstJobsToPurge.Add(jobNum);
                             }
                         }
-
                     }
 
                     continue;
@@ -323,12 +314,9 @@ namespace Space_Manager
 
                 // Use a threshold of 9 months for all other subdirectories
                 AddFilesToPurgeDateThreshold(subdirectory, 270, serverFilesToPurge);
-
             }
 
             return serverFilesToPurge;
-
         }
-
     }
 }

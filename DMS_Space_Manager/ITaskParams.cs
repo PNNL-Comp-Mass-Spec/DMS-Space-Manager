@@ -15,7 +15,6 @@ namespace Space_Manager
     /// </summary>
     public interface ITaskParams
     {
-
         Dictionary<string, string> TaskDictionary { get; }
 
         string GetParam(string name);

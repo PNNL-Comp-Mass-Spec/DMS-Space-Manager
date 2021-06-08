@@ -142,7 +142,7 @@ namespace Space_Manager
         {
             m_MgrParams = mgrParams;
 
-            m_ClientPerspective = (m_MgrParams.GetParam("perspective") == "client");
+            m_ClientPerspective = m_MgrParams.GetParam("perspective") == "client";
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
@@ -235,7 +235,7 @@ namespace Space_Manager
                     return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            if ((lstServerFilesToPurge.Count == 0))
+            if (lstServerFilesToPurge.Count == 0)
             {
                 // Nothing was found to purge.
                 var msg = "No purgeable data found for dataset " + udtDatasetInfo.DatasetName +
@@ -259,14 +259,13 @@ namespace Space_Manager
                         LogError(msg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
-
             }
 
             var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) +
                 " for dataset " + udtDatasetInfo.DatasetDirectoryPath;
 
             var simulateMode = false;
-#if !(DoDelete)
+#if !DoDelete
                 simulateMode = true;
 #endif
             // Purge the dataset directory by deleting contents
@@ -329,7 +328,6 @@ namespace Space_Manager
                             if (!PreviewMode && !simulateMode)
                                 fiFile.Delete();
                         }
-
                     }
                     filesDeleted++;
                 }
@@ -424,7 +422,6 @@ namespace Space_Manager
                     LogError("Unrecognized purge policy");
                     return EnumCloseOutType.CLOSEOUT_FAILED;
             }
-
         }
 
         /// <summary>
@@ -625,7 +622,6 @@ namespace Space_Manager
                 {
                     return comparisonResult;
                 }
-
             } // for each file in lstServerFilesToPurge
 
             switch (eCompResultOverall)
@@ -637,16 +633,13 @@ namespace Space_Manager
                 case ArchiveCompareResults.Compare_Not_Equal_or_Missing:
                     LogWarning(mismatchMessage);
                     break;
-
             }
 
             return eCompResultOverall;
-
         }
 
         private List<MyEMSLReader.ArchivedFileInfo> FindFilesInMyEMSL(string datasetName, out bool queryException)
         {
-
             queryException = false;
 
             try
@@ -668,7 +661,6 @@ namespace Space_Manager
                 var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName);
 
                 return lstFilesInMyEMSL;
-
             }
             catch (Exception ex)
             {
@@ -790,7 +782,6 @@ namespace Space_Manager
 
             if (comparisonResult == ArchiveCompareResults.Hash_Not_Found_For_File)
             {
-
                 // If this file is over AGED_FILE_DAYS days old and is in a subdirectory then only compare file dates
                 // If the file in the archive is newer than this file, then assume the archive copy is valid
                 // Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
@@ -812,7 +803,6 @@ namespace Space_Manager
                         // Copy in archive is the same size and same date (or newer)
                         assumeEqual = true;
                     }
-
                 }
 
                 if (assumeEqual)
@@ -824,7 +814,6 @@ namespace Space_Manager
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (comparisonResult == ArchiveCompareResults.Hash_Not_Found_For_File)
                 {
-
                     return comparisonResult;
                 }
 
@@ -866,7 +855,6 @@ namespace Space_Manager
 
                 LogError("Error in ConvertServerPathToArchivePath: File path '" + inpFileName + "' does not contain dataset path '" + datasetPathSvr + "'");
                 return PATH_CONVERSION_ERROR;
-
             }
             catch (Exception ex)
             {
@@ -884,7 +872,6 @@ namespace Space_Manager
         /// <returns>Enum containing compare results</returns>
         private ArchiveCompareResults CompareTwoFiles(string serverFile, string archiveFile, udtDatasetInfoType udtDatasetInfo)
         {
-
             LogDebug("Comparing file " + serverFile + " to file " + archiveFile);
 
             // Get hash for archive file
@@ -942,7 +929,6 @@ namespace Space_Manager
 
             //Files not equal
             return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
-
         }
 
         /// <summary>
@@ -953,7 +939,6 @@ namespace Space_Manager
         /// <returns>True if the directory was empty and was deleted; otherwise false</returns>
         private bool DeleteDirectoryIfEmpty(string directoryPath, ref int directoriesDeleted)
         {
-
             var targetDirectory = new DirectoryInfo(directoryPath);
 
             if (!targetDirectory.Exists)
@@ -963,7 +948,7 @@ namespace Space_Manager
 
             if (targetDirectory.GetFiles("*.*", SearchOption.AllDirectories).Length == 0)
             {
-#if !(DoDelete)
+#if !DoDelete
                 directoriesDeleted++;
                 return true;
 #endif
@@ -986,7 +971,7 @@ namespace Space_Manager
         /// <returns></returns>
         private void DeleteDirectoryRecurse(string directoryPath)
         {
-#if !(DoDelete)
+#if !DoDelete
             // Debug mode: don't actually delete anything.
             return;
 #endif
@@ -1024,7 +1009,6 @@ namespace Space_Manager
                 else
                     targetDirectory.Delete(true);
             }
-
         }
 
         /// <summary>
@@ -1125,7 +1109,6 @@ namespace Space_Manager
             }
 
             return string.Empty;
-
         }
 
         private string GetPurgePolicyDescription(PurgePolicyConstants ePurgePolicy)
@@ -1173,7 +1156,6 @@ namespace Space_Manager
         /// <returns>True if success, false if an error</returns>
         private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool waitingForMD5File)
         {
-
             // Find out if there's an MD5 results file for this dataset
             var md5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
@@ -1236,7 +1218,6 @@ namespace Space_Manager
 
                 foreach (var inputLine in contents)
                 {
-
                     // Extract the hash values value from the data line
 
                     // ReSharper disable CommentTypo
@@ -1265,7 +1246,6 @@ namespace Space_Manager
                     var lstHashAndPathInfo = inputLine.Split(new[] { ' ' }, 2).ToList();
                     if (lstHashAndPathInfo.Count > 1)
                     {
-
                         // For the above example, we want to store:
                         // "QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15.raw" and "0dcf9d677ac76519ae54c11cc5e10723" or
                         // "SIC201309041722_Auto976603/Default_2008-08-22.xml"    and "796d99bcc6f1824dfe1c36cc9a61636dd1b07625"
@@ -1298,7 +1278,6 @@ namespace Space_Manager
                                 // Preferentially use the newer value, unless the older value is a MyEMSL SHA-1 hash but the newer value is an MD5 hash
                                 if (!(hashCode.Length < 40 && m_HashFileContents[fileNameTrimmed].HashCode.Length >= 40))
                                 {
-
                                     m_HashFileContents[fileNameTrimmed] = newHashInfo;
                                 }
                             }
@@ -1314,7 +1293,6 @@ namespace Space_Manager
                         LogWarning("Unable to split line " + inputLine + " in results file " + md5ResultsFilePath);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -1552,9 +1530,7 @@ namespace Space_Manager
                             // Retain this line
                             updatedMD5Info.Add(inputLine);
                         }
-
                     } // while not at EndOfStream
-
                 }
 
                 if (writeUpdatedMD5Info)
@@ -1580,13 +1556,11 @@ namespace Space_Manager
                     File.Delete(md5ResultsFilePathTemp);
 
                     ReportStatus("  Updated MD5 results file " + md5ResultsFileMasterPath);
-
                 }
                 else
                 {
                     LogDebug("MD5 results file does not require updating: " + md5ResultsFileMasterPath);
                 }
-
             }
             catch (Exception ex)
             {
