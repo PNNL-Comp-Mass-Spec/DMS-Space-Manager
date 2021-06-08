@@ -1358,56 +1358,58 @@ namespace Space_Manager
         {
             const string SP_MARK_PURGED_JOBS = "MarkPurgedJobs";
 
-            if (lstJobsToPurge.Count > 0)
+            if (lstJobsToPurge.Count == 0)
             {
-                // Construct a comma-separated list of jobs
-                var jobs = string.Empty;
+                return;
+            }
 
-                foreach (var job in lstJobsToPurge)
-                {
-                    if (jobs.Length > 0)
-                        jobs += "," + job;
-                    else
-                        jobs = job.ToString(CultureInfo.InvariantCulture);
-                }
+            // Construct a comma-separated list of jobs
+            var jobs = string.Empty;
 
-                var simulateMode = false;
-#if !(DoDelete)
+            foreach (var job in lstJobsToPurge)
+            {
+                if (jobs.Length > 0)
+                    jobs += "," + job;
+                else
+                    jobs = job.ToString(CultureInfo.InvariantCulture);
+            }
+
+            var simulateMode = false;
+#if !DoDelete
                 simulateMode = true;
 #endif
-                if (PreviewMode || simulateMode)
-                {
-                    var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
-                    LogDebug(msg);
-                    return;
-                }
+            if (PreviewMode || simulateMode)
+            {
+                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
+                LogDebug(msg);
+                return;
+            }
 
-                // Call stored procedure MarkPurgedJobs
+            // Call stored procedure MarkPurgedJobs
 
-                const int maxRetryCount = 3;
+            const int maxRetryCount = 3;
 
-                //Setup for execution of the stored procedure
-                var dbTools = DMSProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
+            //Setup for execution of the stored procedure
+            var dbTools = DMSProcedureExecutor;
+            var cmd = dbTools.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
-                dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
+            dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            dbTools.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
+            dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
 
-                //Execute the SP
-                var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
-                if (resCode == 0)
-                {
-                    ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
-                }
-                else
-                {
-                    var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged";
-                    if (!string.IsNullOrEmpty(errorMessage))
-                        msg += ": " + errorMessage;
+            //Execute the SP
+            var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
+            if (resCode == 0)
+            {
+                ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
+            }
+            else
+            {
+                var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged";
+                if (!string.IsNullOrEmpty(errorMessage))
+                    msg += ": " + errorMessage;
 
-                    LogError(msg);
-                }
+                LogError(msg);
             }
         }
 
