@@ -87,7 +87,7 @@ namespace Space_Manager
         /// <summary>
         /// Wrapper for requesting a task from the database
         /// </summary>
-        /// <returns>num indicating if task was found</returns>
+        /// <returns>Enum indicating if task was found</returns>
         public override EnumRequestTaskResult RequestTask(string driveLetter)
         {
             var retVal = RequestTaskDetailed(driveLetter);
@@ -161,7 +161,7 @@ namespace Space_Manager
                     default:
                         // There was an SP error
                         LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
-                            "; Msg text = " + (string)messageParam.Value);
+                            "; Message text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }

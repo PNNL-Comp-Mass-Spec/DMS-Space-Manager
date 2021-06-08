@@ -1484,7 +1484,7 @@ namespace Space_Manager
                             continue;
                         }
 
-                        // Look for the unix file path in m_HashFileContents
+                        // Look for the Linux-style file path in m_HashFileContents
                         var fileNameTrimmed = TrimPathAfterSubdirectory(lineParts[1], subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
