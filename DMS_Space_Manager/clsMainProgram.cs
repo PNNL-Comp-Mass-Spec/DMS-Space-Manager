@@ -174,7 +174,7 @@ namespace Space_Manager
             var logFile = new FileInfo(relativeLogFilePath);
             ConsoleMsgUtils.ShowDebug("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
-            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
+            var appVersion = Assembly.GetEntryAssembly()?.GetName().Version;
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue

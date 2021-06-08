@@ -150,10 +150,7 @@ namespace Space_Manager
             Tool = string.Empty;
 
             // Only clear the recent job info if the variable is null
-            if (MostRecentJobInfo == null)
-            {
-                MostRecentJobInfo = string.Empty;
-            }
+            MostRecentJobInfo ??= string.Empty;
         }
 
         /// <summary>
