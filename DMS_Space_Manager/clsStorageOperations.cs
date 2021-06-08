@@ -1350,13 +1350,11 @@ namespace Space_Manager
             try
             {
                 // Open file (as read-only)
-                using (Stream reader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    // Get the file's hash
-                    var hasher = new MD5CryptoServiceProvider();
-                    byteHash = hasher.ComputeHash(reader);
-                }
+                using Stream reader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
+                // Get the file's hash
+                var hasher = new MD5CryptoServiceProvider();
+                byteHash = hasher.ComputeHash(reader);
             }
             catch (Exception ex)
             {

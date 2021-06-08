@@ -257,21 +257,20 @@ namespace Space_Manager
                 try
                 {
                     // Create an instance of StreamReader to read from a file.
-                    using (var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    {
-                        // Read and display lines from the file until the end of
-                        // the file is reached.
-                        while (!reader.EndOfStream)
-                        {
-                            var dataLine = reader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                                continue;
+                    using var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                            if (dataLine.Contains("RecentJob: "))
-                            {
-                                m_StatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
-                                break;
-                            }
+                    // Read and display lines from the file until the end of
+                    // the file is reached.
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (dataLine.Contains("RecentJob: "))
+                        {
+                            m_StatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
+                            break;
                         }
                     }
                 }
