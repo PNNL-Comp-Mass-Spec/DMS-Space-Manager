@@ -50,14 +50,10 @@ namespace Space_Manager
 
         public override string ToString()
         {
-            string description;
-            if (string.IsNullOrEmpty(HashCode))
-                description = "#No Hash#";
-            else
-                description = HashCode;
+            var description = string.IsNullOrEmpty(HashCode) ? "#No Hash#" : HashCode;
 
             if (!string.IsNullOrEmpty(MyEMSLFileID))
-                description += ", ID=" + MyEMSLFileID;
+                return description + ", ID=" + MyEMSLFileID;
 
             return description;
         }
