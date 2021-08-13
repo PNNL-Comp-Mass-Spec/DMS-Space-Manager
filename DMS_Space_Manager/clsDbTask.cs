@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using PRISM.AppSettings;
+using PRISMDatabaseUtils;
 
 namespace Space_Manager
 {
@@ -58,7 +59,10 @@ namespace Space_Manager
 
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, m_MgrParams.ManagerName);
+
+            m_DMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse);
 
             m_DMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
 

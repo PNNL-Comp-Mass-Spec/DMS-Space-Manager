@@ -13,6 +13,7 @@ using System.Reflection;
 using PRISM;
 using PRISM.AppSettings;
 using PRISM.Logging;
+using PRISMDatabaseUtils;
 using PRISMDatabaseUtils.AppSettings;
 
 namespace Space_Manager
@@ -92,7 +93,10 @@ namespace Space_Manager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            LogTools.CreateDbLogger(defaultDmsConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
+            var applicationName = "SpaceManager_" + System.Net.Dns.GetHostName();
+            var defaultDbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationName);
+
+            LogTools.CreateDbLogger(defaultDbLoggerConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -164,10 +168,12 @@ namespace Space_Manager
 
             // Typically
             // Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;
-            var logCnStr = m_MgrSettings.GetParam("ConnectionString");
+            var connectionString = m_MgrSettings.GetParam("ConnectionString");
+
+            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, m_MgrName);
 
             LogTools.RemoveDefaultDbLogger();
-            LogTools.CreateDbLogger(logCnStr, "SpaceManager: " + m_MgrName);
+            LogTools.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + m_MgrName);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
