@@ -24,7 +24,6 @@ namespace Space_Manager
         /// Convert bytes to Gigabytes
         /// </summary>
         /// <param name="bytes"></param>
-        /// <returns></returns>
         public static double BytesToGB(long bytes)
         {
             return bytes / 1024.0 / 1024.0 / 1024.0;

@@ -40,7 +40,6 @@ namespace Space_Manager
         /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
-        /// <remarks></remarks>
         int CpuUtilization { get; set; }
 
         /// <summary>
@@ -116,7 +115,6 @@ namespace Space_Manager
         /// Updates status file
         /// </summary>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(float percentComplete);
 
         /// <summary>
@@ -124,7 +122,6 @@ namespace Space_Manager
         /// </summary>
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         void UpdateAndWrite(EnumTaskStatusDetail status, float percentComplete);
 
         void UpdateStopped(bool mgrError);
@@ -136,7 +133,6 @@ namespace Space_Manager
         /// <summary>
         /// Writes out a new status file, indicating that the manager is still alive
         /// </summary>
-        /// <remarks></remarks>
         void WriteStatusFile();
     }
 }

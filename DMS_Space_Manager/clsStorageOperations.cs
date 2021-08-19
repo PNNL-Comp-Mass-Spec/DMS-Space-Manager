@@ -429,7 +429,6 @@ namespace Space_Manager
         /// Returns "" if the value is 1
         /// </summary>
         /// <param name="value"></param>
-        /// <returns></returns>
         private string CheckPlural(int value)
         {
             if (value == 1)
@@ -507,7 +506,7 @@ namespace Space_Manager
         /// <param name="sambaDatasetNamePath">Location of dataset directory in archive (samba)</param>
         /// <param name="lstServerFilesToPurge"></param>
         /// <param name="lstJobsToPurge"></param>
-        /// <returns></returns>
+        /// <returns>Comparison result</returns>
         public ArchiveCompareResults CompareDatasetDirectories(udtDatasetInfoType udtDatasetInfo, string sambaDatasetNamePath,
             out SortedSet<string> lstServerFilesToPurge,
             out List<int> lstJobsToPurge)
@@ -968,7 +967,6 @@ namespace Space_Manager
         /// Assures that the ReadOnly bit is turned off for each directory
         /// </summary>
         /// <param name="directoryPath"></param>
-        /// <returns></returns>
         private void DeleteDirectoryRecurse(string directoryPath)
         {
 #if !DoDelete
@@ -1410,7 +1408,6 @@ namespace Space_Manager
         /// </summary>
         /// <param name="fileNamePath"></param>
         /// <param name="subdirectoryToFind"></param>
-        /// <returns></returns>
         private string TrimPathAfterSubdirectory(string fileNamePath, string subdirectoryToFind)
         {
             var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);

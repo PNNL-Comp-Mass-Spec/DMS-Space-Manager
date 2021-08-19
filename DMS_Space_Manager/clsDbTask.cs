@@ -111,7 +111,7 @@ namespace Space_Manager
         /// Fill string dictionary with parameter values
         /// </summary>
         /// <param name="parameters">Result table from call to RequestStepTask</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         protected bool FillParamDict(List<List<string>> parameters)
         {
             // Verify valid parameters
