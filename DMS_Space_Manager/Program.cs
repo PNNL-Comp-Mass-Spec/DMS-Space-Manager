@@ -16,7 +16,7 @@ namespace Space_Manager
     /// </summary>
     internal static class Program
     {
-        private const string PROGRAM_DATE = "August 19, 2021";
+        private const string PROGRAM_DATE = "November 12, 2021";
 
         private static clsMainProgram mMainProgram;
 
@@ -29,7 +29,8 @@ namespace Space_Manager
             bool restart;
 
             var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-            var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName,
+
+            var parser = new CommandLineParser<CommandLineOptions>(exeName,
                 PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
             {
                 ProgramInfo = "This program manages free space on Proto-x servers",
@@ -40,10 +41,17 @@ namespace Space_Manager
                     "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics"
             };
 
-            var parsed = cmdLineParser.ParseArgs(args, false);
-            var options = parsed.ParsedResults;
-            if (args.Length > 0 && !parsed.Success)
+            var result = parser.ParseArgs(args, false);
+            var options = result.ParsedResults;
+
+            if (args.Length > 0 && !result.Success)
             {
+                if (parser.CreateParamFileProvided)
+                {
+                    return;
+                }
+
+                // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(1500);
                 return;
             }
