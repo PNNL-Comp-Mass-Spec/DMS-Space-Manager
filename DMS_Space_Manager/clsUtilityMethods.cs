@@ -43,7 +43,7 @@ namespace Space_Manager
                 return null;
             }
 
-            // Data for drives is separated by semi-colon.
+            // Data for drives is separated by semicolons
             var driveArray = inpList.Split(';');
 
             var driveList = new List<clsDriveData>();
