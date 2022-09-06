@@ -1,4 +1,6 @@
-﻿using System;
+﻿using PRISM.Logging;
+using PRISM;
+using System;
 
 namespace Space_Manager
 {
@@ -11,7 +13,7 @@ namespace Space_Manager
         /// <param name="writeToLog"></param>
         protected static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            UtilityMethods.ReportDebug(statusMessage, writeToLog);
+            ReportDebug(statusMessage, writeToLog);
         }
 
         /// <summary>
@@ -21,7 +23,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogError(string errorMessage, bool logToDb = false)
         {
-            UtilityMethods.LogError(errorMessage, logToDb);
+            LogTools.LogError(errorMessage, null, logToDb);
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace Space_Manager
         /// <param name="ex">Exception to log</param>
         protected static void LogError(string errorMessage, Exception ex)
         {
-            UtilityMethods.LogError(errorMessage, ex);
+            ReportStatus(errorMessage, ex);
         }
 
         /// <summary>
@@ -41,7 +43,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            UtilityMethods.LogWarning(warningMessage, logToDb);
+            LogTools.LogWarning(warningMessage, logToDb);
         }
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace Space_Manager
         /// <param name="ex">Exception</param>
         protected static void ReportStatus(string errorMessage, Exception ex)
         {
-            UtilityMethods.ReportStatus(errorMessage, ex);
+            LogTools.LogError(errorMessage, ex);
         }
 
         /// <summary>
@@ -61,7 +63,26 @@ namespace Space_Manager
         /// <param name="isDebug">True if a debug level message</param>
         protected static void ReportStatus(string statusMessage, bool isDebug = false)
         {
-            UtilityMethods.ReportStatus(statusMessage, isDebug);
+            if (isDebug)
+            {
+                ReportDebug(statusMessage, true);
+                return;
+            }
+
+            LogTools.LogMessage(statusMessage);
+        }
+
+        /// <summary>
+        /// Show a debug message, and optionally log to disk
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="writeToLog"></param>
+        protected static void ReportDebug(string message, bool writeToLog = false)
+        {
+            if (writeToLog)
+                LogTools.LogDebug(message);
+            else
+                ConsoleMsgUtils.ShowDebug(message);
         }
     }
 }

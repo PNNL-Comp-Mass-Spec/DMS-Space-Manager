@@ -717,7 +717,7 @@ namespace Space_Manager
             {
                 LogDebug(
                     string.Format("Computing SHA-1 hash for {0:F2} GB file {1}",
-                                  UtilityMethods.BytesToGB(serverFile.Length), relativeFilePath));
+                                  MainProgram.BytesToGB(serverFile.Length), relativeFilePath));
             }
 
             fileInMyEMSL = true;

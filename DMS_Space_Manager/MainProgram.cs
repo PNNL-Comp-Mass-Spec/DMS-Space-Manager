@@ -356,7 +356,7 @@ namespace Space_Manager
                 }
 
                 // Get a list of drives needing space management
-                var driveList = UtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
+                var driveList = GetDriveList(m_MgrSettings.GetParam("drives"));
                 if (driveList == null)
                 {
                     // Problem with drive spec. Error reporting handled by GetDriveList
@@ -458,7 +458,7 @@ namespace Space_Manager
                     // Check available space on server drive and compare it with min allowed space
                     var serverName = m_MgrSettings.GetParam("MachName");
                     var perspective = m_MgrSettings.GetParam("perspective");
-                    var checkResult = UtilityMethods.IsPurgeRequired(serverName,
+                    var checkResult = IsPurgeRequired(serverName,
                                                                         perspective,
                                                                         testDrive,
                                                                         out var driveFreeSpaceGB);
@@ -580,6 +580,176 @@ namespace Space_Manager
             }
 
             return opStatus;
+        }
+
+        /// <summary>
+        /// Parses a list of drive data objects from a string
+        /// </summary>
+        /// <param name="inpList">Input string containing drive information</param>
+        /// <returns>List of drives with associated data</returns>
+        private IEnumerable<DriveData> GetDriveList(string inpList)
+        {
+            if (string.IsNullOrWhiteSpace(inpList))
+            {
+                // There were no drives in string
+                LogError("Drive list provided to GetDriveList is empty");
+                return null;
+            }
+
+            // Data for drives is separated by semicolons
+            var driveArray = inpList.Split(';');
+
+            var driveList = new List<DriveData>();
+
+            // Data for an individual drive is separated by comma
+            foreach (var driveSpec in driveArray)
+            {
+                if (string.IsNullOrWhiteSpace(driveSpec))
+                {
+                    LogError("Unable to get drive space threshold from string, should be something like G:,600 and not " + driveSpec);
+                    return null;
+                }
+
+                var driveInfo = driveSpec.Split(',');
+
+                if (driveInfo.Length != 2)
+                {
+                    LogError("Invalid parameter count for drive data string " + driveSpec + ", should be something like G:,600");
+                    return null;
+                }
+
+                // Add the data for this drive to the return list
+                // Note that driveInfo[0] can be either just a drive letter or a drive letter and a colon; either is supported
+                var newDrive = new DriveData(driveInfo[0], double.Parse(driveInfo[1]));
+                driveList.Add(newDrive);
+            }
+
+            return driveList;
+        }
+
+        /// <summary>
+        /// Convert bytes to Gigabytes
+        /// </summary>
+        /// <param name="bytes"></param>
+        public static double BytesToGB(long bytes)
+        {
+            return bytes / 1024.0 / 1024.0 / 1024.0;
+        }
+
+        /// <summary>
+        /// For remote drives, uses WMI to determine if free space on disk is above minimum threshold
+        /// For local drives, uses DriveInfo
+        /// </summary>
+        /// <param name="machine">Name of server to check</param>
+        /// <param name="perspective">Client/Server setting for manager.  "Client" means checking a remote drive; "Server" means running on a Proto-x server </param>
+        /// <param name="driveData">Data for drive to be checked</param>
+        /// <param name="driveFreeSpaceGB">Actual drive free space in GB</param>
+        /// <returns>Enum indicating space status</returns>
+        private SpaceCheckResults IsPurgeRequired(string machine, string perspective, DriveData driveData, out double driveFreeSpaceGB)
+        {
+            SpaceCheckResults testResult;
+
+            driveFreeSpaceGB = -1;
+
+            if (perspective.StartsWith("client", StringComparison.OrdinalIgnoreCase))
+            {
+                // Checking a remote drive
+                // Get WMI object representing drive
+                var requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
+
+                try
+                {
+                    var disk = new ManagementObject(requestStr);
+                    disk.Get();
+
+                    var oFreeSpace = disk["FreeSpace"];
+                    if (oFreeSpace == null)
+                    {
+                        LogError("Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready", true);
+                        return SpaceCheckResults.Error;
+                    }
+
+                    var availableSpace = Convert.ToDouble(oFreeSpace);
+                    var totalSpace = Convert.ToDouble(disk["Size"]);
+
+                    if (totalSpace <= 0)
+                    {
+                        LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready", true);
+                        return SpaceCheckResults.Error;
+                    }
+
+                    driveFreeSpaceGB = BytesToGB((long)availableSpace);
+                }
+                catch (Exception ex)
+                {
+                    var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
+
+                    var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase);
+                    LogError(msg, postToDB);
+
+                    if (driveFreeSpaceGB > 0)
+                        driveFreeSpaceGB = -driveFreeSpaceGB;
+
+                    if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
+                        driveFreeSpaceGB = -1;
+                }
+            }
+            else
+            {
+                // Analyzing a drive local to this manager
+
+                try
+                {
+                    // Note: WMI string would be: "win32_logicaldisk.deviceid=\"" + driveData.DriveLetter + "\"";
+                    // Instantiate a new drive info object
+                    var diDrive = new DriveInfo(driveData.DriveLetter);
+
+                    if (!diDrive.IsReady)
+                    {
+                        LogError("Drive " + driveData.DriveLetter + " reports Not Ready via DriveInfo object; drive is offline or drive letter is invalid", true);
+                        return SpaceCheckResults.Error;
+                    }
+
+                    if (diDrive.TotalSize <= 0)
+                    {
+                        LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via DriveInfo object; likely is Not Ready", true);
+                        return SpaceCheckResults.Error;
+                    }
+
+                    driveFreeSpaceGB = BytesToGB(diDrive.TotalFreeSpace);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception getting free disk space via .NET DriveInfo object, drive " + driveData.DriveLetter + ": " + ex.Message, true);
+
+                    if (driveFreeSpaceGB > 0)
+                        driveFreeSpaceGB = -driveFreeSpaceGB;
+                    if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
+                        driveFreeSpaceGB = -1;
+                }
+            }
+
+            if (driveFreeSpaceGB < 0)
+            {
+                testResult = SpaceCheckResults.Error;
+
+                // Log space requirement if debug logging enabled
+                ReportDebug("Drive " + driveData.DriveLetter + " Space Threshold: " + driveData.MinDriveSpace + ", Drive not found");
+            }
+            else
+            {
+                if (driveFreeSpaceGB > driveData.MinDriveSpace)
+                    testResult = SpaceCheckResults.Above_Threshold;
+                else
+                    testResult = SpaceCheckResults.Below_Threshold;
+
+                // Log space requirement if debug logging enabled
+                ReportStatus("Drive " + driveData.DriveLetter +
+                    " Space Threshold: " + driveData.MinDriveSpace +
+                    ", Avail space: " + driveFreeSpaceGB.ToString("####0.0"), true);
+            }
+
+            return testResult;
         }
 
         /// <summary>

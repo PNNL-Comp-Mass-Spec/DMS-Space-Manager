@@ -79,7 +79,6 @@
     <Compile Include="StatusData.cs" />
     <Compile Include="StatusFile.cs" />
     <Compile Include="StorageOperations.cs" />
-    <Compile Include="UtilityMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

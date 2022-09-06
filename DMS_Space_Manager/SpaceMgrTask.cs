@@ -220,8 +220,7 @@ namespace Space_Manager
 
             if (TraceMode)
             {
-                UtilityMethods.ReportDebug(
-                    string.Format("Calling {0} for dataset {1} with completion code {2}",
+                ReportDebug(string.Format("Calling {0} for dataset {1} with completion code {2}",
                                   spName, datasetName, completionCode));
             }
 
