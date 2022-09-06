@@ -21,7 +21,7 @@ namespace Space_Manager
     /// <summary>
     /// Main program execution loop for application
     /// </summary>
-    internal class clsMainProgram : clsLoggerBase
+    internal class MainProgram : LoggerBase
     {
         private enum DriveOpStatus
         {
@@ -41,13 +41,13 @@ namespace Space_Manager
         private const bool RESTART_NOT_OK = false;
 
         private MgrSettings m_MgrSettings;
-        private clsSpaceMgrTask m_Task;
+        private SpaceMgrTask m_Task;
         private FileSystemWatcher m_FileWatcher;
         private bool m_ConfigChanged;
         private int m_ErrorCount;
         private IStatusFile m_StatusFile;
 
-        private clsMessageHandler m_MsgHandler;
+        private MessageHandler m_MsgHandler;
 
         private string m_MgrName = "Unknown";
 
@@ -57,7 +57,7 @@ namespace Space_Manager
         private int m_DebugLevel = 4;
 
         private System.Timers.Timer m_StatusTimer;
-        private clsStorageOperations m_StorageOps;
+        private StorageOperations m_StorageOps;
 
         public bool PreviewMode { get; }
 
@@ -66,7 +66,7 @@ namespace Space_Manager
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProgram(bool previewMode = false, bool traceMode = false)
+        public MainProgram(bool previewMode = false, bool traceMode = false)
         {
             PreviewMode = previewMode;
             TraceMode = traceMode;
@@ -184,7 +184,7 @@ namespace Space_Manager
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue
-            m_MsgHandler = new clsMessageHandler
+            m_MsgHandler = new MessageHandler
             {
                 BrokerUri = m_MgrSettings.GetParam("MessageQueueURI"),
                 StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),
@@ -220,7 +220,7 @@ namespace Space_Manager
             m_FileWatcher.Changed += FileWatcherChanged;
 
             // Set up the tool for getting tasks
-            m_Task = new clsSpaceMgrTask(m_MgrSettings, TraceMode);
+            m_Task = new SpaceMgrTask(m_MgrSettings, TraceMode);
 
             // Set up the status file class
             if (fInfo.DirectoryName == null)
@@ -230,7 +230,7 @@ namespace Space_Manager
             }
 
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
-            m_StatusFile = new clsStatusFile(statusFileNameLoc)
+            m_StatusFile = new StatusFile(statusFileNameLoc)
             {
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
@@ -286,7 +286,7 @@ namespace Space_Manager
             }
 
             // Set up the storage operations class
-            m_StorageOps = new clsStorageOperations(m_MgrSettings)
+            m_StorageOps = new StorageOperations(m_MgrSettings)
             {
                 PreviewMode = PreviewMode,
                 TraceMode = TraceMode
@@ -356,7 +356,7 @@ namespace Space_Manager
                 }
 
                 // Get a list of drives needing space management
-                var driveList = clsUtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
+                var driveList = UtilityMethods.GetDriveList(m_MgrSettings.GetParam("drives"));
                 if (driveList == null)
                 {
                     // Problem with drive spec. Error reporting handled by GetDriveList
@@ -407,7 +407,7 @@ namespace Space_Manager
             return methodReturnCode;
         }
 
-        private DriveOpStatus ProcessDrive(int maxReps, clsDriveData testDrive)
+        private DriveOpStatus ProcessDrive(int maxReps, DriveData testDrive)
         {
             const int MAX_MISSING_DIRECTORIES = 50;
 
@@ -458,7 +458,7 @@ namespace Space_Manager
                     // Check available space on server drive and compare it with min allowed space
                     var serverName = m_MgrSettings.GetParam("MachName");
                     var perspective = m_MgrSettings.GetParam("perspective");
-                    var checkResult = clsUtilityMethods.IsPurgeRequired(serverName,
+                    var checkResult = UtilityMethods.IsPurgeRequired(serverName,
                                                                         perspective,
                                                                         testDrive,
                                                                         out var driveFreeSpaceGB);
@@ -654,7 +654,7 @@ namespace Space_Manager
         /// <param name="e"></param>
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            LogDebug("clsMainProgram.FileWatcherChanged event received");
+            LogDebug("MainProgram.FileWatcherChanged event received");
 
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;

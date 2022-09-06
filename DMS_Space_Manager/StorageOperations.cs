@@ -22,7 +22,7 @@ namespace Space_Manager
     /// <summary>
     /// Class to perform a purge task and all associated operations
     /// </summary>
-    public class clsStorageOperations : clsLoggerBase
+    public class StorageOperations : LoggerBase
     {
         // Ignore Spelling: dmsarch, frodo, myemsl, pre, purgeable, svc-dms
 
@@ -128,7 +128,7 @@ namespace Space_Manager
         /// MD5 hash values are 32 characters long
         /// SHA-1 hash values are 40 characters long
         /// </remarks>
-        private Dictionary<string, clsHashInfo> m_HashFileContents;
+        private Dictionary<string, HashInfo> m_HashFileContents;
 
         private string m_LastMD5WarnDataset = string.Empty;
 
@@ -138,7 +138,7 @@ namespace Space_Manager
 
         public bool TraceMode { get; set; }
 
-        public clsStorageOperations(MgrSettings mgrParams)
+        public StorageOperations(MgrSettings mgrParams)
         {
             m_MgrParams = mgrParams;
 
@@ -565,7 +565,7 @@ namespace Space_Manager
             }
 
             // Find files to purge based on the purge policy
-            var oPurgeableFileSearcher = new clsPurgeableFileSearcher();
+            var oPurgeableFileSearcher = new PurgeableFileSearcher();
             lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, udtDatasetInfo, out lstJobsToPurge);
 
             var mismatchMessage = string.Empty;
@@ -717,7 +717,7 @@ namespace Space_Manager
             {
                 LogDebug(
                     string.Format("Computing SHA-1 hash for {0:F2} GB file {1}",
-                                  clsUtilityMethods.BytesToGB(serverFile.Length), relativeFilePath));
+                                  UtilityMethods.BytesToGB(serverFile.Length), relativeFilePath));
             }
 
             fileInMyEMSL = true;
@@ -1070,7 +1070,7 @@ namespace Space_Manager
             }
             else
             {
-                m_HashFileContents = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
+                m_HashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 var hashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var waitingForMD5File);
 
@@ -1258,7 +1258,7 @@ namespace Space_Manager
                         }
                         else
                         {
-                            var newHashInfo = new clsHashInfo(hashCode, myEmslFileID);
+                            var newHashInfo = new HashInfo(hashCode, myEmslFileID);
 
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
                             if (m_HashFileContents.ContainsKey(fileNameTrimmed))
@@ -1307,7 +1307,7 @@ namespace Space_Manager
             //Verify input file exists
             if (!File.Exists(filePath))
             {
-                LogError("clsUpdateOps.GenerateMD5HashFromFile; File not found: " + filePath);
+                LogError("StorageOperations.GenerateMD5HashFromFile; File not found: " + filePath);
                 return "";
             }
 
@@ -1324,7 +1324,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                LogError("clsUpdateOps.GenerateMD5HashFromFile; Exception generating hash for file " + filePath, ex);
+                LogError("StorageOperations.GenerateMD5HashFromFile; Exception generating hash for file " + filePath, ex);
                 return string.Empty;
             }
 

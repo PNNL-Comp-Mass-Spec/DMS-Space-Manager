@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Space_Manager
 {
-    internal class clsPurgeableFileSearcher
+    internal class PurgeableFileSearcher
     {
         // Ignore Spelling: idx, wiff, maldi, uimf, tof, baf, ser, fid, xtr
 
@@ -106,12 +106,12 @@ namespace Space_Manager
         /// <returns>List of files that are safe to delete</returns>
         public SortedSet<string> FindDatasetFilesToPurge(
             DirectoryInfo datasetDirectory,
-            clsStorageOperations.udtDatasetInfoType udtDatasetInfo,
+            StorageOperations.udtDatasetInfoType udtDatasetInfo,
             out List<int> lstJobsToPurge)
         {
             var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
-            if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAll)
+            if (ePurgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAll)
             {
                 var serverFilesToPurge = new SortedSet<string>();
                 AddFilesToPurge(datasetDirectory, "*.*", 0, true, serverFilesToPurge);
@@ -120,7 +120,7 @@ namespace Space_Manager
                 return serverFilesToPurge;
             }
 
-            if (ePurgePolicyToApply == clsStorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
+            if (ePurgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
             {
                 var serverFilesToPurge = new SortedSet<string>();
                 AddFilesToPurge(datasetDirectory, "*.*", 0, false, serverFilesToPurge);
@@ -165,7 +165,7 @@ namespace Space_Manager
         /// <param name="udtDatasetInfo">Dataset info</param>
         /// <param name="lstJobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
-        public SortedSet<string> FindDatasetFilesToAutoPurge(clsStorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
+        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
         {
             var serverFilesToPurge = new SortedSet<string>();
             lstJobsToPurge = new List<int>();

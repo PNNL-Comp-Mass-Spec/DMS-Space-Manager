@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -72,24 +72,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="cfGlobalStuff.cs" />
-    <Compile Include="clsDriveData.cs" />
-    <Compile Include="clsHashInfo.cs" />
-    <Compile Include="clsLoggerBase.cs" />
-    <Compile Include="clsPurgeableFileSearcher.cs" />
-    <Compile Include="clsSpaceMgrTask.cs" />
-    <Compile Include="clsDbTask.cs" />
-    <Compile Include="clsMainProgram.cs" />
-    <Compile Include="clsMessageHandler.cs" />
-    <Compile Include="clsStatusData.cs" />
-    <Compile Include="clsStatusFile.cs" />
-    <Compile Include="clsStorageOperations.cs" />
-    <Compile Include="clsUtilityMethods.cs" />
     <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="DbTask.cs" />
+    <Compile Include="DriveData.cs" />
+    <Compile Include="GlobalStuff.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="HashInfo.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
+    <Compile Include="LoggerBase.cs" />
+    <Compile Include="MainProgram.cs" />
+    <Compile Include="MessageHandler.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="PurgeableFileSearcher.cs" />
+    <Compile Include="SpaceMgrTask.cs" />
+    <Compile Include="StatusData.cs" />
+    <Compile Include="StatusFile.cs" />
+    <Compile Include="StorageOperations.cs" />
+    <Compile Include="UtilityMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

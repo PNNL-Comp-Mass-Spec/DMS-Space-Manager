@@ -1,7 +1,7 @@
 ﻿
 namespace Space_Manager
 {
-    public class clsHashInfo
+    public class HashInfo
     {
         private string mHashCode;
         private string mMyEMSLFileID;
@@ -29,7 +29,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="myEmslFileID"></param>
-        public clsHashInfo(string hashCode, string myEmslFileID)
+        public HashInfo(string hashCode, string myEmslFileID)
         {
             Clear();
             HashCode = hashCode;
@@ -42,7 +42,7 @@ namespace Space_Manager
             MyEMSLFileID = string.Empty;
         }
 
-        public bool IsMatch(clsHashInfo comparisonValue)
+        public bool IsMatch(HashInfo comparisonValue)
         {
             return string.Equals(HashCode, comparisonValue.HashCode) &&
                    string.Equals(MyEMSLFileID, comparisonValue.MyEMSLFileID);

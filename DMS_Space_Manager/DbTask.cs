@@ -17,7 +17,7 @@ namespace Space_Manager
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
-    internal abstract class clsDbTask : clsLoggerBase
+    internal abstract class DbTask : LoggerBase
     {
         // Ignore Spelling: dmsarch
 
@@ -51,7 +51,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
         /// <param name="traceMode">True to show additional debug messages</param>
-        protected clsDbTask(MgrSettings mgrParams, bool traceMode)
+        protected DbTask(MgrSettings mgrParams, bool traceMode)
         {
             m_MgrParams = mgrParams;
 
@@ -117,14 +117,14 @@ namespace Space_Manager
             // Verify valid parameters
             if (parameters == null)
             {
-                LogError("clsDbTask.FillParamDict(): parameters is null");
+                LogError("DbTask.FillParamDict(): parameters is null");
                 return false;
             }
 
             // Verify at least one row present
             if (parameters.Count < 1)
             {
-                LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
+                LogError("DbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
             }
 
@@ -164,7 +164,7 @@ namespace Space_Manager
             }
             catch (Exception ex)
             {
-                LogError("clsDbTask.FillParamDict(): Exception reading task parameters", ex);
+                LogError("DbTask.FillParamDict(): Exception reading task parameters", ex);
                 return false;
             }
         }

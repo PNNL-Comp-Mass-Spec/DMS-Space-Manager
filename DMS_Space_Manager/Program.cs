@@ -18,7 +18,7 @@ namespace Space_Manager
     {
         private const string PROGRAM_DATE = "April 29, 2022";
 
-        private static clsMainProgram mMainProgram;
+        private static MainProgram mMainProgram;
 
         /// <summary>
         /// The main entry point for the application.
@@ -63,7 +63,7 @@ namespace Space_Manager
                     if (mMainProgram == null)
                     {
                         //Initialize the main execution class
-                        mMainProgram = new clsMainProgram(options.PreviewMode, options.TraceMode);
+                        mMainProgram = new MainProgram(options.PreviewMode, options.TraceMode);
 
                         if (!mMainProgram.InitMgr())
                         {
@@ -78,7 +78,7 @@ namespace Space_Manager
                 {
                     var errMsg = "Critical exception starting application: " + ex.Message;
                     ConsoleMsgUtils.ShowWarning(errMsg + "; " + StackTraceFormatter.GetExceptionStackTrace(ex));
-                    ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
+                    ConsoleMsgUtils.ShowWarning("Exiting Program.Main with error code = 1");
                     PRISM.Logging.FileLogger.FlushPendingMessages();
                     return;
                 }

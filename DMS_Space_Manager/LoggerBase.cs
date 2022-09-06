@@ -2,7 +2,7 @@
 
 namespace Space_Manager
 {
-    public abstract class clsLoggerBase
+    public abstract class LoggerBase
     {
         /// <summary>
         /// Log a debug message
@@ -11,7 +11,7 @@ namespace Space_Manager
         /// <param name="writeToLog"></param>
         protected static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            clsUtilityMethods.ReportDebug(statusMessage, writeToLog);
+            UtilityMethods.ReportDebug(statusMessage, writeToLog);
         }
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogError(string errorMessage, bool logToDb = false)
         {
-            clsUtilityMethods.LogError(errorMessage, logToDb);
+            UtilityMethods.LogError(errorMessage, logToDb);
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Space_Manager
         /// <param name="ex">Exception to log</param>
         protected static void LogError(string errorMessage, Exception ex)
         {
-            clsUtilityMethods.LogError(errorMessage, ex);
+            UtilityMethods.LogError(errorMessage, ex);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Space_Manager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            clsUtilityMethods.LogWarning(warningMessage, logToDb);
+            UtilityMethods.LogWarning(warningMessage, logToDb);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Space_Manager
         /// <param name="ex">Exception</param>
         protected static void ReportStatus(string errorMessage, Exception ex)
         {
-            clsUtilityMethods.ReportStatus(errorMessage, ex);
+            UtilityMethods.ReportStatus(errorMessage, ex);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace Space_Manager
         /// <param name="isDebug">True if a debug level message</param>
         protected static void ReportStatus(string statusMessage, bool isDebug = false)
         {
-            clsUtilityMethods.ReportStatus(statusMessage, isDebug);
+            UtilityMethods.ReportStatus(statusMessage, isDebug);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace Space_Manager
     /// <summary>
     /// Holds static utility methods that are put here to avoid cluttering up other classes
     /// </summary>
-    public static class clsUtilityMethods
+    public static class UtilityMethods
     {
         /// <summary>
         /// Convert bytes to Gigabytes
@@ -34,7 +34,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="inpList">Input string containing drive information</param>
         /// <returns>List of drives with associated data</returns>
-        public static IEnumerable<clsDriveData> GetDriveList(string inpList)
+        public static IEnumerable<DriveData> GetDriveList(string inpList)
         {
             if (string.IsNullOrWhiteSpace(inpList))
             {
@@ -46,7 +46,7 @@ namespace Space_Manager
             // Data for drives is separated by semicolons
             var driveArray = inpList.Split(';');
 
-            var driveList = new List<clsDriveData>();
+            var driveList = new List<DriveData>();
 
             // Data for an individual drive is separated by comma
             foreach (var driveSpec in driveArray)
@@ -67,7 +67,7 @@ namespace Space_Manager
 
                 // Add the data for this drive to the return list
                 // Note that driveInfo[0] can be either just a drive letter or a drive letter and a colon; either is supported
-                var newDrive = new clsDriveData(driveInfo[0], double.Parse(driveInfo[1]));
+                var newDrive = new DriveData(driveInfo[0], double.Parse(driveInfo[1]));
                 driveList.Add(newDrive);
             }
 
@@ -83,7 +83,7 @@ namespace Space_Manager
         /// <param name="driveData">Data for drive to be checked</param>
         /// <param name="driveFreeSpaceGB">Actual drive free space in GB</param>
         /// <returns>Enum indicating space status</returns>
-        public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, clsDriveData driveData, out double driveFreeSpaceGB)
+        public static SpaceCheckResults IsPurgeRequired(string machine, string perspective, DriveData driveData, out double driveFreeSpaceGB)
         {
             SpaceCheckResults testResult;
 
