@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Management;
 using System.Reflection;
 using PRISM;
 using PRISM.AppSettings;
@@ -46,8 +47,6 @@ namespace Space_Manager
         private bool m_ConfigChanged;
         private int m_ErrorCount;
         private IStatusFile m_StatusFile;
-
-        private MessageHandler m_MsgHandler;
 
         private string m_MgrName = "Unknown";
 
@@ -184,16 +183,10 @@ namespace Space_Manager
             ReportStatus("=== Started Space Manager V" + appVersion + " ===== ");
 
             // Setup the message queue
-            m_MsgHandler = new MessageHandler
-            {
-                BrokerUri = m_MgrSettings.GetParam("MessageQueueURI"),
-                StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),
-                MgrSettings = m_MgrSettings
-            };
-
-            // Initialize the message queue
-            // Start this in a separate thread so that we can abort the initialization if necessary
-            InitializeMessageQueue();
+            // NOT USED; if changing to use, can copy MessageSender class from CaptureTaskManager:
+            // mMsgHandler = new MessageSender(m_MgrSettings.GetParam("MessageQueueURI"),
+            //     m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),
+            //     m_MgrSettings.ManagerName);
 
             var configFileName = m_MgrSettings.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
@@ -294,44 +287,6 @@ namespace Space_Manager
 
             // Everything worked!
             return true;
-        }
-
-        private void InitializeMessageQueue()
-        {
-            const int MAX_WAIT_TIME_SECONDS = 60;
-
-            var worker = new System.Threading.Thread(InitializeMessageQueueWork);
-            worker.Start();
-
-            var dtWaitStart = DateTime.UtcNow;
-
-            // Wait a maximum of 60 seconds
-            if (!worker.Join(MAX_WAIT_TIME_SECONDS * 1000))
-            {
-                worker.Abort();
-                LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
-                return;
-            }
-
-            var elapsedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
-
-            if (elapsedTime > 25)
-            {
-                ReportStatus("Connection to the message queue was slow, taking " + (int)elapsedTime + " seconds");
-            }
-        }
-
-        private void InitializeMessageQueueWork()
-        {
-            if (!m_MsgHandler.Init())
-            {
-                // Most error messages provided by .Init method, but debug message is here for program tracking
-                LogDebug("Message handler init error");
-            }
-            else
-            {
-                LogDebug("Message handler initialized");
-            }
         }
 
         /// <summary>
