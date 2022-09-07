@@ -17,7 +17,7 @@ namespace Space_Manager
     /// <summary>
     /// Provides database access and tools for one capture task
     /// </summary>
-    internal class clsSpaceMgrTask : clsDbTask, ITaskParams
+    internal class SpaceMgrTask : DbTask, ITaskParams
     {
         // ReSharper disable once CommentTypo
         // Ignore Spelling: machname
@@ -30,7 +30,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
         /// <param name="traceMode">True to show additional debug messages</param>
-        public clsSpaceMgrTask(MgrSettings mgrParams, bool traceMode)
+        public SpaceMgrTask(MgrSettings mgrParams, bool traceMode)
             : base(mgrParams, traceMode)
         {
             m_JobParams.Clear();
@@ -129,10 +129,10 @@ namespace Space_Manager
                 // Thus, pass 0 for this parameter instead of 1
                 dbTools.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
 
-                var msg = "clsSpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.ConnectStr;
+                var msg = "SpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.ConnectStr;
                 LogTools.LogDebug(msg);
 
-                msg = "clsSpaceMgrTask.RequestTaskDetailed(), printing param list";
+                msg = "SpaceMgrTask.RequestTaskDetailed(), printing param list";
                 LogTools.LogDebug(msg);
                 PrintCommandParams(cmd);
 
@@ -160,7 +160,7 @@ namespace Space_Manager
                         break;
                     default:
                         // There was an SP error
-                        LogError("clsSpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
+                        LogError("SpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
                             "; Message text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
@@ -220,8 +220,7 @@ namespace Space_Manager
 
             if (TraceMode)
             {
-                clsUtilityMethods.ReportDebug(
-                    string.Format("Calling {0} for dataset {1} with completion code {2}",
+                ReportDebug(string.Format("Calling {0} for dataset {1} with completion code {2}",
                                   spName, datasetName, completionCode));
             }
 

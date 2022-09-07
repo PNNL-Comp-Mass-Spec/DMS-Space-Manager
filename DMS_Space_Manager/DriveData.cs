@@ -11,7 +11,7 @@ namespace Space_Manager
     /// <summary>
     /// Class to hold data for each drive being managed
     /// </summary>
-    public class clsDriveData
+    public class DriveData
     {
         private readonly string m_DriveLetter;
 
@@ -27,7 +27,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="driveLetter">Drive letter</param>
         /// <param name="driveSpace">Min allowable drive space</param>
-        public clsDriveData(string driveLetter, double driveSpace)
+        public DriveData(string driveLetter, double driveSpace)
         {
             m_DriveLetter = driveLetter;
             MinDriveSpace = driveSpace;

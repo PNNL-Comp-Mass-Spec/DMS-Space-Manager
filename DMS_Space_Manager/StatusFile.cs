@@ -17,7 +17,7 @@ namespace Space_Manager
     /// <summary>
     /// Class to handle status file updates
     /// </summary>
-    public class clsStatusFile : EventNotifier, IStatusFile
+    public class StatusFile : EventNotifier, IStatusFile
     {
         // Ignore Spelling: tcp, yyyy-MM-dd, hh:mm:ss tt
 
@@ -114,7 +114,7 @@ namespace Space_Manager
         /// Constructor
         /// </summary>
         /// <param name="statusFilePath">Full path to status file</param>
-        public clsStatusFile(string statusFilePath)
+        public StatusFile(string statusFilePath)
         {
             FileNamePath = statusFilePath;
             TaskStartTime = DateTime.UtcNow;
@@ -245,7 +245,7 @@ namespace Space_Manager
         }
 
         private string GenerateStatusXML(
-            clsStatusFile status,
+            StatusFile status,
             DateTime lastUpdate,
             int processId,
             int cpuUtilization,
@@ -291,7 +291,7 @@ namespace Space_Manager
             xWriter.WriteElementString("ProcessID", processId.ToString());
             xWriter.WriteStartElement("RecentErrorMessages");
 
-            foreach (var errMsg in clsStatusData.ErrorQueue)
+            foreach (var errMsg in StatusData.ErrorQueue)
             {
                 xWriter.WriteElementString("ErrMsg", errMsg);
             }
@@ -312,7 +312,7 @@ namespace Space_Manager
             xWriter.WriteElementString("Job", status.JobNumber.ToString());
             xWriter.WriteElementString("Step", status.JobStep.ToString());
             xWriter.WriteElementString("Dataset", status.Dataset);
-            xWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
+            xWriter.WriteElementString("MostRecentLogMessage", StatusData.MostRecentLogMessage);
             xWriter.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
             xWriter.WriteEndElement(); // TaskDetails
             xWriter.WriteEndElement(); // Task
