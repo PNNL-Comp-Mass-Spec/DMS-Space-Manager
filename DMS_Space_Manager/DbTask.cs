@@ -40,7 +40,7 @@ namespace Space_Manager
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISMDatabaseUtils.IDBTools m_DMSProcedureExecutor;
+        protected readonly IDBTools m_DMSProcedureExecutor;
 
         public Dictionary<string, string> TaskDictionary => m_JobParams;
 

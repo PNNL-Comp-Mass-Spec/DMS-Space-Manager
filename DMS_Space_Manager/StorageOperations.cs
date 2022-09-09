@@ -132,7 +132,7 @@ namespace Space_Manager
 
         private string m_LastMD5WarnDataset = string.Empty;
 
-        private readonly PRISMDatabaseUtils.IDBTools DMSProcedureExecutor;
+        private readonly IDBTools DMSProcedureExecutor;
 
         public bool PreviewMode { get; set; }
 
@@ -147,7 +147,7 @@ namespace Space_Manager
             // This Connection String points to the DMS5 database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
 
-            DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
+            DMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
             m_HashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
         }
