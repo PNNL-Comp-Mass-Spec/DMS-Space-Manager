@@ -248,7 +248,8 @@ namespace Space_Manager
 
         private void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
-            var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0;
+            var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                          message.IndexOf("Exception calling", StringComparison.OrdinalIgnoreCase) >= 0;
 
             if (logToDb)
                 LogError(message, logToDb: true);

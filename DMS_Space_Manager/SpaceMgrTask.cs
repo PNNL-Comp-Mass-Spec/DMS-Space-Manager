@@ -181,7 +181,7 @@ namespace Space_Manager
 
             if (!SetPurgeTaskComplete(SP_NAME_SET_COMPLETE, completionCode, m_JobParams["dataset"]))
             {
-                LogError("Error setting task complete in database, dataset " + m_JobParams["dataset"]);
+                LogError("Error setting task complete in database, dataset " + m_JobParams["dataset"], true);
             }
             else
             {
