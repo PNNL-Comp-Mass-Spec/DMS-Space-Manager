@@ -128,7 +128,7 @@ namespace Space_Manager
         /// MD5 hash values are 32 characters long
         /// SHA-1 hash values are 40 characters long
         /// </remarks>
-        private Dictionary<string, HashInfo> m_HashFileContents;
+        private readonly Dictionary<string, HashInfo> m_HashFileContents;
 
         private string m_LastMD5WarnDataset = string.Empty;
 
@@ -148,6 +148,8 @@ namespace Space_Manager
             var connectionString = m_MgrParams.GetParam("ConnectionString");
 
             DMSProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(connectionString);
+
+            m_HashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -923,8 +925,11 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Equal;
             }
 
-            // Update the cached hash value to #HashMismatch#
-            m_HashFileContents[filePathInDictionary].HashCode = HASH_MISMATCH;
+            if (m_HashFileContents.TryGetValue(filePathInDictionary, out var hashEntry))
+            {
+                // Update the cached hash value to #HashMismatch#
+                hashEntry.HashCode = HASH_MISMATCH;
+            }
 
             //Files not equal
             return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
@@ -1064,14 +1069,12 @@ namespace Space_Manager
 
             if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) &&
                 string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
-                m_HashFileContents != null)
+                m_HashFileContents.Count > 0)
             {
                 // Hash file has already been loaded into memory; no need to re-load it
             }
             else
             {
-                m_HashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
-
                 var hashFileLoaded = LoadMD5ResultsFile(udtDatasetInfo, out var waitingForMD5File);
 
                 if (!hashFileLoaded)
@@ -1144,6 +1147,8 @@ namespace Space_Manager
         /// <returns>True if success, false if an error</returns>
         private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool waitingForMD5File)
         {
+            m_HashFileContents.Clear();
+
             // Find out if there's an MD5 results file for this dataset
             var md5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
@@ -1200,8 +1205,6 @@ namespace Space_Manager
             // Read in results file
             try
             {
-                m_HashFileContents.Clear();
-
                 var contents = File.ReadAllLines(md5ResultsFilePath);
 
                 foreach (var inputLine in contents)
