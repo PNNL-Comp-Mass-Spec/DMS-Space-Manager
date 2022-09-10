@@ -704,8 +704,30 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Error;
             }
 
+            var serverFile = new FileInfo(serverFilePath);
+            if (!serverFile.Exists)
+            {
+                LogError("File not found, which is unexpected since this program found this file just recently, cannot compare to MyEMSL Info: " + serverFile.FullName);
+                return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
+            }
+
+            if (serverFile.Length == 0)
+            {
+                // MyEMSL does not let us push zero-byte files into MyEMSL
+                // Treat zero-byte files as being "in" MyEMSL
+
+                if (TraceMode)
+                {
+                    LogDebug(string.Format(
+                        "{0} is a zero-byte file; ignoring since cannot store empty files in MyEMSL", relativeFilePath));
+                }
+
+                fileInMyEMSL = true;
+                return ArchiveCompareResults.Compare_Equal;
+            }
+
             // Look for this file in dctFilesInMyEMSL
-            if (!dctFilesInMyEMSL.TryGetValue(relativeFilePath, out var archiveFileHash))
+            if (!dctFilesInMyEMSL.TryGetValue(relativeFilePath, out var archiveFileInfo))
             {
                 if (TraceMode)
                 {
@@ -713,13 +735,6 @@ namespace Space_Manager
                         string.Format("{0} not found in MyEMSL", relativeFilePath));
                 }
 
-                return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
-            }
-
-            var serverFile = new FileInfo(serverFilePath);
-            if (!serverFile.Exists)
-            {
-                LogError("File not found, cannot compare to MyEMSL Info: " + serverFile.FullName);
                 return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
             }
 
