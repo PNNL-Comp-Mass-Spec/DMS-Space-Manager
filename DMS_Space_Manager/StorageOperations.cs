@@ -570,17 +570,29 @@ namespace Space_Manager
 
             var mismatchMessage = string.Empty;
 
-            // Populate a dictionary with the relative paths and hash values in lstFilesInMyEMSL
-            // File paths are not case sensitive
-            var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            // Populate a dictionary with the relative paths and hash values in filesInMyEMSL
+            // The same file could be present in filesInMyEMSL if different versions of the file were pushed into MyEMSL at different times
+
+            // Dictionary dctFilesInMyEMSL tracks the newest version of each file
+            // Keys are relative file paths (not case sensitive, Windows slashes)
+            // Values are KeyValuePairs where keys are MyEMSL Submission timestamp and values are SHA-1 Hash
+
+            var dctFilesInMyEMSL = new Dictionary<string, KeyValuePair<DateTime, string>>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in filesInMyEMSL)
             {
-                if (dctFilesInMyEMSL.ContainsKey(item.RelativePathWindows))
+                if (dctFilesInMyEMSL.TryGetValue(item.RelativePathWindows, out var existingEntry))
                 {
-                    throw new Exception("lstFilesInMyEMSL has duplicate entries for " + item.RelativePathWindows + "; this indicates a bug in MyEMSLReader");
+                    if (item.SubmissionTimeValue > existingEntry.Key)
+                    {
+                        // Current item is newer than the item in the dictionary
+                        dctFilesInMyEMSL[item.RelativePathWindows] = new KeyValuePair<DateTime, string>(item.SubmissionTimeValue, item.Sha1Hash);
+                    }
                 }
-                dctFilesInMyEMSL.Add(item.RelativePathWindows, item.Sha1Hash);
+                else
+                {
+                    dctFilesInMyEMSL.Add(item.RelativePathWindows, new KeyValuePair<DateTime, string>(item.SubmissionTimeValue, item.Sha1Hash));
+                }
             }
 
             // Loop through the file list, checking for archive copies and comparing if archive copy present
@@ -671,7 +683,7 @@ namespace Space_Manager
         private ArchiveCompareResults CompareFileUsingMyEMSLInfo(
             string serverFilePath,
             udtDatasetInfoType udtDatasetInfo,
-            IReadOnlyDictionary<string, string> dctFilesInMyEMSL,
+            IReadOnlyDictionary<string, KeyValuePair<DateTime, string>> dctFilesInMyEMSL,
             out bool fileInMyEMSL)
         {
             fileInMyEMSL = false;
@@ -722,7 +734,7 @@ namespace Space_Manager
             var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFile);
 
             // Compute the SHA-1 hash value of the file
-            if (string.Equals(serverFileHash, archiveFileHash))
+            if (string.Equals(serverFileHash, archiveFileInfo.Value))
             {
                 if (TraceMode)
                 {
@@ -732,7 +744,7 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Equal;
             }
 
-            LogDebug(string.Format(" ... hashes do not match: {0} locally vs. {1} in MyEMSL", serverFileHash, archiveFileHash));
+            LogDebug(string.Format(" ... hashes do not match: {0} locally vs. {1} in MyEMSL", serverFileHash, archiveFileInfo.Value));
 
             return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
         }
