@@ -616,24 +616,31 @@ namespace Space_Manager
                     comparisonResult = CompareFileUsingSamba(sambaDatasetNamePath, serverFilePath, udtDatasetInfo, datasetDirectory);
                 }
 
-                if (comparisonResult == ArchiveCompareResults.Compare_Equal)
-                    continue;
-
-                if (comparisonResult == ArchiveCompareResults.Compare_Not_Equal_or_Missing)
+                switch (comparisonResult)
                 {
-                    // An update is required
-                    if (string.IsNullOrEmpty(mismatchMessage) || eCompResultOverall != ArchiveCompareResults.Compare_Not_Equal_or_Missing)
-                        mismatchMessage = "  Update required. Server file " + serverFilePath + " doesn't match copy in MyEMSL or in the archive";
+                    case ArchiveCompareResults.Compare_Equal:
+                        continue;
 
-                    eCompResultOverall = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
-                    continue;
-                }
+                    case ArchiveCompareResults.Compare_Not_Equal_or_Missing or
+                        ArchiveCompareResults.Compare_Archive_Samba_Share_Missing or
+                        ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing:
+                    {
+                        // An update is required
+                        if (string.IsNullOrEmpty(mismatchMessage) || compResultOverall != ArchiveCompareResults.Compare_Not_Equal_or_Missing)
+                            mismatchMessage = "  Update required. Server file " + serverFilePath + " doesn't match copy in MyEMSL or in the archive";
 
-                if (comparisonResult == ArchiveCompareResults.Compare_Error)
-                {
-                    return comparisonResult;
+                        compResultOverall = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
+                        continue;
+                    }
+
+                    case ArchiveCompareResults.Compare_Error:
+                        return comparisonResult;
+
+                    default:
+                        compResultOverall = ArchiveCompareResults.Compare_Not_Equal_or_Missing;
+                        break;
                 }
-            } // for each file in lstServerFilesToPurge
+            }
 
             switch (compResultOverall)
             {
