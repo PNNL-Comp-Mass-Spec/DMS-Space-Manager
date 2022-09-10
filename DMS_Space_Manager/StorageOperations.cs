@@ -740,9 +740,8 @@ namespace Space_Manager
 
             if (TraceMode)
             {
-                LogDebug(
-                    string.Format("Computing SHA-1 hash for {0:F2} GB file {1}",
-                                  MainProgram.BytesToGB(serverFile.Length), relativeFilePath));
+                LogDebug(string.Format("Computing SHA-1 hash for {0} file {1}",
+                        PRISM.FileTools.BytesToHumanReadable(serverFile.Length), relativeFilePath));
             }
 
             fileInMyEMSL = true;
