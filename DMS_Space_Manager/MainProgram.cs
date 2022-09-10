@@ -77,6 +77,60 @@ namespace Space_Manager
                 Console.WriteLine("Trace mode enabled");
         }
 
+        /// <summary>
+        /// Use the hidden admin share to determine the free space of a drive on a remote computer
+        /// </summary>
+        /// <param name="remoteServer"></param>
+        /// <param name="driveData"></param>
+        /// <param name="driveFreeSpaceGB"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool GetFreeSpaceUsingAdminShare(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
+        {
+            var postToDB = !Environment.MachineName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase);
+
+            // This path must end with a backslash
+            var sharePath = string.Format(@"\\{0}\\{1}$\\", remoteServer, driveData.DriveLetter.Substring(0, 1));
+
+            driveFreeSpaceGB = 0;
+
+            try
+            {
+                var remoteShare = new DirectoryInfo(sharePath);
+
+                long freeBytesAvailable = 0;
+                long totalNumberOfBytes = 0;
+                long totalNumberOfFreeBytes = 0;
+
+                if (RemoteShareInfo.GetDiskFreeSpaceEx(
+                        remoteShare.FullName,
+                        ref freeBytesAvailable,
+                        ref totalNumberOfBytes,
+                        ref totalNumberOfFreeBytes))
+                {
+                    driveFreeSpaceGB = BytesToGB(freeBytesAvailable);
+                    return true;
+                }
+
+                LogError("GetDiskFreeSpaceEx returned false for " + sharePath, postToDB);
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception getting free disk space using GetDiskFreeSpaceEx, share path " + sharePath + ": " + ex.Message;
+
+                LogError(msg, postToDB);
+
+                if (driveFreeSpaceGB > 0)
+                    driveFreeSpaceGB = -driveFreeSpaceGB;
+
+                if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
+                    driveFreeSpaceGB = -1;
+
+                return false;
+            }
+        }
 
         /// <summary>
         /// Use WMI to determine the free space of a drive on a remote computer
@@ -673,15 +727,28 @@ namespace Space_Manager
             {
                 // Checking a remote drive
 
+                // Option 1: use WMI
+                // Option 2: use the hidden share (F$, G$, etc.)
 
+                // WMI worked in 2018 from a developer computer but is not working in 2022
+                // Thus, always use the hidden share method when accessing a remote computer
 
+                const bool USE_WMI = false;
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (USE_WMI)
+                {
                     if (!GetFreeSpaceUsingWMI(machine, driveData, out driveFreeSpaceGB))
                     {
                         return SpaceCheckResults.Error;
                     }
                 }
+                else
                 {
+                    if (!GetFreeSpaceUsingAdminShare(machine, driveData, out driveFreeSpaceGB))
+                    {
+                        return SpaceCheckResults.Error;
+                    }
                 }
             }
             else

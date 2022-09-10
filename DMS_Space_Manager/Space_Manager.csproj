@@ -74,6 +74,7 @@
     <Compile Include="MainProgram.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="PurgeableFileSearcher.cs" />
+    <Compile Include="RemoteShareInfo.cs" />
     <Compile Include="SpaceMgrTask.cs" />
     <Compile Include="StatusData.cs" />
     <Compile Include="StatusFile.cs" />
