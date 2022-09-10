@@ -90,8 +90,7 @@ namespace Space_Manager
         /// <returns>Enum indicating if task was found</returns>
         public override EnumRequestTaskResult RequestTask(string driveLetter)
         {
-            var retVal = RequestTaskDetailed(driveLetter);
-            return retVal;
+            return RequestTaskDetailed(driveLetter);
         }
 
         /// <summary>

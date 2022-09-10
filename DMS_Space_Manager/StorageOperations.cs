@@ -193,9 +193,7 @@ namespace Space_Manager
 
             ReportStatus("Verifying integrity vs. archive, dataset " + udtDatasetInfo.DatasetDirectoryPath);
 
-            var compResult = CompareDatasetDirectories(udtDatasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge);
-
-            switch (compResult)
+            switch (CompareDatasetDirectories(udtDatasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge))
             {
                 case ArchiveCompareResults.Compare_Equal:
                     // Everything matches up
@@ -659,9 +657,7 @@ namespace Space_Manager
                 reader.StatusEvent += Reader_MessageEvent;
                 reader.ProgressUpdate += Reader_ProgressEvent;
 
-                var lstFilesInMyEMSL = reader.FindFilesByDatasetName(datasetName);
-
-                return lstFilesInMyEMSL;
+                return reader.FindFilesByDatasetName(datasetName);
             }
             catch (Exception ex)
             {
@@ -1205,9 +1201,7 @@ namespace Space_Manager
             // Read in results file
             try
             {
-                var contents = File.ReadAllLines(md5ResultsFilePath);
-
-                foreach (var inputLine in contents)
+                foreach (var inputLine in File.ReadAllLines(md5ResultsFilePath))
                 {
                     // Extract the hash values value from the data line
 
