@@ -530,10 +530,11 @@ namespace Space_Manager
                     // Check available space on server drive and compare it with min allowed space
                     var serverName = m_MgrSettings.GetParam("MachName");
                     var perspective = m_MgrSettings.GetParam("perspective");
+
                     var checkResult = IsPurgeRequired(serverName,
-                                                                        perspective,
-                                                                        testDrive,
-                                                                        out var driveFreeSpaceGB);
+                                                      perspective,
+                                                      testDrive,
+                                                      out var driveFreeSpaceGB);
 
                     if (checkResult == SpaceCheckResults.Above_Threshold)
                     {

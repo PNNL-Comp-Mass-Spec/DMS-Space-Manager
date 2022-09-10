@@ -266,7 +266,7 @@ namespace Space_Manager
 
             var simulateMode = false;
 #if !DoDelete
-                simulateMode = true;
+            simulateMode = true;
 #endif
             // Purge the dataset directory by deleting contents
             if (PreviewMode)
@@ -1394,7 +1394,7 @@ namespace Space_Manager
 
             var simulateMode = false;
 #if !DoDelete
-                simulateMode = true;
+            simulateMode = true;
 #endif
             if (PreviewMode || simulateMode)
             {
