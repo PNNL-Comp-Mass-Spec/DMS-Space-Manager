@@ -79,14 +79,14 @@ namespace Space_Manager
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
         private bool AddFilesToPurgeDateThreshold(DirectoryInfo targetDirectory, int ageThresholdDays, ISet<string> serverFilesToPurge)
         {
-            var lstFiles = FindFilesAndNewestDate(targetDirectory, out var dtMostRecentUpdate);
+            var foundFiles = FindFilesAndNewestDate(targetDirectory, out var dtMostRecentUpdate);
 
             if (ageThresholdDays < 1)
                 ageThresholdDays = 1;
 
             if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > ageThresholdDays)
             {
-                foreach (var file in lstFiles)
+                foreach (var file in foundFiles)
                 {
                     if (!serverFilesToPurge.Contains(file))
                         serverFilesToPurge.Add(file);
@@ -102,12 +102,12 @@ namespace Space_Manager
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory to process</param>
         /// <param name="udtDatasetInfo">Dataset info</param>
-        /// <param name="lstJobsToPurge">Jobs whose directories will be deleted</param>
+        /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
         public SortedSet<string> FindDatasetFilesToPurge(
             DirectoryInfo datasetDirectory,
             StorageOperations.udtDatasetInfoType udtDatasetInfo,
-            out List<int> lstJobsToPurge)
+            out List<int> jobsToPurge)
         {
             var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
 
@@ -116,7 +116,7 @@ namespace Space_Manager
                 var serverFilesToPurge = new SortedSet<string>();
                 AddFilesToPurge(datasetDirectory, "*.*", 0, true, serverFilesToPurge);
 
-                lstJobsToPurge = new List<int>();
+                jobsToPurge = new List<int>();
                 return serverFilesToPurge;
             }
 
@@ -131,17 +131,17 @@ namespace Space_Manager
                         AddFilesToPurge(subdirectory, "*.*", 0, true, serverFilesToPurge);
                 }
 
-                lstJobsToPurge = new List<int>();
+                jobsToPurge = new List<int>();
                 return serverFilesToPurge;
             }
 
             // Auto-purge files for this dataset
-            return FindDatasetFilesToAutoPurge(udtDatasetInfo, out lstJobsToPurge);
+            return FindDatasetFilesToAutoPurge(udtDatasetInfo, out jobsToPurge);
         }
 
         private List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime dtMostRecentUpdate)
         {
-            var lstFiles = new List<string>();
+            var foundFiles = new List<string>();
             dtMostRecentUpdate = DateTime.MinValue;
 
             // Find files in targetDirectory
@@ -152,10 +152,10 @@ namespace Space_Manager
                     dtMostRecentUpdate = candidateFile.LastWriteTimeUtc;
                 }
 
-                lstFiles.Add(candidateFile.FullName);
+                foundFiles.Add(candidateFile.FullName);
             }
 
-            return lstFiles;
+            return foundFiles;
         }
 
         /// <summary>
@@ -163,12 +163,12 @@ namespace Space_Manager
         /// Auto-determine the ones that should be purged
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
-        /// <param name="lstJobsToPurge">Jobs whose directories will be deleted</param>
+        /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
-        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> lstJobsToPurge)
+        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> jobsToPurge)
         {
             var serverFilesToPurge = new SortedSet<string>();
-            lstJobsToPurge = new List<int>();
+            jobsToPurge = new List<int>();
 
             var jobDirectoryMatcher = new Regex(@"_Auto(\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -287,14 +287,14 @@ namespace Space_Manager
                             // Files are not yet 3 years old
                             // If all of the files are 1 year old, then purge files over 50 MB
 
-                            var lstFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
+                            var foundFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
 
                             if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
                             {
                                 // Purge all files over 50 MB in size
                                 var filesMatched = AddFilesToPurge(subdirectory, "*.*", 50 * 1024, true, serverFilesToPurge);
 
-                                if (filesMatched == lstFiles.Count)
+                                if (filesMatched == foundFiles.Count)
                                     subDirPurged = true;
                             }
                         }
@@ -304,7 +304,7 @@ namespace Space_Manager
                             if (match.Groups.Count > 0)
                             {
                                 if (int.TryParse(match.Groups[1].Value, out var jobNum))
-                                    lstJobsToPurge.Add(jobNum);
+                                    jobsToPurge.Add(jobNum);
                             }
                         }
                     }

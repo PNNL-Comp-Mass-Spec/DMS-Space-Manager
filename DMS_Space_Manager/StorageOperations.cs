@@ -506,18 +506,18 @@ namespace Space_Manager
         /// </summary>
         /// <param name="udtDatasetInfo">Dataset info</param>
         /// <param name="sambaDatasetNamePath">Location of dataset directory in archive (samba)</param>
-        /// <param name="lstServerFilesToPurge"></param>
+        /// <param name="serverFilesToPurge"></param>
         /// <param name="lstJobsToPurge"></param>
         /// <returns>Comparison result</returns>
         public ArchiveCompareResults CompareDatasetDirectories(udtDatasetInfoType udtDatasetInfo, string sambaDatasetNamePath,
-            out SortedSet<string> lstServerFilesToPurge,
+            out SortedSet<string> serverFilesToPurge,
             out List<int> lstJobsToPurge)
         {
-            lstServerFilesToPurge = new SortedSet<string>();
+            serverFilesToPurge = new SortedSet<string>();
             lstJobsToPurge = new List<int>();
 
             // Set this to true for now
-            var eCompResultOverall = ArchiveCompareResults.Compare_Equal;
+            var compResultOverall = ArchiveCompareResults.Compare_Equal;
 
             // Verify server dataset directory exists. If it doesn't, either we're getting Access Denied or the directory was manually purged
             var datasetDirectory = new DirectoryInfo(udtDatasetInfo.DatasetDirectoryPath);
@@ -530,9 +530,9 @@ namespace Space_Manager
 
             // First look for this dataset's files in MyEMSL
             // Next append any files visible using Samba (at \\agate.emsl.pnl.gov\dmsarch\)
-            var lstFilesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out var queryException);
+            var filesInMyEMSL = FindFilesInMyEMSL(udtDatasetInfo.DatasetName, out var queryException);
 
-            if (lstFilesInMyEMSL.Count == 0)
+            if (filesInMyEMSL.Count == 0)
             {
                 // Verify Samba dataset directory exists
                 if (!Directory.Exists(sambaDatasetNamePath))
@@ -567,8 +567,8 @@ namespace Space_Manager
             }
 
             // Find files to purge based on the purge policy
-            var oPurgeableFileSearcher = new PurgeableFileSearcher();
-            lstServerFilesToPurge = oPurgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, udtDatasetInfo, out lstJobsToPurge);
+            var purgeableFileSearcher = new PurgeableFileSearcher();
+            serverFilesToPurge = purgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, udtDatasetInfo, out lstJobsToPurge);
 
             var mismatchMessage = string.Empty;
 
@@ -576,7 +576,7 @@ namespace Space_Manager
             // File paths are not case sensitive
             var dctFilesInMyEMSL = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var item in lstFilesInMyEMSL)
+            foreach (var item in filesInMyEMSL)
             {
                 if (dctFilesInMyEMSL.ContainsKey(item.RelativePathWindows))
                 {
@@ -587,7 +587,7 @@ namespace Space_Manager
 
             // Loop through the file list, checking for archive copies and comparing if archive copy present
             // We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mismatch is present
-            foreach (var serverFilePath in lstServerFilesToPurge)
+            foreach (var serverFilePath in serverFilesToPurge)
             {
                 // Determine if file exists in archive
 
@@ -625,7 +625,7 @@ namespace Space_Manager
                 }
             } // for each file in lstServerFilesToPurge
 
-            switch (eCompResultOverall)
+            switch (compResultOverall)
             {
                 case ArchiveCompareResults.Compare_Equal:
                     // Everything matches up
@@ -636,7 +636,7 @@ namespace Space_Manager
                     break;
             }
 
-            return eCompResultOverall;
+            return compResultOverall;
         }
 
         private List<MyEMSLReader.ArchivedFileInfo> FindFilesInMyEMSL(string datasetName, out bool queryException)
