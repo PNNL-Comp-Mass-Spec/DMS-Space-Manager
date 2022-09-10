@@ -77,6 +77,69 @@ namespace Space_Manager
                 Console.WriteLine("Trace mode enabled");
         }
 
+
+        /// <summary>
+        /// Use WMI to determine the free space of a drive on a remote computer
+        /// </summary>
+        /// <param name="remoteServer"></param>
+        /// <param name="driveData"></param>
+        /// <param name="driveFreeSpaceGB"></param>
+        /// <returns>True if successful, false if an error</returns>
+        // ReSharper disable once MemberCanBeMadeStatic.Local
+        private bool GetFreeSpaceUsingWMI(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
+        {
+            var postToDB = !Environment.MachineName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase);
+
+            // Get WMI object representing drive
+            var requestStr = @"\\" + remoteServer + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
+
+            driveFreeSpaceGB = 0;
+
+            try
+            {
+                var disk = new ManagementObject(requestStr);
+                disk.Get();
+
+                var freeSpaceBytes = disk["FreeSpace"];
+                if (freeSpaceBytes == null)
+                {
+                    LogError("Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready", true);
+                    {
+                        return false;
+                    }
+                }
+
+                var availableSpace = Convert.ToDouble(freeSpaceBytes);
+                var totalSpace = Convert.ToDouble(disk["Size"]);
+
+                if (totalSpace <= 0)
+                {
+                    LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready", postToDB);
+                    {
+                        return false;
+                    }
+                }
+
+                driveFreeSpaceGB = BytesToGB((long)availableSpace);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
+
+                LogError(msg, postToDB);
+
+                if (driveFreeSpaceGB > 0)
+                    driveFreeSpaceGB = -driveFreeSpaceGB;
+
+                if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
+                    driveFreeSpaceGB = -1;
+
+                return false;
+            }
+        }
+
         /// <summary>
         /// Initializes the manager
         /// </summary>
@@ -609,44 +672,16 @@ namespace Space_Manager
             if (perspective.StartsWith("client", StringComparison.OrdinalIgnoreCase))
             {
                 // Checking a remote drive
-                // Get WMI object representing drive
-                var requestStr = @"\\" + machine + @"\root\cimv2:win32_logicaldisk.deviceid=""" + driveData.DriveLetter + "\"";
 
-                try
-                {
-                    var disk = new ManagementObject(requestStr);
-                    disk.Get();
 
-                    var oFreeSpace = disk["FreeSpace"];
-                    if (oFreeSpace == null)
+
+
+                    if (!GetFreeSpaceUsingWMI(machine, driveData, out driveFreeSpaceGB))
                     {
-                        LogError("Drive " + driveData.DriveLetter + " not found via WMI; likely is Not Ready", true);
                         return SpaceCheckResults.Error;
                     }
-
-                    var availableSpace = Convert.ToDouble(oFreeSpace);
-                    var totalSpace = Convert.ToDouble(disk["Size"]);
-
-                    if (totalSpace <= 0)
-                    {
-                        LogError("Drive " + driveData.DriveLetter + " reports a total size of 0 bytes via WMI; likely is Not Ready", true);
-                        return SpaceCheckResults.Error;
-                    }
-
-                    driveFreeSpaceGB = BytesToGB((long)availableSpace);
                 }
-                catch (Exception ex)
                 {
-                    var msg = "Exception getting free disk space using WMI, drive " + driveData.DriveLetter + ": " + ex.Message;
-
-                    var postToDB = !Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase);
-                    LogError(msg, postToDB);
-
-                    if (driveFreeSpaceGB > 0)
-                        driveFreeSpaceGB = -driveFreeSpaceGB;
-
-                    if (Math.Abs(driveFreeSpaceGB) < float.Epsilon)
-                        driveFreeSpaceGB = -1;
                 }
             }
             else
