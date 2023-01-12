@@ -16,7 +16,7 @@ namespace Space_Manager
     /// </summary>
     internal static class Program
     {
-        private const string PROGRAM_DATE = "January 7, 2023";
+        private const string PROGRAM_DATE = "January 12, 2023";
 
         private static MainProgram mMainProgram;
 
