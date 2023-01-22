@@ -16,9 +16,14 @@ namespace Space_Manager
     /// </summary>
     internal static class Program
     {
-        private const string PROGRAM_DATE = "January 12, 2023";
+        private static readonly string ProgramDate;
 
         private static MainProgram mMainProgram;
+
+        static Program()
+        {
+            ProgramDate = ThisAssembly.GitCommitDate.ToLocalTime().ToString("MMMM dd, yyyy");
+        }
 
         /// <summary>
         /// The main entry point for the application.
@@ -31,7 +36,7 @@ namespace Space_Manager
             var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
 
             var parser = new CommandLineParser<CommandLineOptions>(exeName,
-                AppUtils.GetAppVersion(PROGRAM_DATE))
+                AppUtils.GetAppVersion(ProgramDate))
             {
                 ProgramInfo = "This program manages free space on Proto-x servers",
                 ContactInfo =
