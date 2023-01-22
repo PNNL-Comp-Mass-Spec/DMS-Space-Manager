@@ -31,7 +31,7 @@ namespace Space_Manager
             var exeName = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
 
             var parser = new CommandLineParser<CommandLineOptions>(exeName,
-                PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
+                AppUtils.GetAppVersion(PROGRAM_DATE))
             {
                 ProgramInfo = "This program manages free space on Proto-x servers",
                 ContactInfo =

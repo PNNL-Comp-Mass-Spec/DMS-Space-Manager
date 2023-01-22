@@ -323,7 +323,7 @@ namespace Space_Manager
                         catch
                         {
                             // Perform garbage collection, then try again
-                            PRISM.ProgRunner.GarbageCollectNow();
+                            PRISM.AppUtils.GarbageCollectNow();
 
                             if (!PreviewMode && !simulateMode)
                                 fiFile.Delete();

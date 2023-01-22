@@ -232,7 +232,7 @@ namespace Space_Manager
                 RegisterEvents(m_MgrSettings);
                 m_MgrSettings.CriticalErrorEvent += ErrorEventHandler;
 
-                var mgrExePath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
+                var mgrExePath = AppUtils.GetAppPath();
                 var localSettings = m_MgrSettings.LoadMgrSettingsFromFile(mgrExePath + ".config");
 
                 if (localSettings == null)
@@ -315,7 +315,7 @@ namespace Space_Manager
             }
 
             // Setup a file watcher for the config file
-            var appPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
+            var appPath = AppUtils.GetAppPath();
             var fInfo = new FileInfo(appPath);
             m_FileWatcher = new FileSystemWatcher
             {
