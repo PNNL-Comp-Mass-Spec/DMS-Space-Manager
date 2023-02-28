@@ -213,7 +213,7 @@ namespace Space_Manager
             var cmd = dbTools.CreateCommand(spName, CommandType.StoredProcedure);
 
             dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-            dbTools.AddParameter(cmd, "@datasetNum", SqlType.VarChar, 128, datasetName);
+            dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
             dbTools.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
