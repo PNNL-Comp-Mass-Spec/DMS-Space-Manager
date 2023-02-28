@@ -48,12 +48,12 @@ namespace Space_Manager
     /// <summary>
     /// Purge task completion codes
     /// </summary>
-    /// <remarks>These codes are used by stored procedure SetPurgeTaskComplete</remarks>
+    /// <remarks>These codes are used by stored procedure set_purge_task_complete</remarks>
     public enum EnumCloseOutType : short
     {
         CLOSEOUT_SUCCESS = 0,                   // Purged all data; PurgePolicy=2
         CLOSEOUT_FAILED = 1,
-        CLOSEOUT_UPDATE_REQUIRED = 2,           // This completion code will cause SetPurgeTaskComplete to auto-call MakeNewArchiveUpdateJob in the DMS_Capture database
+        CLOSEOUT_UPDATE_REQUIRED = 2,           // This completion code will cause set_purge_task_complete to auto-call make_new_archive_update_job in the DMS_Capture database
                                                 // Obsolete: CLOSEOUT_WAITING_HASH_FILE = 3,
         CLOSEOUT_DRIVE_MISSING = 4,
         CLOSEOUT_PURGE_AUTO = 5,                // Purged instrument data, MSXML data, and older jobs; PurgePolicy=0

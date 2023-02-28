@@ -22,8 +22,8 @@ namespace Space_Manager
         // ReSharper disable once CommentTypo
         // Ignore Spelling: machname
 
-        private const string SP_NAME_SET_COMPLETE = "SetPurgeTaskComplete";
-        private const string SP_NAME_REQUEST_TASK = "RequestPurgeTask";
+        private const string SP_NAME_SET_COMPLETE = "set_purge_task_complete";
+        private const string SP_NAME_REQUEST_TASK = "request_purge_task";
 
         /// <summary>
         /// Constructor
@@ -224,8 +224,8 @@ namespace Space_Manager
             }
 
             // Execute the SP
-            // Note that stored procedure SetPurgeTaskComplete (in DMS5) will call
-            // MakeNewArchiveUpdateJob (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
+            // Note that stored procedure set_purge_task_complete (in DMS5) will call
+            // make_new_archive_update_job (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
             var resCode = m_DMSProcedureExecutor.ExecuteSP(cmd);
 
             return resCode == 0;

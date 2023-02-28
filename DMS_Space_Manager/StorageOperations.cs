@@ -1374,7 +1374,7 @@ namespace Space_Manager
         /// <param name="lstJobsToPurge"></param>
         private void MarkPurgedJobs(IReadOnlyCollection<int> lstJobsToPurge)
         {
-            const string SP_MARK_PURGED_JOBS = "MarkPurgedJobs";
+            const string SP_MARK_PURGED_JOBS = "mark_purged_jobs";
 
             if (lstJobsToPurge.Count == 0)
             {
@@ -1403,7 +1403,7 @@ namespace Space_Manager
                 return;
             }
 
-            // Call stored procedure MarkPurgedJobs
+            // Call stored procedure mark_purged_jobs
 
             const int maxRetryCount = 3;
 
