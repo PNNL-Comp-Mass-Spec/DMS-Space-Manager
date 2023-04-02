@@ -110,7 +110,7 @@ namespace Space_Manager
         /// <summary>
         /// Fill string dictionary with parameter values
         /// </summary>
-        /// <param name="parameters">Result table from call to request_step_task</param>
+        /// <param name="parameters">Result table from call to request_ctm_step_task</param>
         /// <returns>True if successful, false if an error</returns>
         protected bool FillParamDict(List<List<string>> parameters)
         {

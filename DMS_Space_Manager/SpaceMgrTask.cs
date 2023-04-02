@@ -225,7 +225,7 @@ namespace Space_Manager
 
             // Execute the SP
             // Note that stored procedure set_purge_task_complete (in DMS5) will call
-            // make_new_archive_update_job (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
+            // make_new_archive_update_task (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
             var resCode = m_DMSProcedureExecutor.ExecuteSP(cmd);
 
             return resCode == 0;
