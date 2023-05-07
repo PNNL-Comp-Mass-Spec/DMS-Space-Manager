@@ -103,6 +103,8 @@ namespace Space_Manager
 
             try
             {
+                var serverType = DbToolsFactory.GetServerTypeFromConnectionString(mDMSProcedureExecutor.ConnectStr);
+
                 // Set up the command object prior to SP execution
                 var cmd = mDMSProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
@@ -121,7 +123,14 @@ namespace Space_Manager
                 mDMSProcedureExecutor.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
                 var messageParam = mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
-                mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
+                if (serverType == DbServerTypes.PostgreSQL)
+                {
+                    mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.Boolean).Value = false;
+                }
+                else
+                {
+                    mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
+                }
 
                 // We stopped creating stagemd5 files in January 2016
                 // Thus, pass 0 for this parameter instead of 1

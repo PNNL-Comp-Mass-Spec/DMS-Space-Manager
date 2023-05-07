@@ -1407,15 +1407,26 @@ namespace Space_Manager
 
             const int maxRetryCount = 3;
 
+            var serverType = DbToolsFactory.GetServerTypeFromConnectionString(mDMSProcedureExecutor.ConnectStr);
+
             //Setup for execution of the stored procedure
             var cmd = mDMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
             mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
             mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
-            mDMSProcedureExecutor.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
+
+            if (serverType == DbServerTypes.PostgreSQL)
+            {
+                mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.Boolean).Value = false;
+            }
+            else
+            {
+                mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
+            }
 
             //Execute the SP
             var resCode = mDMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
+
             if (resCode == 0)
             {
                 ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
