@@ -108,7 +108,9 @@ namespace Space_Manager
                 // Set up the command object prior to SP execution
                 var cmd = mDMSProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
-                mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
                 mDMSProcedureExecutor.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, mMgrParams.GetParam("machname"));
@@ -144,9 +146,11 @@ namespace Space_Manager
                 PrintCommandParams(cmd);
 
                 // Execute the SP
-                var retVal = mDMSProcedureExecutor.ExecuteSPData(cmd, out var queryResults);
+                mDMSProcedureExecutor.ExecuteSPData(cmd, out var queryResults);
 
-                switch (retVal)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                switch (returnCode)
                 {
                     case RET_VAL_OK:
                         // Step task was found; get the data for it
@@ -219,23 +223,28 @@ namespace Space_Manager
             // Setup for execution of the stored procedure
             var cmd = mDMSProcedureExecutor.CreateCommand(spName, CommandType.StoredProcedure);
 
-            mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            // Define parameter for procedure's return value
+            // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+            var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
             mDMSProcedureExecutor.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
             mDMSProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
             mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
             if (TraceMode)
             {
-                ReportDebug(string.Format("Calling {0} for dataset {1} with completion code {2}",
-                                  spName, datasetName, completionCode));
+                ReportDebug(string.Format(
+                    "Calling {0} for dataset {1} with completion code {2}",
+                    spName, datasetName, completionCode));
             }
 
             // Execute the SP
             // Note that stored procedure set_purge_task_complete (in DMS5) will call
             // make_new_archive_update_task (in the DMS_Capture database) if the completionCode is 2 = Archive Update required
-            var resCode = mDMSProcedureExecutor.ExecuteSP(cmd);
+            mDMSProcedureExecutor.ExecuteSP(cmd);
 
-            return resCode == 0;
+            var returnCode = DBToolsBase.GetReturnCode(returnParam);
+            return returnCode == 0;
         }
     }
 }

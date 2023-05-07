@@ -1412,7 +1412,10 @@ namespace Space_Manager
             //Setup for execution of the stored procedure
             var cmd = mDMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-            mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            // Define parameter for procedure's return value
+            // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+            var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
             mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
 
             if (serverType == DbServerTypes.PostgreSQL)
@@ -1425,9 +1428,11 @@ namespace Space_Manager
             }
 
             //Execute the SP
-            var resCode = mDMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
+            mDMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
 
-            if (resCode == 0)
+            var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+            if (returnCode == 0)
             {
                 ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
             }
