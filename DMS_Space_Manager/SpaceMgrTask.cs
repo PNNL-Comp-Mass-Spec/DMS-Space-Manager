@@ -22,8 +22,8 @@ namespace Space_Manager
         // ReSharper disable once CommentTypo
         // Ignore Spelling: machname
 
-        private const string SP_NAME_SET_COMPLETE = "set_purge_task_complete";
         private const string SP_NAME_REQUEST_TASK = "request_purge_task";
+        private const string SP_NAME_SET_COMPLETE = "set_purge_task_complete";
 
         /// <summary>
         /// Constructor
@@ -103,15 +103,13 @@ namespace Space_Manager
 
             try
             {
-                var dbTools = m_DMSProcedureExecutor;
-
                 // Set up the command object prior to SP execution
-                var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
+                var cmd = m_DMSProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                m_DMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
-                dbTools.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, m_MgrParams.GetParam("machname"));
+                m_DMSProcedureExecutor.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, m_MgrParams.GetParam("machname"));
 
                 var serverDisk = driveLetter;
                 if (driveLetter.EndsWith(":"))
@@ -120,13 +118,14 @@ namespace Space_Manager
                     serverDisk = driveLetter + @"\";
                 }
 
-                dbTools.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
-                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
-                dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
+                m_DMSProcedureExecutor.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
+                var messageParam = m_DMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+
+                m_DMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
 
                 // We stopped creating stagemd5 files in January 2016
                 // Thus, pass 0 for this parameter instead of 1
-                dbTools.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
+                m_DMSProcedureExecutor.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
 
                 var msg = "SpaceMgrTask.RequestTaskDetailed(), connection string: " + m_DMSProcedureExecutor.ConnectStr;
                 LogTools.LogDebug(msg);
@@ -209,13 +208,12 @@ namespace Space_Manager
         public bool SetPurgeTaskComplete(string spName, int completionCode, string datasetName)
         {
             // Setup for execution of the stored procedure
-            var dbTools = m_DMSProcedureExecutor;
-            var cmd = dbTools.CreateCommand(spName, CommandType.StoredProcedure);
+            var cmd = m_DMSProcedureExecutor.CreateCommand(spName, CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-            dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
-            dbTools.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
-            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+            m_DMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            m_DMSProcedureExecutor.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
+            m_DMSProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
+            m_DMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
             if (TraceMode)
             {

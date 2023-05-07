@@ -1408,12 +1408,11 @@ namespace Space_Manager
             const int maxRetryCount = 3;
 
             //Setup for execution of the stored procedure
-            var dbTools = DMSProcedureExecutor;
-            var cmd = dbTools.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
+            var cmd = DMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-            dbTools.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
-            dbTools.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
+            DMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            DMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
+            DMSProcedureExecutor.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
 
             //Execute the SP
             var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
