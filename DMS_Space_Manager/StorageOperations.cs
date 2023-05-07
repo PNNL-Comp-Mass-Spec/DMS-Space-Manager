@@ -1413,7 +1413,7 @@ namespace Space_Manager
             var cmd = mDMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
             // Define parameter for procedure's return value
-            // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+            // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
             var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
             mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
