@@ -225,7 +225,7 @@ namespace Space_Manager
 
             mDMSProcedureExecutor.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
             mDMSProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
-            mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+            mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
             if (TraceMode)
             {
