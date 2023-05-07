@@ -16,13 +16,13 @@ namespace Space_Manager
     /// </summary>
     internal static class StatusData
     {
-        private static string m_MostRecentLogMessage;
+        private static string mMostRecentLogMessage;
 
-        private static readonly Queue<string> m_ErrorQueue = new();
+        private static readonly Queue<string> mErrorQueue = new();
 
         public static string MostRecentLogMessage
         {
-            get => m_MostRecentLogMessage;
+            get => mMostRecentLogMessage;
             set
             {
                 //Filter out routine startup and shutdown messages
@@ -32,22 +32,22 @@ namespace Space_Manager
                 }
                 else
                 {
-                    m_MostRecentLogMessage = value;
+                    mMostRecentLogMessage = value;
                 }
             }
         }
 
-        public static IEnumerable<string> ErrorQueue => m_ErrorQueue;
+        public static IEnumerable<string> ErrorQueue => mErrorQueue;
 
         public static void AddErrorMessage(string ErrMsg)
         {
             //Add the most recent error message
-            m_ErrorQueue.Enqueue(ErrMsg);
+            mErrorQueue.Enqueue(ErrMsg);
 
             // If there are more than 4 entries in the queue, delete the oldest ones
-            while (m_ErrorQueue.Count > 4)
+            while (mErrorQueue.Count > 4)
             {
-                m_ErrorQueue.Dequeue();
+                mErrorQueue.Dequeue();
             }
         }
     }

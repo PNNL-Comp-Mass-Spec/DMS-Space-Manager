@@ -24,25 +24,25 @@ namespace Space_Manager
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 
-        protected readonly MgrSettings m_MgrParams;
+        protected readonly MgrSettings mMgrParams;
 
         /// <summary>
         /// Debug level
         /// </summary>
         /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
-        protected readonly int m_DebugLevel;
+        protected readonly int mDebugLevel;
 
         /// <summary>
         /// Job parameters
         /// </summary>
-        protected readonly Dictionary<string, string> m_JobParams = new(StringComparer.OrdinalIgnoreCase);
+        protected readonly Dictionary<string, string> mJobParams = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly IDBTools m_DMSProcedureExecutor;
+        protected readonly IDBTools mDMSProcedureExecutor;
 
-        public Dictionary<string, string> TaskDictionary => m_JobParams;
+        public Dictionary<string, string> TaskDictionary => mJobParams;
 
         public bool TraceMode { get; }
 
@@ -53,22 +53,22 @@ namespace Space_Manager
         /// <param name="traceMode">True to show additional debug messages</param>
         protected DbTask(MgrSettings mgrParams, bool traceMode)
         {
-            m_MgrParams = mgrParams;
+            mMgrParams = mgrParams;
 
             TraceMode = traceMode;
 
             // This Connection String points to the DMS5 database
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, m_MgrParams.ManagerName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
 
-            m_DMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse);
+            mDMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse);
 
-            m_DMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
+            mDMSProcedureExecutor.ErrorEvent += DMSProcedureExecutor_DBErrorEvent;
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = mgrParams.GetParam("DebugLevel", 4);
+            mDebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace Space_Manager
                 msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
 
-            var writeToLog = m_DebugLevel >= 5;
+            var writeToLog = mDebugLevel >= 5;
             LogDebug("Parameter list:" + msg, writeToLog);
         }
 
@@ -143,7 +143,7 @@ namespace Space_Manager
             // DatasetCreated: 2011-08-29 13:42:05
             // DatasetYearQuarter: 2011_3
 
-            m_JobParams.Clear();
+            mJobParams.Clear();
 
             try
             {
@@ -157,7 +157,7 @@ namespace Space_Manager
 
                     if (!string.IsNullOrWhiteSpace(paramName))
                     {
-                        m_JobParams.Add(paramName, paramValue);
+                        mJobParams.Add(paramName, paramValue);
                     }
                 }
                 return true;

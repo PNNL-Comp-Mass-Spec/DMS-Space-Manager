@@ -114,11 +114,11 @@ namespace Space_Manager
             public string RawDataType;
         }
 
-        private readonly MgrSettings m_MgrParams;
-        private readonly bool m_ClientPerspective;
+        private readonly MgrSettings mMgrParams;
+        private readonly bool mClientPerspective;
 
-        private string m_MD5ResultsFileDatasetName = string.Empty;
-        private string m_MD5ResultsFilePath = string.Empty;
+        private string mMD5ResultsFileDatasetName = string.Empty;
+        private string mMD5ResultsFilePath = string.Empty;
 
         /// <summary>
         /// Tracks the full path to a file as the key and the MD5 or SHA-1 hash as the value
@@ -128,9 +128,9 @@ namespace Space_Manager
         /// MD5 hash values are 32 characters long
         /// SHA-1 hash values are 40 characters long
         /// </remarks>
-        private readonly Dictionary<string, HashInfo> m_HashFileContents;
+        private readonly Dictionary<string, HashInfo> mHashFileContents;
 
-        private string m_LastMD5WarnDataset = string.Empty;
+        private string mLastMD5WarnDataset = string.Empty;
 
         private readonly IDBTools DMSProcedureExecutor;
 
@@ -140,16 +140,16 @@ namespace Space_Manager
 
         public StorageOperations(MgrSettings mgrParams)
         {
-            m_MgrParams = mgrParams;
+            mMgrParams = mgrParams;
 
-            m_ClientPerspective = m_MgrParams.GetParam("perspective") == "client";
+            mClientPerspective = mMgrParams.GetParam("perspective") == "client";
 
             // This Connection String points to the DMS5 database
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
             DMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
-            m_HashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
+            mHashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace Space_Manager
 
             // Get path to dataset directory on server
             {
-                if (m_ClientPerspective)
+                if (mClientPerspective)
                 {
                     // Manager is running on a client
                     udtDatasetInfo.DatasetDirectoryPath = purgeParams.GetParam("StorageVolExternal");
@@ -596,7 +596,7 @@ namespace Space_Manager
             }
 
             // Loop through the file list, checking for archive copies and comparing if archive copy present
-            // We need to generate a hash for all of the files so that we can remove invalid lines from m_HashFileContents if a hash mismatch is present
+            // We need to generate a hash for all of the files so that we can remove invalid lines from mHashFileContents if a hash mismatch is present
             foreach (var serverFilePath in serverFilesToPurge)
             {
                 // Determine if file exists in archive
@@ -954,7 +954,7 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Equal;
             }
 
-            if (m_HashFileContents.TryGetValue(filePathInDictionary, out var hashEntry))
+            if (mHashFileContents.TryGetValue(filePathInDictionary, out var hashEntry))
             {
                 // Update the cached hash value to #HashMismatch#
                 hashEntry.HashCode = HASH_MISMATCH;
@@ -1069,7 +1069,7 @@ namespace Space_Manager
         /// \\proto-7\MD5Results\VOrbiETD04\2015_4\results.QC_Shew_15_02_500ng_CID-1_4Nov15_Samwise_15-07-19</returns>
         private string GenerateMD5ResultsFilePath(udtDatasetInfoType udtDatasetInfo)
         {
-            var hashFileDirectory = m_MgrParams.GetParam("MD5ResultsFolderPath");
+            var hashFileDirectory = mMgrParams.GetParam("MD5ResultsFolderPath");
 
             var md5ResultsFilePath = Path.Combine(hashFileDirectory, udtDatasetInfo.Instrument);
             md5ResultsFilePath = Path.Combine(md5ResultsFilePath, udtDatasetInfo.YearQuarter);
@@ -1096,9 +1096,9 @@ namespace Space_Manager
 
             LogDebug("Getting archive hash for file " + fileNamePath);
 
-            if (!string.IsNullOrEmpty(m_MD5ResultsFileDatasetName) &&
-                string.Equals(m_MD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
-                m_HashFileContents.Count > 0)
+            if (!string.IsNullOrEmpty(mMD5ResultsFileDatasetName) &&
+                string.Equals(mMD5ResultsFileDatasetName, udtDatasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
+                mHashFileContents.Count > 0)
             {
                 // Hash file has already been loaded into memory; no need to re-load it
             }
@@ -1128,9 +1128,9 @@ namespace Space_Manager
             }
             else
             {
-                if (!m_HashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
+                if (!mHashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
                 {
-                    LogDebug("  MD5 hash not found for file " + fileNamePath + " using " + fileNameTrimmed + "; see results file " + m_MD5ResultsFilePath);
+                    LogDebug("  MD5 hash not found for file " + fileNamePath + " using " + fileNameTrimmed + "; see results file " + mMD5ResultsFilePath);
                     return HASH_NOT_FOUND;
                 }
 
@@ -1176,23 +1176,23 @@ namespace Space_Manager
         /// <returns>True if success, false if an error</returns>
         private bool LoadMD5ResultsFile(udtDatasetInfoType udtDatasetInfo, out bool waitingForMD5File)
         {
-            m_HashFileContents.Clear();
+            mHashFileContents.Clear();
 
             // Find out if there's an MD5 results file for this dataset
             var md5ResultsFilePath = GenerateMD5ResultsFilePath(udtDatasetInfo);
 
             waitingForMD5File = false;
-            m_MD5ResultsFileDatasetName = string.Empty;
+            mMD5ResultsFileDatasetName = string.Empty;
 
             try
             {
                 if (!File.Exists(md5ResultsFilePath))
                 {
                     // MD5 results file not found
-                    if (string.CompareOrdinal(udtDatasetInfo.DatasetName, m_LastMD5WarnDataset) != 0)
+                    if (string.CompareOrdinal(udtDatasetInfo.DatasetName, mLastMD5WarnDataset) != 0)
                     {
                         // Warning not yet posted
-                        m_LastMD5WarnDataset = string.Copy(udtDatasetInfo.DatasetName);
+                        mLastMD5WarnDataset = string.Copy(udtDatasetInfo.DatasetName);
 
                         ReportStatus("  MD5 results file not found: " + md5ResultsFilePath);
 
@@ -1202,7 +1202,7 @@ namespace Space_Manager
                         // Check to see if a stagemd5 file exists for this dataset.
                         // This is for info only since this program does not create stagemd5 files (the DatasetPurgeArchiveHelper creates them)
 
-                        //var hashFileDirectory = m_MgrParams.GetParam("HashFileLocation");
+                        //var hashFileDirectory = mMgrParams.GetParam("HashFileLocation");
 
                         //var stagedFileNamePath = Path.Combine(hashFileDirectory, STAGED_FILE_NAME_PREFIX + udtDatasetInfo.DatasetName);
                         //if (File.Exists(stagedFileNamePath))
@@ -1291,17 +1291,17 @@ namespace Space_Manager
                             var newHashInfo = new HashInfo(hashCode, myEmslFileID);
 
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-                            if (m_HashFileContents.ContainsKey(fileNameTrimmed))
+                            if (mHashFileContents.ContainsKey(fileNameTrimmed))
                             {
                                 // Preferentially use the newer value, unless the older value is a MyEMSL SHA-1 hash but the newer value is an MD5 hash
-                                if (!(hashCode.Length < 40 && m_HashFileContents[fileNameTrimmed].HashCode.Length >= 40))
+                                if (!(hashCode.Length < 40 && mHashFileContents[fileNameTrimmed].HashCode.Length >= 40))
                                 {
-                                    m_HashFileContents[fileNameTrimmed] = newHashInfo;
+                                    mHashFileContents[fileNameTrimmed] = newHashInfo;
                                 }
                             }
                             else
                             {
-                                m_HashFileContents.Add(fileNameTrimmed, newHashInfo);
+                                mHashFileContents.Add(fileNameTrimmed, newHashInfo);
                             }
                         }
                     }
@@ -1319,8 +1319,8 @@ namespace Space_Manager
             }
 
             // If we get here, then the file has successfully been loaded
-            m_MD5ResultsFileDatasetName = string.Copy(udtDatasetInfo.DatasetName);
-            m_MD5ResultsFilePath = string.Copy(md5ResultsFilePath);
+            mMD5ResultsFileDatasetName = string.Copy(udtDatasetInfo.DatasetName);
+            mMD5ResultsFilePath = string.Copy(md5ResultsFilePath);
 
             return true;
         }
@@ -1475,7 +1475,7 @@ namespace Space_Manager
                 return;
             }
 
-            // Update the hash file to remove any entries with a hash of HASH_MISMATCH in m_HashFileContents
+            // Update the hash file to remove any entries with a hash of HASH_MISMATCH in mHashFileContents
             // These are files for which the MD5 hash of the actual file doesn't match the hash stored in the master MD5 results file,
             //   and we thus need to re-compute the hash using the file in the Archive
             // In theory, before we do this, the Archive Update manager will update the file
@@ -1510,7 +1510,7 @@ namespace Space_Manager
                             continue;
                         }
 
-                        // Look for the Linux-style file path in m_HashFileContents
+                        // Look for the Linux-style file path in mHashFileContents
                         var fileNameTrimmed = TrimPathAfterSubdirectory(lineParts[1], subdirectoryToFind);
 
                         if (string.IsNullOrEmpty(fileNameTrimmed))
@@ -1520,7 +1520,7 @@ namespace Space_Manager
                             continue;
                         }
 
-                        if (m_HashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
+                        if (mHashFileContents.TryGetValue(fileNameTrimmed, out var hashInfo))
                         {
                             // Match found; examine md5HashNew
                             if (string.Equals(hashInfo.HashCode, HASH_MISMATCH))
@@ -1543,7 +1543,7 @@ namespace Space_Manager
                         }
                         else
                         {
-                            // Match not found in m_HashFileContents
+                            // Match not found in mHashFileContents
                             // Retain this line
                             updatedMD5Info.Add(inputLine);
                         }

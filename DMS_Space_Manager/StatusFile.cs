@@ -21,9 +21,9 @@ namespace Space_Manager
     {
         // Ignore Spelling: tcp, yyyy-MM-dd, hh:mm:ss tt
 
-        private DateTime m_LastFileWriteTime;
+        private DateTime mLastFileWriteTime;
 
-        private int m_WritingErrorCountSaved;
+        private int mWritingErrorCountSaved;
 
         /// <summary>
         /// Status file path
@@ -119,7 +119,7 @@ namespace Space_Manager
             FileNamePath = statusFilePath;
             TaskStartTime = DateTime.UtcNow;
 
-            m_LastFileWriteTime = DateTime.MinValue;
+            mLastFileWriteTime = DateTime.MinValue;
 
             ClearCachedInfo();
         }
@@ -336,7 +336,7 @@ namespace Space_Manager
         {
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
-            if (!(DateTime.UtcNow.Subtract(m_LastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
+            if (!(DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
                 return;
 
             // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
@@ -346,7 +346,7 @@ namespace Space_Manager
 
             var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
 
-            m_LastFileWriteTime = DateTime.UtcNow;
+            mLastFileWriteTime = DateTime.UtcNow;
 
             var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText);
             if (success)
@@ -397,20 +397,20 @@ namespace Space_Manager
                 }
 
                 // Reset the error counter
-                m_WritingErrorCountSaved = 0;
+                mWritingErrorCountSaved = 0;
 
                 success = true;
             }
             catch (Exception ex)
             {
                 // Increment the error counter
-                m_WritingErrorCountSaved++;
+                mWritingErrorCountSaved++;
 
-                if (m_WritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD)
+                if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD)
                 {
                     // 5 or more errors in a row have occurred
                     // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
-                    if (m_WritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || m_WritingErrorCountSaved % 10 == 0)
+                    if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
                     {
                         var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
                         OnWarningEvent(msg);

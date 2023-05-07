@@ -41,22 +41,22 @@ namespace Space_Manager
 
         private const bool RESTART_NOT_OK = false;
 
-        private MgrSettings m_MgrSettings;
-        private SpaceMgrTask m_Task;
-        private FileSystemWatcher m_FileWatcher;
-        private bool m_ConfigChanged;
-        private int m_ErrorCount;
-        private IStatusFile m_StatusFile;
+        private MgrSettings mMgrSettings;
+        private SpaceMgrTask mTask;
+        private FileSystemWatcher mFileWatcher;
+        private bool mConfigChanged;
+        private int mErrorCount;
+        private IStatusFile mStatusFile;
 
-        private string m_MgrName = "Unknown";
+        private string mMgrName = "Unknown";
 
         /// <summary>
         /// DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
         /// </summary>
-        private int m_DebugLevel = 4;
+        private int mDebugLevel = 4;
 
-        private System.Timers.Timer m_StatusTimer;
-        private StorageOperations m_StorageOps;
+        private System.Timers.Timer mStatusTimer;
+        private StorageOperations mStorageOps;
 
         public bool PreviewMode { get; }
 
@@ -228,12 +228,12 @@ namespace Space_Manager
                     {MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString},
                 };
 
-                m_MgrSettings = new MgrSettingsDB();
-                RegisterEvents(m_MgrSettings);
-                m_MgrSettings.CriticalErrorEvent += ErrorEventHandler;
+                mMgrSettings = new MgrSettingsDB();
+                RegisterEvents(mMgrSettings);
+                mMgrSettings.CriticalErrorEvent += ErrorEventHandler;
 
                 var mgrExePath = AppUtils.GetAppPath();
-                var localSettings = m_MgrSettings.LoadMgrSettingsFromFile(mgrExePath + ".config");
+                var localSettings = mMgrSettings.LoadMgrSettingsFromFile(mgrExePath + ".config");
 
                 if (localSettings == null)
                 {
@@ -252,13 +252,13 @@ namespace Space_Manager
                     }
                 }
 
-                var success = m_MgrSettings.LoadSettings(localSettings, true);
+                var success = mMgrSettings.LoadSettings(localSettings, true);
                 if (!success)
                 {
-                    if (string.Equals(m_MgrSettings.ErrMsg, MgrSettings.DEACTIVATED_LOCALLY))
+                    if (string.Equals(mMgrSettings.ErrMsg, MgrSettings.DEACTIVATED_LOCALLY))
                         throw new ApplicationException(MgrSettings.DEACTIVATED_LOCALLY);
 
-                    throw new ApplicationException("Unable to initialize manager settings class: " + m_MgrSettings.ErrMsg);
+                    throw new ApplicationException("Unable to initialize manager settings class: " + mMgrSettings.ErrMsg);
                 }
 
                 ReportStatus("Loaded manager settings from Manager Control Database");
@@ -270,26 +270,26 @@ namespace Space_Manager
             }
 
             // Update the cached manager name
-            m_MgrName = m_MgrSettings.ManagerName;
+            mMgrName = mMgrSettings.ManagerName;
 
             // Set up the loggers
-            var logFileNameBase = m_MgrSettings.GetParam("LogFileName", "SpaceMan");
+            var logFileNameBase = mMgrSettings.GetParam("LogFileName", "SpaceMan");
 
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
-            m_DebugLevel = m_MgrSettings.GetParam("DebugLevel", 4);
+            mDebugLevel = mMgrSettings.GetParam("DebugLevel", 4);
 
-            var logLevel = (BaseLogger.LogLevels)m_DebugLevel;
+            var logLevel = (BaseLogger.LogLevels)mDebugLevel;
 
             LogTools.CreateFileLogger(logFileNameBase, logLevel);
 
             // Typically
             // Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;
-            var connectionString = m_MgrSettings.GetParam("ConnectionString");
+            var connectionString = mMgrSettings.GetParam("ConnectionString");
 
-            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, m_MgrName);
+            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             LogTools.RemoveDefaultDbLogger();
-            LogTools.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + m_MgrName);
+            LogTools.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + mMgrName);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
@@ -301,11 +301,11 @@ namespace Space_Manager
 
             // Setup the message queue
             // NOT USED; if changing to use, can copy MessageSender class from CaptureTaskManager:
-            // mMsgHandler = new MessageSender(m_MgrSettings.GetParam("MessageQueueURI"),
-            //     m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),
-            //     m_MgrSettings.ManagerName);
+            // mMsgHandler = new MessageSender(mMgrSettings.GetParam("MessageQueueURI"),
+            //     mMgrSettings.GetParam("MessageQueueTopicMgrStatus"),
+            //     mMgrSettings.ManagerName);
 
-            var configFileName = m_MgrSettings.GetParam("ConfigFileName");
+            var configFileName = mMgrSettings.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
@@ -317,7 +317,7 @@ namespace Space_Manager
             // Setup a file watcher for the config file
             var appPath = AppUtils.GetAppPath();
             var fInfo = new FileInfo(appPath);
-            m_FileWatcher = new FileSystemWatcher
+            mFileWatcher = new FileSystemWatcher
             {
                 Path = fInfo.DirectoryName,
                 IncludeSubdirectories = false,
@@ -327,10 +327,10 @@ namespace Space_Manager
             };
 
             // Subscribe to the file watcher Changed event
-            m_FileWatcher.Changed += FileWatcherChanged;
+            mFileWatcher.Changed += FileWatcherChanged;
 
             // Set up the tool for getting tasks
-            m_Task = new SpaceMgrTask(m_MgrSettings, TraceMode);
+            mTask = new SpaceMgrTask(mMgrSettings, TraceMode);
 
             // Set up the status file class
             if (fInfo.DirectoryName == null)
@@ -340,32 +340,32 @@ namespace Space_Manager
             }
 
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
-            m_StatusFile = new StatusFile(statusFileNameLoc)
+            mStatusFile = new StatusFile(statusFileNameLoc)
             {
-                MgrName = m_MgrName,
+                MgrName = mMgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
 
-            RegisterEvents((EventNotifier)m_StatusFile);
+            RegisterEvents((EventNotifier)mStatusFile);
 
-            var logStatusToMessageQueue = m_MgrSettings.GetParam("LogStatusToMessageQueue", true);
-            var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
-            var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+            var logStatusToMessageQueue = mMgrSettings.GetParam("LogStatusToMessageQueue", true);
+            var messageQueueUri = mMgrSettings.GetParam("MessageQueueURI");
+            var messageQueueTopicMgrStatus = mMgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
-            m_StatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
+            mStatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
 
-            m_StatusFile.WriteStatusFile();
+            mStatusFile.WriteStatusFile();
 
             // Set up the status reporting time
-            m_StatusTimer = new System.Timers.Timer
+            mStatusTimer = new System.Timers.Timer
             {
                 Enabled = false,
                 Interval = 60 * 1000
             };
-            m_StatusTimer.Elapsed += StatusTimer_Elapsed;
+            mStatusTimer.Elapsed += StatusTimer_Elapsed;
 
             // Get the most recent job history
-            var historyFilePath = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+            var historyFilePath = Path.Combine(mMgrSettings.GetParam("ApplicationPath"), "History.txt");
 
             if (File.Exists(historyFilePath))
             {
@@ -384,7 +384,7 @@ namespace Space_Manager
 
                         if (dataLine.Contains("RecentJob: "))
                         {
-                            m_StatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
+                            mStatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
                             break;
                         }
                     }
@@ -396,7 +396,7 @@ namespace Space_Manager
             }
 
             // Set up the storage operations class
-            m_StorageOps = new StorageOperations(m_MgrSettings)
+            mStorageOps = new StorageOperations(mMgrSettings)
             {
                 PreviewMode = PreviewMode,
                 TraceMode = TraceMode
@@ -416,10 +416,10 @@ namespace Space_Manager
 
             try
             {
-                var maxReps = m_MgrSettings.GetParam("MaxRepetitions", 25);
+                var maxReps = mMgrSettings.GetParam("MaxRepetitions", 25);
 
                 // Check if manager has been disabled via manager config db
-                if (!m_MgrSettings.GetParam("MgrActive", false))
+                if (!mMgrSettings.GetParam("MgrActive", false))
                 {
                     // Manager deactivated via manager config db
                     ReportStatus("Manager disabled via config db");
@@ -428,7 +428,7 @@ namespace Space_Manager
                 }
 
                 // Get a list of drives needing space management
-                var driveList = GetDriveList(m_MgrSettings.GetParam("drives"));
+                var driveList = GetDriveList(mMgrSettings.GetParam("drives"));
                 if (driveList == null)
                 {
                     // Problem with drive spec. Error reporting handled by GetDriveList
@@ -494,7 +494,7 @@ namespace Space_Manager
                 while (true)
                 {
                     // Check for configuration changes
-                    if (m_ConfigChanged)
+                    if (mConfigChanged)
                     {
                         // Local config has changed, so exit loop and reload settings
                         ReportStatus("Local config changed. Reloading configuration");
@@ -528,8 +528,8 @@ namespace Space_Manager
                     }
 
                     // Check available space on server drive and compare it with min allowed space
-                    var serverName = m_MgrSettings.GetParam("MachName");
-                    var perspective = m_MgrSettings.GetParam("perspective");
+                    var serverName = mMgrSettings.GetParam("MachName");
+                    var perspective = mMgrSettings.GetParam("perspective");
 
                     var checkResult = IsPurgeRequired(serverName,
                                                       perspective,
@@ -552,7 +552,7 @@ namespace Space_Manager
                     if (checkResult == SpaceCheckResults.Error)
                     {
                         // There was an error getting the free space for this drive. Logging handled by IsPurgeRequired
-                        m_ErrorCount++;
+                        mErrorCount++;
                         break;
                     }
 
@@ -564,13 +564,13 @@ namespace Space_Manager
                     }
 
                     // Request a purge task
-                    var requestResult = m_Task.RequestTask(testDrive.DriveLetter);
+                    var requestResult = mTask.RequestTask(testDrive.DriveLetter);
 
                     // Check for an error
                     if (requestResult == EnumRequestTaskResult.ResultError)
                     {
                         // Error requesting task. Error logging handled by RequestTask, so just continue to next purge candidate
-                        m_ErrorCount++;
+                        mErrorCount++;
                         repCounter++;
                         continue;
                     }
@@ -579,7 +579,7 @@ namespace Space_Manager
                     if (requestResult == EnumRequestTaskResult.ConfigChanged)
                     {
                         // Manager control db has changed. Set flag and allow config test at beginning of loop to control restart
-                        m_ConfigChanged = true;
+                        mConfigChanged = true;
                         continue;
                     }
 
@@ -592,7 +592,7 @@ namespace Space_Manager
                     }
 
                     // If we got to here, the drive needs purging and a purge task was assigned. So, perform the purge
-                    var purgeResult = m_StorageOps.PurgeDataset(m_Task);
+                    var purgeResult = mStorageOps.PurgeDataset(mTask);
 
                     // Evaluate purge result
                     switch (purgeResult)
@@ -601,14 +601,14 @@ namespace Space_Manager
                         case EnumCloseOutType.CLOSEOUT_PURGE_AUTO:
                         case EnumCloseOutType.CLOSEOUT_PURGE_ALL_EXCEPT_QC:
                             repCounter++;
-                            m_ErrorCount = 0;
+                            mErrorCount = 0;
                             break;
                         case EnumCloseOutType.CLOSEOUT_UPDATE_REQUIRED:
                             repCounter++;
-                            m_ErrorCount = 0;
+                            mErrorCount = 0;
                             break;
                         case EnumCloseOutType.CLOSEOUT_FAILED:
-                            m_ErrorCount++;
+                            mErrorCount++;
                             repCounter++;
                             break;
                         // Obsolete:
@@ -629,9 +629,9 @@ namespace Space_Manager
 #endif
                     // Close the purge task
                     if (PreviewMode || simulateMode)
-                        m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
+                        mTask.CloseTask(EnumCloseOutType.CLOSEOUT_PREVIEWED_PURGE);
                     else
-                        m_Task.CloseTask(purgeResult);
+                        mTask.CloseTask(purgeResult);
 
                     if (purgeResult == EnumCloseOutType.CLOSEOUT_DRIVE_MISSING)
                     {
@@ -816,10 +816,10 @@ namespace Space_Manager
         /// <returns>TRUE if error count less than max allowed; FALSE otherwise</returns>
         private bool TestErrorCount()
         {
-            if (m_ErrorCount > MAX_ERROR_COUNT)
+            if (mErrorCount > MAX_ERROR_COUNT)
             {
                 // Too many errors - something must be seriously wrong. Human intervention may be required
-                LogError("Excessive errors. Error count = " + m_ErrorCount + ". Closing manager");
+                LogError("Excessive errors. Error count = " + mErrorCount + ". Closing manager");
 
                 return false;
             }
@@ -871,8 +871,8 @@ namespace Space_Manager
 
         private void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
-            m_StatusFile.CurrentOperation = progressMessage;
-            m_StatusFile.UpdateAndWrite(percentComplete);
+            mStatusFile.CurrentOperation = progressMessage;
+            mStatusFile.UpdateAndWrite(percentComplete);
         }
 
         /// <summary>
@@ -884,18 +884,18 @@ namespace Space_Manager
         {
             LogDebug("MainProgram.FileWatcherChanged event received");
 
-            m_ConfigChanged = true;
-            m_FileWatcher.EnableRaisingEvents = false;
+            mConfigChanged = true;
+            mFileWatcher.EnableRaisingEvents = false;
         }
 
         /// <summary>
-        /// Updates the status at m_StatusTimer interval
+        /// Updates the status at mStatusTimer interval
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            m_StatusFile.WriteStatusFile();
+            mStatusFile.WriteStatusFile();
         }
     }
 }

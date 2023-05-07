@@ -13,9 +13,9 @@ namespace Space_Manager
     /// </summary>
     public class DriveData
     {
-        private readonly string m_DriveLetter;
+        private readonly string mDriveLetter;
 
-        public string DriveLetter => AppendColonToDriveLetter(m_DriveLetter);
+        public string DriveLetter => AppendColonToDriveLetter(mDriveLetter);
 
         /// <summary>
         /// Minimum allowable space, in GB
@@ -29,7 +29,7 @@ namespace Space_Manager
         /// <param name="driveSpace">Min allowable drive space</param>
         public DriveData(string driveLetter, double driveSpace)
         {
-            m_DriveLetter = driveLetter;
+            mDriveLetter = driveLetter;
             MinDriveSpace = driveSpace;
         }
 
