@@ -132,7 +132,7 @@ namespace Space_Manager
 
         private string mLastMD5WarnDataset = string.Empty;
 
-        private readonly IDBTools DMSProcedureExecutor;
+        private readonly IDBTools mDMSProcedureExecutor;
 
         public bool PreviewMode { get; set; }
 
@@ -147,7 +147,7 @@ namespace Space_Manager
             // This Connection String points to the DMS5 database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            DMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
+            mDMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
             mHashFileContents = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
         }
@@ -1408,14 +1408,14 @@ namespace Space_Manager
             const int maxRetryCount = 3;
 
             //Setup for execution of the stored procedure
-            var cmd = DMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
+            var cmd = mDMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
-            DMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-            DMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
-            DMSProcedureExecutor.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
+            mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+            mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
+            mDMSProcedureExecutor.AddParameter(cmd, "@InfoOnly", SqlType.TinyInt).Value = 0;
 
             //Execute the SP
-            var resCode = DMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
+            var resCode = mDMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
             if (resCode == 0)
             {
                 ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
