@@ -99,8 +99,6 @@ namespace Space_Manager
         /// <returns>RequestTaskResult enum</returns>
         private EnumRequestTaskResult RequestTaskDetailed(string driveLetter)
         {
-            EnumRequestTaskResult outcome;
-
             try
             {
                 var serverType = DbToolsFactory.GetServerTypeFromConnectionString(mDMSProcedureExecutor.ConnectStr);
@@ -157,33 +155,31 @@ namespace Space_Manager
                         var paramSuccess = FillParamDict(queryResults);
                         if (paramSuccess)
                         {
-                            outcome = EnumRequestTaskResult.TaskFound;
+                            return EnumRequestTaskResult.TaskFound;
                         }
-                        else
-                        {
-                            // There was an error
-                            outcome = EnumRequestTaskResult.ResultError;
-                        }
-                        break;
+
+                        // There was an error
+                        return EnumRequestTaskResult.ResultError;
+
                     case RET_VAL_TASK_NOT_AVAILABLE:
                         // No jobs found
-                        outcome = EnumRequestTaskResult.NoTaskFound;
-                        break;
+                        return EnumRequestTaskResult.NoTaskFound;
+
                     default:
                         // There was an SP error
-                        LogError("SpaceMgrTask.RequestTaskDetailed(), SP execution error " + retVal +
-                            "; Message text = " + (string)messageParam.Value);
-                        outcome = EnumRequestTaskResult.ResultError;
-                        break;
+                        LogError(string.Format(
+                            "SpaceMgrTask.RequestTaskDetailed(), SP execution error {0}: {1}",
+                            returnCode,
+                            string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value));
+
+                        return EnumRequestTaskResult.ResultError;
                 }
             }
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
-                outcome = EnumRequestTaskResult.ResultError;
+                return EnumRequestTaskResult.ResultError;
             }
-
-            return outcome;
         }
 
         public override void CloseTask(EnumCloseOutType taskResult)
