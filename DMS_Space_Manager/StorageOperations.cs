@@ -1419,20 +1419,22 @@ namespace Space_Manager
                 mDMSProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
             }
 
-            //Execute the SP
+            // Execute the SP
             mDMSProcedureExecutor.ExecuteSP(cmd, out var errorMessage, maxRetryCount);
 
             var returnCode = DBToolsBase.GetReturnCode(returnParam);
 
             if (returnCode == 0)
             {
-                ReportStatus("Marked job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged");
+                ReportStatus(string.Format("Marked job{0} {1} as purged", CheckPlural(lstJobsToPurge.Count), jobList));
             }
             else
             {
-                var msg = "Error calling stored procedure " + SP_MARK_PURGED_JOBS + " to mark job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs + " as purged";
-                if (!string.IsNullOrEmpty(errorMessage))
-                    msg += ": " + errorMessage;
+                var appendMsg = string.IsNullOrEmpty(errorMessage) ? string.Empty : ": " + errorMessage;
+
+                var msg = string.Format(
+                    "Error calling stored procedure {0} to mark job{1} {2} as purged{3}",
+                    SP_MARK_PURGED_JOBS, CheckPlural(lstJobsToPurge.Count), jobList, appendMsg);
 
                 LogError(msg);
             }
