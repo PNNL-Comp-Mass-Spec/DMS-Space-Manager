@@ -225,7 +225,7 @@ namespace Space_Manager
 
             mDMSProcedureExecutor.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
             mDMSProcedureExecutor.AddParameter(cmd, "@completionCode", SqlType.Int).Value = completionCode;
-            mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+            var messageParam = mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
             if (TraceMode)
             {
@@ -240,7 +240,18 @@ namespace Space_Manager
             mDMSProcedureExecutor.ExecuteSP(cmd);
 
             var returnCode = DBToolsBase.GetReturnCode(returnParam);
-            return returnCode == 0;
+
+            if (returnCode == 0)
+                return true;
+
+            var outputMessage = messageParam.Value.CastDBVal<string>();
+            var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
+
+            LogError(string.Format(
+                "Call to procedure {0} returned {1}, message: {2}",
+                spName, returnParam.Value.CastDBVal<string>(), message));
+
+            return false;
         }
     }
 }
