@@ -1382,15 +1382,7 @@ namespace Space_Manager
             }
 
             // Construct a comma-separated list of jobs
-            var jobs = string.Empty;
-
-            foreach (var job in lstJobsToPurge)
-            {
-                if (jobs.Length > 0)
-                    jobs += "," + job;
-                else
-                    jobs = job.ToString(CultureInfo.InvariantCulture);
-            }
+            var jobList = string.Join(", ", lstJobsToPurge);
 
             var simulateMode = false;
 #if !DoDelete
@@ -1398,7 +1390,7 @@ namespace Space_Manager
 #endif
             if (PreviewMode || simulateMode)
             {
-                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobs;
+                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobList;
                 LogDebug(msg);
                 return;
             }
@@ -1416,7 +1408,7 @@ namespace Space_Manager
             // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
             var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
-            mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobs);
+            mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobList);
 
             if (serverType == DbServerTypes.PostgreSQL)
             {
