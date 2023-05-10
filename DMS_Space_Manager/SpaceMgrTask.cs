@@ -153,6 +153,7 @@ namespace Space_Manager
                     case RET_VAL_OK:
                         // Step task was found; get the data for it
                         var paramSuccess = FillParamDict(queryResults);
+
                         if (paramSuccess)
                         {
                             return EnumRequestTaskResult.TaskFound;
@@ -167,10 +168,12 @@ namespace Space_Manager
 
                     default:
                         // There was an SP error
+                        var outputMessage = messageParam.Value.CastDBVal<string>();
+                        var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
+
                         LogError(string.Format(
                             "SpaceMgrTask.RequestTaskDetailed(), SP execution error {0}: {1}",
-                            returnCode,
-                            string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value));
+                            returnParam.Value.CastDBVal<string>(), message));
 
                         return EnumRequestTaskResult.ResultError;
                 }
