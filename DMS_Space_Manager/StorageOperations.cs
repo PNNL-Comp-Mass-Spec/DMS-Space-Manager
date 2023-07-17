@@ -665,7 +665,7 @@ namespace Space_Manager
             {
                 var reader = new MyEMSLReader.Reader
                 {
-                    IncludeAllRevisions = false,
+                    IncludeAllRevisions = true,
                     ReportMetadataURLs = TraceMode,
                     ThrowErrors = true,
                     TraceMode = TraceMode
