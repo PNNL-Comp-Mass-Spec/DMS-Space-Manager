@@ -388,7 +388,7 @@ namespace Space_Manager
             // Mark the jobs in lstJobsToPurge as purged
             MarkPurgedJobs(lstJobsToPurge);
 
-            // If we got to here, then log success and exit
+            // If we got to here, log success and exit
             purgeMessage = "Purged dataset " + datasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(datasetInfo.PurgePolicy);
             if (datasetDirectoryDeleted)
             {
@@ -456,7 +456,7 @@ namespace Space_Manager
             }
 
             // Make sure the archive directory has at least one file
-            // If it doesn't have any files, then we could have a permissions error,
+            // If it doesn't have any files, we could have a permissions error,
             // or we could be dealing with an instrument whose files are only in MyEMSL
 
             var datasetDirectory = new DirectoryInfo(sambaDatasetNamePath);
@@ -557,7 +557,7 @@ namespace Space_Manager
                 }
             }
 
-            // If the dataset directory is empty yet the parent directory exists, then assume it was manually purged; just update the database
+            // If the dataset directory is empty yet the parent directory exists, assume it was manually purged; just update the database
             if (datasetDirectory.GetFileSystemInfos().Length == 0 && datasetDirectory.Parent?.Exists == true)
             {
                 LogWarning("Directory " + datasetInfo.DatasetDirectoryPath + " is empty; assuming manually purged");
@@ -813,8 +813,8 @@ namespace Space_Manager
 
             if (comparisonResult == ArchiveCompareResults.Hash_Not_Found_For_File)
             {
-                // If this file is over AGED_FILE_DAYS days old and is in a subdirectory then only compare file dates
-                // If the file in the archive is newer than this file, then assume the archive copy is valid
+                // If this file is over AGED_FILE_DAYS days old and is in a subdirectory, only compare file dates
+                // If the file in the archive is newer than this file, assume the archive copy is valid
                 // Prior to January 2012 we would assume the files are not equal (since no hash) and would not purge this dataset
                 // Due to the slow speed of restoring files to tape we have switched to simply comparing dates
                 //
@@ -1319,7 +1319,7 @@ namespace Space_Manager
                 return false;
             }
 
-            // If we get here, then the file has successfully been loaded
+            // If we get here, the file has successfully been loaded
             mMD5ResultsFileDatasetName = string.Copy(datasetInfo.DatasetName);
             mMD5ResultsFilePath = string.Copy(md5ResultsFilePath);
 
@@ -1444,7 +1444,7 @@ namespace Space_Manager
         /// <summary>
         /// Looks for subdirectoryToFind in fileNamePath
         /// If found, returns the text that occurs after subdirectoryToFind
-        /// If not found, then returns an empty string
+        /// If not found, returns an empty string
         /// </summary>
         /// <param name="fileNamePath"></param>
         /// <param name="subdirectoryToFind"></param>

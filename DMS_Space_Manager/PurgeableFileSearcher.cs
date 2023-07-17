@@ -41,7 +41,7 @@ namespace Space_Manager
 
             var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-            // If filterSpec is "*.baf" then .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
+            // If filterSpec is "*.baf", .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
             // We instead want the behavior to be like DOS, in that "*.baf" should only match analysis.baf
             if (filterSpec.StartsWith("*.") && char.IsLetterOrDigit(filterSpec[filterSpec.Length - 1]))
                 requiredFileSuffix = filterSpec.Substring(1);
@@ -67,7 +67,7 @@ namespace Space_Manager
 
         /// <summary>
         /// Examines the file modification time of all files in targetDirectory
-        /// If all are over ageThresholdDays old, then adds the files to serverFilesToPurge
+        /// If all are over ageThresholdDays old, adds the files to serverFilesToPurge
         /// </summary>
         /// <param name="targetDirectory"></param>
         /// <param name="ageThresholdDays"></param>
@@ -281,7 +281,7 @@ namespace Space_Manager
                         if (!subDirPurged)
                         {
                             // Files are not yet 3 years old
-                            // If all of the files are 1 year old, then purge files over 50 MB
+                            // If all of the files are 1 year old, purge files over 50 MB
 
                             var foundFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
 
