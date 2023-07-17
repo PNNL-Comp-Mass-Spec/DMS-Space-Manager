@@ -39,18 +39,14 @@ namespace Space_Manager
             var filesMatched = 0;
             var requiredFileSuffix = string.Empty;
 
-            SearchOption eSearchOption;
-            if (recurse)
-                eSearchOption = SearchOption.AllDirectories;
-            else
-                eSearchOption = SearchOption.TopDirectoryOnly;
+            var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             // If filterSpec is "*.baf" then .NET will match analysis.baf plus also analysis.baf_idx and analysis.baf_xtr
             // We instead want the behavior to be like DOS, in that "*.baf" should only match analysis.baf
             if (filterSpec.StartsWith("*.") && char.IsLetterOrDigit(filterSpec[filterSpec.Length - 1]))
                 requiredFileSuffix = filterSpec.Substring(1);
 
-            foreach (var candidateFile in targetDirectory.GetFiles(filterSpec, eSearchOption))
+            foreach (var candidateFile in targetDirectory.GetFiles(filterSpec, searchOption))
             {
                 if (requiredFileSuffix.Length == 0 || candidateFile.Name.EndsWith(requiredFileSuffix, StringComparison.OrdinalIgnoreCase))
                 {
@@ -101,17 +97,17 @@ namespace Space_Manager
         /// Examine each file in serverFiles and decide which is safe to delete based on the purge policy
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory to process</param>
-        /// <param name="udtDatasetInfo">Dataset info</param>
+        /// <param name="datasetInfo">Dataset info</param>
         /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
         public SortedSet<string> FindDatasetFilesToPurge(
             DirectoryInfo datasetDirectory,
-            StorageOperations.udtDatasetInfoType udtDatasetInfo,
+            StorageOperations.udtDatasetInfoType datasetInfo,
             out List<int> jobsToPurge)
         {
-            var ePurgePolicyToApply = udtDatasetInfo.PurgePolicy;
+            var purgePolicyToApply = datasetInfo.PurgePolicy;
 
-            if (ePurgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAll)
+            if (purgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAll)
             {
                 var serverFilesToPurge = new SortedSet<string>();
                 AddFilesToPurge(datasetDirectory, "*.*", 0, true, serverFilesToPurge);
@@ -120,7 +116,7 @@ namespace Space_Manager
                 return serverFilesToPurge;
             }
 
-            if (ePurgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
+            if (purgePolicyToApply == StorageOperations.PurgePolicyConstants.PurgeAllExceptQC)
             {
                 var serverFilesToPurge = new SortedSet<string>();
                 AddFilesToPurge(datasetDirectory, "*.*", 0, false, serverFilesToPurge);
@@ -136,7 +132,7 @@ namespace Space_Manager
             }
 
             // Auto-purge files for this dataset
-            return FindDatasetFilesToAutoPurge(udtDatasetInfo, out jobsToPurge);
+            return FindDatasetFilesToAutoPurge(datasetInfo, out jobsToPurge);
         }
 
         private List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime dtMostRecentUpdate)
@@ -162,21 +158,21 @@ namespace Space_Manager
         /// Examine the files that exist below a dataset directory
         /// Auto-determine the ones that should be purged
         /// </summary>
-        /// <param name="udtDatasetInfo">Dataset info</param>
+        /// <param name="datasetInfo">Dataset info</param>
         /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
-        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType udtDatasetInfo, out List<int> jobsToPurge)
+        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType datasetInfo, out List<int> jobsToPurge)
         {
             var serverFilesToPurge = new SortedSet<string>();
             jobsToPurge = new List<int>();
 
             var jobDirectoryMatcher = new Regex(@"_Auto(\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var datasetDirectory = new DirectoryInfo(udtDatasetInfo.DatasetDirectoryPath);
+            var datasetDirectory = new DirectoryInfo(datasetInfo.DatasetDirectoryPath);
 
             // Process files in the dataset directory
 
-            switch (udtDatasetInfo.RawDataType)
+            switch (datasetInfo.RawDataType)
             {
                 case "dot_raw_files":
                     AddFilesToPurge(datasetDirectory, "*.raw", serverFilesToPurge);
