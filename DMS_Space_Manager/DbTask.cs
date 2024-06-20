@@ -86,19 +86,19 @@ namespace Space_Manager
         /// <summary>
         /// Debugging routine for printing SP calling params
         /// </summary>
-        /// <param name="inpCmd">SQL command object containing params</param>
-        protected void PrintCommandParams(DbCommand inpCmd)
+        /// <param name="cmd">SQL command object containing params</param>
+        protected void PrintCommandParams(DbCommand cmd)
         {
             // Verify there really are command parameters
-            if (inpCmd == null)
+            if (cmd == null)
                 return;
 
-            if (inpCmd.Parameters.Count < 1)
+            if (cmd.Parameters.Count < 1)
                 return;
 
             var msg = "";
 
-            foreach (DbParameter myParam in inpCmd.Parameters)
+            foreach (DbParameter myParam in cmd.Parameters)
             {
                 msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
@@ -169,81 +169,81 @@ namespace Space_Manager
             }
         }
 
-        private string DbCStr(object InpObj)
+        private string DbCStr(object value)
         {
             // If input object is DbNull, returns "", otherwise returns String representation of object
-            if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))
+            if (value == null || ReferenceEquals(value, DBNull.Value))
             {
                 return "";
             }
 
-            return InpObj.ToString();
+            return value.ToString();
         }
 
-        protected float DbCSng(object InpObj)
+        protected float DbCFloat(object value)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0.0F;
             }
 
-            return (float)InpObj;
+            return (float)value;
         }
 
-        protected double DbCDbl(object InpObj)
+        protected double DbCDbl(object value)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0.0;
             }
 
-            return (double)InpObj;
+            return (double)value;
         }
 
-        protected int DbCInt(object InpObj)
+        protected int DbCInt(object value)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0;
             }
 
-            return (int)InpObj;
+            return (int)value;
         }
 
-        protected long DbCLng(object InpObj)
+        protected long DbCLng(object value)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0;
             }
 
-            return (long)InpObj;
+            return (long)value;
         }
 
-        protected decimal DbCDec(object InpObj)
+        protected decimal DbCDec(object value)
         {
             // If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0;
             }
 
-            return (decimal)InpObj;
+            return (decimal)value;
         }
 
-        protected short DbCShort(object InpObj)
+        protected short DbCShort(object value)
         {
             // If input object is DbNull, returns 0, otherwise returns Short representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(value, DBNull.Value))
             {
                 return 0;
             }
 
-            return (short)InpObj;
+            return (short)value;
         }
 
         private void DMSProcedureExecutor_DBErrorEvent(string message, Exception ex)
