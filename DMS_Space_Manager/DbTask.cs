@@ -19,7 +19,7 @@ namespace Space_Manager
     /// </summary>
     internal abstract class DbTask : LoggerBase
     {
-        // Ignore Spelling: dmsarch
+        // Ignore Spelling: dict, dmsarch, ret
 
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;

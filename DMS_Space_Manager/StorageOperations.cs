@@ -24,7 +24,7 @@ namespace Space_Manager
     /// </summary>
     public class StorageOperations : LoggerBase
     {
-        // Ignore Spelling: dmsarch, frodo, myemsl, pre, purgeable, svc-dms
+        // Ignore Spelling: dmsarch, frodo, myemsl, pre, purgeable, svc-dms, udt
 
         private const string RESULT_FILE_NAME_PREFIX = "results.";
         private const string WAITING_FOR_HASH_FILE = "(HASH)";
