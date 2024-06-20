@@ -736,6 +736,8 @@ namespace Space_Manager
 
                 const bool USE_WMI = false;
 
+#pragma warning disable CS0162 // Unreachable code detected
+
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (USE_WMI)
                 {
@@ -751,6 +753,7 @@ namespace Space_Manager
                         return SpaceCheckResults.Error;
                     }
                 }
+#pragma warning restore CS0162 // Unreachable code detected
             }
             else
             {

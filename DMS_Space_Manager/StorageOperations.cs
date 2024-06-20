@@ -1262,7 +1262,7 @@ namespace Space_Manager
 
                     // ReSharper restore CommentTypo
 
-                    var lstHashAndPathInfo = inputLine.Split(new[] { ' ' }, 2).ToList();
+                    var lstHashAndPathInfo = inputLine.Split([' '], 2).ToList();
                     if (lstHashAndPathInfo.Count > 1)
                     {
                         // For the above example, we want to store:
