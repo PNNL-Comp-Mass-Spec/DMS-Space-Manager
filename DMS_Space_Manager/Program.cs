@@ -56,7 +56,7 @@ namespace Space_Manager
                     return;
                 }
 
-                // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                // Delay for 1500 msec in case the user double-clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(1500);
                 return;
             }
