@@ -39,10 +39,10 @@ namespace Space_Manager
 
         public static IEnumerable<string> ErrorQueue => mErrorQueue;
 
-        public static void AddErrorMessage(string ErrMsg)
+        public static void AddErrorMessage(string errorMsg)
         {
             //Add the most recent error message
-            mErrorQueue.Enqueue(ErrMsg);
+            mErrorQueue.Enqueue(errorMsg);
 
             // If there are more than 4 entries in the queue, delete the oldest ones
             while (mErrorQueue.Count > 4)

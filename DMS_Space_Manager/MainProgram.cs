@@ -490,7 +490,8 @@ namespace Space_Manager
             try
             {
                 // Start a purge loop for the current drive
-                var bDriveInfoLogged = false;
+                var driveInfoLogged = false;
+
                 while (true)
                 {
                     // Check for configuration changes
@@ -556,9 +557,10 @@ namespace Space_Manager
                         break;
                     }
 
-                    if (!bDriveInfoLogged)
+                    if (!driveInfoLogged)
                     {
-                        bDriveInfoLogged = true;
+                        driveInfoLogged = true;
+
                         // Note: there are extra spaces after "required" so that the log message lines up with the "No purge required" message
                         ReportStatus("Purge required   , drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold");
                     }
