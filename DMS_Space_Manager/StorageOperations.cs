@@ -124,7 +124,7 @@ namespace Space_Manager
         /// Tracks the full path to a file as the key and the MD5 or SHA-1 hash as the value
         /// </summary>
         /// <remarks>
-        /// File paths are not case sensitive
+        /// File paths are not case-sensitive
         /// MD5 hash values are 32 characters long
         /// SHA-1 hash values are 40 characters long
         /// </remarks>
@@ -227,7 +227,7 @@ namespace Space_Manager
 
                 case ArchiveCompareResults.Compare_Archive_Samba_Dataset_Directory_Missing:
                     // Dataset directory not found in the archive
-                    // This is typically a directory permissions error and we thus do not want to re-archive the directory, since any newly archived files would still be inaccessible
+                    // This is typically a directory permissions error, and we thus do not want to re-archive the directory, since any newly archived files would still be inaccessible
                     return EnumCloseOutType.CLOSEOUT_DATASET_DIRECTORY_MISSING_IN_ARCHIVE;
 
                 default:
@@ -575,7 +575,7 @@ namespace Space_Manager
             // The same file could be present in myEmslFilesAllVersions if different versions of the file were pushed into MyEMSL at different times
 
             // Dictionary filesInMyEMSL tracks the newest version of each file
-            // Keys are relative file paths (not case sensitive, Windows slashes)
+            // Keys are relative file paths (not case-sensitive, Windows slashes)
             // Values are KeyValuePairs where keys are MyEMSL Submission timestamp and values are SHA-1 Hash
 
             var filesInMyEMSL = new Dictionary<string, KeyValuePair<DateTime, string>>(StringComparer.OrdinalIgnoreCase);
@@ -597,7 +597,7 @@ namespace Space_Manager
             }
 
             // Loop through the file list, checking for archive copies and comparing if archive copy present
-            // We need to generate a hash for all of the files so that we can remove invalid lines from mHashFileContents if a hash mismatch is present
+            // We need to generate a hash for the files so that we can remove invalid lines from mHashFileContents if a hash mismatch is present
             foreach (var serverFilePath in serverFilesToPurge)
             {
                 // Determine if file exists in archive
@@ -1215,7 +1215,7 @@ namespace Space_Manager
                         //{
                         //    // DatasetPurgeArchiveHelper needs to create a stagemd5 file for this dataset
                         //    // Alternatively, if there are a bunch of stagemd5 files waiting to be processed,
-                        //    //   eventually we should get MD5 result files and then we should be able to purge this dataset
+                        //    //   eventually we should get MD5 result files, and then we should be able to purge this dataset
                         //    LogWarning("  Stagemd5 file not found");
                         //}
 
@@ -1238,7 +1238,7 @@ namespace Space_Manager
             {
                 foreach (var inputLine in File.ReadAllLines(md5ResultsFilePath))
                 {
-                    // Extract the hash values value from the data line
+                    // Extract the hash value from the data line
 
                     // ReSharper disable CommentTypo
 
@@ -1605,7 +1605,7 @@ namespace Space_Manager
         /// Maximum number of parent directories to examine when looking for a valid directory
         /// -1 means parse all parent directories until a valid one is found
         /// </param>
-        /// <returns>True if the dataset directory or the share that should have the dataset directory exists, other wise false</returns>
+        /// <returns>True if the dataset directory or the share that should have the dataset directory exists, otherwise false</returns>
         private bool ValidateDatasetShareExists(string datasetDirectoryPath, int maxParentDepth = -1)
         {
             try

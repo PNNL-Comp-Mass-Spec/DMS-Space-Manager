@@ -314,7 +314,7 @@ namespace Space_Manager
                 return false;
             }
 
-            // Setup a file watcher for the config file
+            // Set up a file watcher for the config file
             var appPath = AppUtils.GetAppPath();
             var fInfo = new FileInfo(appPath);
             mFileWatcher = new FileSystemWatcher
@@ -559,7 +559,7 @@ namespace Space_Manager
                     if (!bDriveInfoLogged)
                     {
                         bDriveInfoLogged = true;
-                        // Note: there are extra spaces after "required" so the log message lines up with the "No purge required" message
+                        // Note: there are extra spaces after "required" so that the log message lines up with the "No purge required" message
                         ReportStatus("Purge required   , drive " + testDrive.DriveLetter + " " + Math.Round(driveFreeSpaceGB, 0) + " GB free vs. " + Math.Round(testDrive.MinDriveSpace, 0) + " GB threshold");
                     }
 

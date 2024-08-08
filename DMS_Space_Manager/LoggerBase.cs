@@ -46,6 +46,8 @@ namespace Space_Manager
             LogTools.LogWarning(warningMessage, logToDb);
         }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// Shows information about an exception at the console and in the log file
         /// </summary>

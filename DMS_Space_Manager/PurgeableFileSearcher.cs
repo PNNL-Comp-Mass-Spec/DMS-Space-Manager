@@ -277,7 +277,7 @@ namespace Space_Manager
                         if (!subDirPurged)
                         {
                             // Files are not yet 3 years old
-                            // If all of the files are 1 year old, purge files over 50 MB
+                            // If all the files are 1 year old, purge files over 50 MB
 
                             var foundFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
 

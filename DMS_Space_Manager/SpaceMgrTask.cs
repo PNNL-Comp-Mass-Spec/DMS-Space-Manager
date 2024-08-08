@@ -116,7 +116,7 @@ namespace Space_Manager
                 var serverDisk = driveLetter;
                 if (driveLetter.EndsWith(":"))
                 {
-                    // Append back slash to drive letter
+                    // Append backslash to drive letter
                     serverDisk = driveLetter + @"\";
                 }
 
