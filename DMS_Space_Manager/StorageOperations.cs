@@ -295,7 +295,8 @@ namespace Space_Manager
                 try
                 {
                     var fiFile = new FileInfo(fileToDelete);
-                    if (fiFile.Directory != null && !lstServerDirectories.Contains(fiFile.Directory.FullName))
+
+                    if (fiFile.Directory != null)
                         lstServerDirectories.Add(fiFile.Directory.FullName);
 
                     if (!fiFile.Exists)

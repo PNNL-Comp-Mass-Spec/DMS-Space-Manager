@@ -50,12 +50,9 @@ namespace Space_Manager
             {
                 if (requiredFileSuffix.Length == 0 || candidateFile.Name.EndsWith(requiredFileSuffix, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (minSizeKB <= 0 || (candidateFile.Length / 1024.0) >= minSizeKB)
+                    if (minSizeKB <= 0 || candidateFile.Length / 1024.0 >= minSizeKB)
                     {
-                        if (!serverFilesToPurge.Contains(candidateFile.FullName))
-                        {
-                            serverFilesToPurge.Add(candidateFile.FullName);
-                        }
+                        serverFilesToPurge.Add(candidateFile.FullName);
 
                         filesMatched++;
                     }
@@ -84,8 +81,7 @@ namespace Space_Manager
             {
                 foreach (var file in foundFiles)
                 {
-                    if (!serverFilesToPurge.Contains(file))
-                        serverFilesToPurge.Add(file);
+                    serverFilesToPurge.Add(file);
                 }
                 return true;
             }
