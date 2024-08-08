@@ -108,10 +108,10 @@ namespace Space_Manager
 
                 // Define parameter for procedure's return value
                 // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
-                var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
-                mDMSProcedureExecutor.AddParameter(cmd, "@StorageServerName", SqlType.VarChar, 128, mMgrParams.GetParam("machname"));
+                mDMSProcedureExecutor.AddParameter(cmd, "@storageServerName", SqlType.VarChar, 128, mMgrParams.GetParam("machname"));
 
                 var serverDisk = driveLetter;
                 if (driveLetter.EndsWith(":"))
@@ -120,7 +120,7 @@ namespace Space_Manager
                     serverDisk = driveLetter + @"\";
                 }
 
-                mDMSProcedureExecutor.AddParameter(cmd, "@ServerDisk", SqlType.VarChar, 128, serverDisk);
+                mDMSProcedureExecutor.AddParameter(cmd, "@serverDisk", SqlType.VarChar, 128, serverDisk);
                 var messageParam = mDMSProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 if (serverType == DbServerTypes.PostgreSQL)
@@ -134,13 +134,22 @@ namespace Space_Manager
 
                 // We stopped creating stagemd5 files in January 2016
                 // Thus, pass 0 for this parameter instead of 1
-                mDMSProcedureExecutor.AddParameter(cmd, "@ExcludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
 
-                var msg = "SpaceMgrTask.RequestTaskDetailed(), connection string: " + mDMSProcedureExecutor.ConnectStr;
-                LogTools.LogDebug(msg);
+                if (serverType == DbServerTypes.PostgreSQL)
+                {
+                    mDMSProcedureExecutor.AddParameter(cmd, "@excludeStageMD5RequiredDatasets", SqlType.Boolean).Value = false;
+                }
+                else
+                {
+                    mDMSProcedureExecutor.AddParameter(cmd, "@excludeStageMD5RequiredDatasets", SqlType.TinyInt).Value = 0;
+                }
 
-                msg = "SpaceMgrTask.RequestTaskDetailed(), printing param list";
-                LogTools.LogDebug(msg);
+                var connectionStringInfo = "SpaceMgrTask.RequestTaskDetailed(), connection string: " + mDMSProcedureExecutor.ConnectStr;
+                LogTools.LogDebug(connectionStringInfo);
+
+                var parameterList = "SpaceMgrTask.RequestTaskDetailed(), printing param list";
+                LogTools.LogDebug(parameterList);
+
                 PrintCommandParams(cmd);
 
                 // Execute the SP
