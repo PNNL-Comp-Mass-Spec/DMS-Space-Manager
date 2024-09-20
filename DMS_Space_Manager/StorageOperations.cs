@@ -1135,7 +1135,7 @@ namespace Space_Manager
                     return HASH_NOT_FOUND;
                 }
 
-                filePathInDictionary = string.Copy(fileNameTrimmed);
+                filePathInDictionary = fileNameTrimmed;
                 return hashInfo.HashCode;
             }
 
@@ -1193,7 +1193,7 @@ namespace Space_Manager
                     if (string.CompareOrdinal(datasetInfo.DatasetName, mLastMD5WarnDataset) != 0)
                     {
                         // Warning not yet posted
-                        mLastMD5WarnDataset = string.Copy(datasetInfo.DatasetName);
+                        mLastMD5WarnDataset = datasetInfo.DatasetName;
 
                         ReportStatus("  MD5 results file not found: " + md5ResultsFilePath);
 
@@ -1320,8 +1320,8 @@ namespace Space_Manager
             }
 
             // If we get here, the file has successfully been loaded
-            mMD5ResultsFileDatasetName = string.Copy(datasetInfo.DatasetName);
-            mMD5ResultsFilePath = string.Copy(md5ResultsFilePath);
+            mMD5ResultsFileDatasetName = datasetInfo.DatasetName;
+            mMD5ResultsFilePath = md5ResultsFilePath;
 
             return true;
         }
@@ -1350,7 +1350,7 @@ namespace Space_Manager
                 using Stream reader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
                 // Get the file's hash
-                var hasher = new MD5CryptoServiceProvider();
+                var hasher = MD5.Create();
                 byteHash = hasher.ComputeHash(reader);
             }
             catch (Exception ex)
