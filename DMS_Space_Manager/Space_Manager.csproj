@@ -39,12 +39,6 @@
     <NoWarn>IDE0028; IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyEMSLReader">
-      <HintPath>RefLib\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica">
-      <HintPath>RefLib\Pacifica.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
@@ -98,6 +92,12 @@
     <Content Include="TRFFC17.ICO" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MyEMSL-Pacifica">
+      <Version>2.1.118</Version>
+    </PackageReference>
+    <PackageReference Include="MyEMSL-Reader">
+      <Version>2.1.118</Version>
+    </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
       <Version>3.6.143</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
