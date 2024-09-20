@@ -16,6 +16,7 @@ using PRISM.AppSettings;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
 using PRISMDatabaseUtils.AppSettings;
+using PRISMDatabaseUtils.Logging;
 
 namespace Space_Manager
 {
@@ -212,7 +213,7 @@ namespace Space_Manager
             var applicationName = "SpaceManager_" + System.Net.Dns.GetHostName();
             var defaultDbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationName);
 
-            LogTools.CreateDbLogger(defaultDbLoggerConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
+            DbConfig.CreateDbLogger(defaultDbLoggerConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -289,7 +290,7 @@ namespace Space_Manager
             var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             LogTools.RemoveDefaultDbLogger();
-            LogTools.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + mMgrName);
+            DbConfig.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + mMgrName);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
