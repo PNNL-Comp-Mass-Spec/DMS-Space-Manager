@@ -147,8 +147,7 @@ namespace Space_Manager
                 var connectionStringInfo = "SpaceMgrTask.RequestTaskDetailed(), connection string: " + mDMSProcedureExecutor.ConnectStr;
                 LogTools.LogDebug(connectionStringInfo);
 
-                var parameterList = "SpaceMgrTask.RequestTaskDetailed(), printing param list";
-                LogTools.LogDebug(parameterList);
+                LogTools.LogDebug("SpaceMgrTask.RequestTaskDetailed(), printing param list");
 
                 PrintCommandParams(cmd);
 
