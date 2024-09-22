@@ -25,7 +25,7 @@ namespace Space_Manager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
         public string MgrCnfgDbConnectStr {
             get {
                 return ((string)(this["MgrCnfgDbConnectStr"]));
