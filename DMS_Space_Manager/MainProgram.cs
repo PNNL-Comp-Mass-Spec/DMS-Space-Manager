@@ -79,6 +79,34 @@ namespace Space_Manager
         }
 
         /// <summary>
+        /// Initializes the database logger in static class PRISM.Logging.LogTools
+        /// </summary>
+        /// <remarks>Supports both SQL Server and Postgres connection strings</remarks>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="moduleName">Module name used by logger</param>
+        /// <param name="traceMode">When true, show additional debug messages at the console</param>
+        /// <param name="logLevel">Log threshold level</param>
+        private void CreateDbLogger(
+            string connectionString,
+            string moduleName,
+            bool traceMode = false,
+            BaseLogger.LogLevels logLevel = BaseLogger.LogLevels.INFO)
+        {
+            var databaseType = DbToolsFactory.GetServerTypeFromConnectionString(connectionString);
+
+            DatabaseLogger dbLogger = databaseType switch
+            {
+                DbServerTypes.MSSQLServer => new SQLServerDatabaseLogger(),
+                DbServerTypes.PostgreSQL => new PostgresDatabaseLogger(),
+                _ => throw new Exception("Unsupported database connection string: should be SQL Server or Postgres")
+            };
+
+            dbLogger.ChangeConnectionInfo(moduleName, connectionString);
+
+            LogTools.SetDbLogger(dbLogger, logLevel, traceMode);
+        }
+
+        /// <summary>
         /// Use the hidden admin share to determine the free space of a drive on a remote computer
         /// </summary>
         /// <param name="remoteServer"></param>
@@ -211,10 +239,11 @@ namespace Space_Manager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            var applicationName = "SpaceManager_" + System.Net.Dns.GetHostName();
+            var hostName = System.Net.Dns.GetHostName();
+            var applicationName = "SpaceManager_" + hostName;
             var defaultDbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationName);
 
-            DbConfig.CreateDbLogger(defaultDbLoggerConnectionString, "SpaceManager: " + System.Net.Dns.GetHostName());
+            CreateDbLogger(defaultDbLoggerConnectionString, "SpaceManager: " + hostName, TraceMode);
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -290,7 +319,7 @@ namespace Space_Manager
             var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             LogTools.RemoveDefaultDbLogger();
-            DbConfig.CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + mMgrName);
+            CreateDbLogger(dbLoggerConnectionString, "SpaceManager: " + mMgrName);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
