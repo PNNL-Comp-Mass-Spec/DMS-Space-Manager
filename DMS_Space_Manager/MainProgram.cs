@@ -205,7 +205,8 @@ namespace Space_Manager
             // This will get updated below
             LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
 
-            // Create a database logger connected to DMS5
+            // Create a database logger connected to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
+
             // Once the initial parameters have been successfully read,
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
@@ -283,8 +284,7 @@ namespace Space_Manager
 
             LogTools.CreateFileLogger(logFileNameBase, logLevel);
 
-            // Typically
-            // Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;
+            // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             var connectionString = mMgrSettings.GetParam("ConnectionString");
 
             var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);

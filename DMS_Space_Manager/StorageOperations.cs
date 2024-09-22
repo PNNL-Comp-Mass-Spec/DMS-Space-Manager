@@ -143,7 +143,7 @@ namespace Space_Manager
 
             mClientPerspective = mMgrParams.GetParam("perspective") == "client";
 
-            // This Connection String points to the DMS5 database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             mDMSProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);

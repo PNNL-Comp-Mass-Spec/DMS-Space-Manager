@@ -57,7 +57,7 @@ namespace Space_Manager
 
             TraceMode = traceMode;
 
-            // This Connection String points to the DMS5 database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
