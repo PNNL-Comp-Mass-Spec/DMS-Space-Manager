@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Space_Manager
 {
-    internal class PurgeableFileSearcher
+    internal static class PurgeableFileSearcher
     {
         // Ignore Spelling: idx, wiff, maldi, uimf, tof, baf, ser, fid, xtr
 
@@ -13,10 +13,10 @@ namespace Space_Manager
         /// Look for files in targetDirectory matching filterSpec; do not recurse
         /// Matching files are added to serverFilesToPurge
         /// </summary>
-        /// <param name="targetDirectory"></param>
-        /// <param name="filterSpec"></param>
-        /// <param name="serverFilesToPurge"></param>
-        private void AddFilesToPurge(DirectoryInfo targetDirectory, string filterSpec, ISet<string> serverFilesToPurge)
+        /// <param name="targetDirectory">Target directory</param>
+        /// <param name="filterSpec">Filter filter spec</param>
+        /// <param name="serverFilesToPurge">List of server files to purge</param>
+        private static void AddFilesToPurge(DirectoryInfo targetDirectory, string filterSpec, ISet<string> serverFilesToPurge)
         {
             const int minSizeKB = 0;
             const bool recurse = false;
@@ -28,13 +28,13 @@ namespace Space_Manager
         /// Filter by size if minSizeKB is greater than 0
         /// Matching files are added to serverFilesToPurge
         /// </summary>
-        /// <param name="targetDirectory"></param>
-        /// <param name="filterSpec"></param>
-        /// <param name="minSizeKB"></param>
-        /// <param name="recurse"></param>
-        /// <param name="serverFilesToPurge"></param>
+        /// <param name="targetDirectory">Target directory</param>
+        /// <param name="filterSpec">File filter spec</param>
+        /// <param name="minSizeKB">Minimum file size to purge</param>
+        /// <param name="recurse">When true, recurse subdirectories</param>
+        /// <param name="serverFilesToPurge">List of server files to purge</param>
         /// <returns>The number of files added to serverFilesToPurge</returns>
-        private int AddFilesToPurge(DirectoryInfo targetDirectory, string filterSpec, int minSizeKB, bool recurse, ISet<string> serverFilesToPurge)
+        private static int AddFilesToPurge(DirectoryInfo targetDirectory, string filterSpec, int minSizeKB, bool recurse, ISet<string> serverFilesToPurge)
         {
             var filesMatched = 0;
             var requiredFileSuffix = string.Empty;
@@ -66,11 +66,11 @@ namespace Space_Manager
         /// Examines the file modification time of all files in targetDirectory
         /// If all are over ageThresholdDays old, adds the files to serverFilesToPurge
         /// </summary>
-        /// <param name="targetDirectory"></param>
-        /// <param name="ageThresholdDays"></param>
-        /// <param name="serverFilesToPurge"></param>
+        /// <param name="targetDirectory">Target directory</param>
+        /// <param name="ageThresholdDays">Date threshold, in days</param>
+        /// <param name="serverFilesToPurge">List of server files to purge</param>
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
-        private bool AddFilesToPurgeDateThreshold(DirectoryInfo targetDirectory, int ageThresholdDays, ISet<string> serverFilesToPurge)
+        private static bool AddFilesToPurgeDateThreshold(DirectoryInfo targetDirectory, int ageThresholdDays, ISet<string> serverFilesToPurge)
         {
             var foundFiles = FindFilesAndNewestDate(targetDirectory, out var dtMostRecentUpdate);
 
@@ -96,7 +96,7 @@ namespace Space_Manager
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
-        public SortedSet<string> FindDatasetFilesToPurge(
+        public static SortedSet<string> FindDatasetFilesToPurge(
             DirectoryInfo datasetDirectory,
             StorageOperations.udtDatasetInfoType datasetInfo,
             out List<int> jobsToPurge)
@@ -131,7 +131,7 @@ namespace Space_Manager
             return FindDatasetFilesToAutoPurge(datasetInfo, out jobsToPurge);
         }
 
-        private List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime dtMostRecentUpdate)
+        private static List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime mostRecentUpdate)
         {
             var foundFiles = new List<string>();
             dtMostRecentUpdate = DateTime.MinValue;
@@ -157,7 +157,7 @@ namespace Space_Manager
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="jobsToPurge">Jobs whose directories will be deleted</param>
         /// <returns>List of files that are safe to delete</returns>
-        public SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType datasetInfo, out List<int> jobsToPurge)
+        public static SortedSet<string> FindDatasetFilesToAutoPurge(StorageOperations.udtDatasetInfoType datasetInfo, out List<int> jobsToPurge)
         {
             var serverFilesToPurge = new SortedSet<string>();
             jobsToPurge = new List<int>();

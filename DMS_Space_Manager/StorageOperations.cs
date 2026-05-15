@@ -428,8 +428,8 @@ namespace Space_Manager
         /// Returns "s" if the value is 0 or greater than 1
         /// Returns "" if the value is 1
         /// </summary>
-        /// <param name="value"></param>
-        private string CheckPlural(int value)
+        /// <param name="value">Value</param>
+        private static string CheckPlural(int value)
         {
             if (value == 1)
                 return string.Empty;
@@ -442,7 +442,7 @@ namespace Space_Manager
         /// <param name="sambaDatasetNamePath">Samba path for the dataset</param>
         /// <param name="serverFilePath">File path that was not found (included in a log message)</param>
         /// <returns>Comparison result</returns>
-        private ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string serverFilePath)
+        private static ArchiveCompareResults CheckSambaPathAvailability(string sambaDatasetNamePath, string serverFilePath)
         {
             // Look for \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\DatasetName
             //       or \\agate.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2013_2\
@@ -864,7 +864,7 @@ namespace Space_Manager
         /// <param name="datasetPathArch">Dataset path on archive</param>
         /// <param name="inpFileName">Name of the file whose path is being converted</param>
         /// <returns>Full archive path to file</returns>
-        private string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
+        private static string ConvertServerPathToArchivePath(string datasetPathSvr, string datasetPathArch, string inpFileName)
         {
             // Convert by replacing storage server path with archive path
             try
@@ -1048,7 +1048,7 @@ namespace Space_Manager
         /// Deletes all files in a directory, assuring that the ReadOnly bit is turned off for each file
         /// </summary>
         /// <param name="targetDirectory"></param>
-        private void DeleteFilesCheckReadonly(DirectoryInfo targetDirectory)
+        private static void DeleteFilesCheckReadonly(DirectoryInfo targetDirectory)
         {
             foreach (var targetFile in targetDirectory.GetFiles("*", SearchOption.AllDirectories))
             {
@@ -1142,7 +1142,7 @@ namespace Space_Manager
             return string.Empty;
         }
 
-        private string GetPurgePolicyDescription(PurgePolicyConstants purgePolicy)
+        private static string GetPurgePolicyDescription(PurgePolicyConstants purgePolicy)
         {
             return purgePolicy switch
             {
@@ -1153,7 +1153,7 @@ namespace Space_Manager
             };
         }
 
-        private PurgePolicyConstants GetPurgePolicyEnum(string purgePolicy)
+        private static PurgePolicyConstants GetPurgePolicyEnum(string purgePolicy)
         {
             if (int.TryParse(purgePolicy, out var purgePolicyValue))
             {
@@ -1331,7 +1331,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="filePath">Full path to file</param>
         /// <returns>String representation of hash</returns>
-        private string GenerateMD5HashFromFile(string filePath)
+        private static string GenerateMD5HashFromFile(string filePath)
         {
             byte[] byteHash;
 
@@ -1446,9 +1446,9 @@ namespace Space_Manager
         /// If found, returns the text that occurs after subdirectoryToFind
         /// If not found, returns an empty string
         /// </summary>
-        /// <param name="fileNamePath"></param>
-        /// <param name="subdirectoryToFind"></param>
-        private string TrimPathAfterSubdirectory(string fileNamePath, string subdirectoryToFind)
+        /// <param name="fileNamePath">File path to search</param>
+        /// <param name="subdirectoryToFind">Subdirectory to find in the path</param>
+        private static string TrimPathAfterSubdirectory(string fileNamePath, string subdirectoryToFind)
         {
             var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
 
@@ -1599,13 +1599,13 @@ namespace Space_Manager
         /// <summary>
         /// Validate that the share for the dataset actually exists
         /// </summary>
-        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <param name="maxParentDepth">
         /// Maximum number of parent directories to examine when looking for a valid directory
         /// -1 means parse all parent directories until a valid one is found
         /// </param>
         /// <returns>True if the dataset directory or the share that should have the dataset directory exists, otherwise false</returns>
-        private bool ValidateDatasetShareExists(string datasetDirectoryPath, int maxParentDepth = -1)
+        private static bool ValidateDatasetShareExists(string datasetDirectoryPath, int maxParentDepth = -1)
         {
             try
             {

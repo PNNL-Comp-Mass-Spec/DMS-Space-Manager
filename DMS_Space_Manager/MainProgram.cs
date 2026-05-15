@@ -86,7 +86,7 @@ namespace Space_Manager
         /// <param name="moduleName">Module name used by logger</param>
         /// <param name="traceMode">When true, show additional debug messages at the console</param>
         /// <param name="logLevel">Log threshold level</param>
-        private void CreateDbLogger(
+        private static void CreateDbLogger(
             string connectionString,
             string moduleName,
             bool traceMode = false,
@@ -109,11 +109,11 @@ namespace Space_Manager
         /// <summary>
         /// Use the hidden admin share to determine the free space of a drive on a remote computer
         /// </summary>
-        /// <param name="remoteServer"></param>
-        /// <param name="driveData"></param>
-        /// <param name="driveFreeSpaceGB"></param>
+        /// <param name="remoteServer">Remote server name</param>
+        /// <param name="driveData">Drive data</param>
+        /// <param name="driveFreeSpaceGB">Drive free space, in GB</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool GetFreeSpaceUsingAdminShare(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
+        private static bool GetFreeSpaceUsingAdminShare(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
         {
             var postToDB = !Environment.MachineName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase);
 
@@ -169,7 +169,7 @@ namespace Space_Manager
         /// <param name="driveFreeSpaceGB"></param>
         /// <returns>True if successful, false if an error</returns>
         // ReSharper disable once MemberCanBeMadeStatic.Local
-        private bool GetFreeSpaceUsingWMI(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
+        private static bool GetFreeSpaceUsingWMI(string remoteServer, DriveData driveData, out double driveFreeSpaceGB)
         {
             var postToDB = !Environment.MachineName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase);
 
@@ -692,7 +692,7 @@ namespace Space_Manager
         /// </summary>
         /// <param name="inpList">Input string containing drive information</param>
         /// <returns>List of drives with associated data</returns>
-        private IEnumerable<DriveData> GetDriveList(string inpList)
+        private static IEnumerable<DriveData> GetDriveList(string inpList)
         {
             if (string.IsNullOrWhiteSpace(inpList))
             {
@@ -750,7 +750,7 @@ namespace Space_Manager
         /// <param name="driveData">Data for drive to be checked</param>
         /// <param name="driveFreeSpaceGB">Actual drive free space in GB</param>
         /// <returns>Enum indicating space status</returns>
-        private SpaceCheckResults IsPurgeRequired(string machine, string perspective, DriveData driveData, out double driveFreeSpaceGB)
+        private static SpaceCheckResults IsPurgeRequired(string machine, string perspective, DriveData driveData, out double driveFreeSpaceGB)
         {
             SpaceCheckResults testResult;
 
