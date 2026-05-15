@@ -3,7 +3,7 @@
 echo Be sure to compile in Release mode
 pause
 
-set TargetBase=\\pnl\projects\OmicsSW\DMS_Programs\CaptureTaskManagerDistribution\SpaceManager
+set TargetBase=\\Proto-3\DMS_Programs_Dist\CaptureTaskManagerDistribution\SpaceManager
 
 echo Copying to %TargetBase%
 

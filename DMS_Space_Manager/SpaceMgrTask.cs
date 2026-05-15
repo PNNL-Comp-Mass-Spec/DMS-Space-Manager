@@ -114,6 +114,7 @@ namespace Space_Manager
                 mDMSProcedureExecutor.AddParameter(cmd, "@storageServerName", SqlType.VarChar, 128, mMgrParams.GetParam("machname"));
 
                 var serverDisk = driveLetter;
+
                 if (driveLetter.EndsWith(":"))
                 {
                     // Append backslash to drive letter
