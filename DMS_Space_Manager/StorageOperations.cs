@@ -871,7 +871,7 @@ namespace Space_Manager
                 if (inpFileName.Contains(datasetPathSvr))
                     return inpFileName.Replace(datasetPathSvr, datasetPathArch);
 
-                var charIndex = inpFileName.IndexOf(datasetPathSvr, StringComparison.InvariantCultureIgnoreCase);
+                var charIndex = inpFileName.IndexOf(datasetPathSvr, StringComparison.OrdinalIgnoreCase);
 
                 if (charIndex >= 0)
                 {
@@ -1097,7 +1097,7 @@ namespace Space_Manager
             LogDebug("Getting archive hash for file " + fileNamePath);
 
             if (!string.IsNullOrEmpty(mMD5ResultsFileDatasetName) &&
-                string.Equals(mMD5ResultsFileDatasetName, datasetInfo.DatasetName, StringComparison.InvariantCultureIgnoreCase) &&
+                string.Equals(mMD5ResultsFileDatasetName, datasetInfo.DatasetName, StringComparison.OrdinalIgnoreCase) &&
                 mHashFileContents.Count > 0)
             {
                 // Hash file has already been loaded into memory; no need to re-load it
@@ -1292,6 +1292,7 @@ namespace Space_Manager
 
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
 
+                            // ReSharper disable once CanSimplifyDictionaryLookupWithTryAdd
                             if (mHashFileContents.ContainsKey(fileNameTrimmed))
                             {
                                 // Preferentially use the newer value, unless the older value is a MyEMSL SHA-1 hash but the newer value is an MD5 hash
@@ -1450,12 +1451,12 @@ namespace Space_Manager
         /// <param name="subdirectoryToFind">Subdirectory to find in the path</param>
         private static string TrimPathAfterSubdirectory(string fileNamePath, string subdirectoryToFind)
         {
-            var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
+            var startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.OrdinalIgnoreCase);
 
             if (startIndex < 0)
             {
                 // Try again using lowercase
-                startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.InvariantCultureIgnoreCase);
+                startIndex = fileNamePath.IndexOf(subdirectoryToFind, StringComparison.OrdinalIgnoreCase);
             }
 
             if (startIndex >= 0)
