@@ -752,6 +752,24 @@ namespace Space_Manager
             }
 
             fileInMyEMSL = true;
+
+            /*
+             * Uncomment to use hardcoded hash values to avoid having to re-hash large files while debugging
+
+            string serverFileHash;
+
+            if (serverFile.FullName.EndsWith("20260128_AMP_Jakes_DHB\\20260128_AMP_Jakes_DHB.d\\ser"))
+            {
+                serverFileHash = "cc3aa41f563d3f955bd141b7e47cf163e4585b5d";
+            } else if (serverFile.FullName.EndsWith("20260128_AMP_Jakes_DHB\\20260128_AMP_Jakes_DHB.d\\81cebc35-689f-481e-876c-a194acb54322_1.mcf"))
+            {
+                serverFileHash = "83f15de832b6459cb4ae2a831ffe6da11897dbf8";
+            }
+            else {
+                serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFile);
+            }
+             */
+
             var serverFileHash = Pacifica.Core.Utilities.GenerateSha1Hash(serverFile);
 
             // Compute the SHA-1 hash value of the file
@@ -765,7 +783,7 @@ namespace Space_Manager
                 return ArchiveCompareResults.Compare_Equal;
             }
 
-            LogDebug(string.Format(" ... hashes do not match: {0} locally vs. {1} in MyEMSL", serverFileHash, archiveFileInfo.Value));
+            LogWarning(string.Format(" ... hashes do not match: {0} locally vs. {1} in MyEMSL for {2}", serverFileHash, archiveFileInfo.Value, serverFile.FullName));
 
             return ArchiveCompareResults.Compare_Not_Equal_or_Missing;
         }
