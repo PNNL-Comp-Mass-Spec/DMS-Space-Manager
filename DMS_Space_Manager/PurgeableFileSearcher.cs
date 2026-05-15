@@ -72,12 +72,12 @@ namespace Space_Manager
         /// <returns>True if the files were all older than the threshold, otherwise false</returns>
         private static bool AddFilesToPurgeDateThreshold(DirectoryInfo targetDirectory, int ageThresholdDays, ISet<string> serverFilesToPurge)
         {
-            var foundFiles = FindFilesAndNewestDate(targetDirectory, out var dtMostRecentUpdate);
+            var foundFiles = FindFilesAndNewestDate(targetDirectory, out var mostRecentUpdate);
 
             if (ageThresholdDays < 1)
                 ageThresholdDays = 1;
 
-            if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > ageThresholdDays)
+            if (DateTime.UtcNow.Subtract(mostRecentUpdate).TotalDays > ageThresholdDays)
             {
                 foreach (var file in foundFiles)
                 {
@@ -134,14 +134,14 @@ namespace Space_Manager
         private static List<string> FindFilesAndNewestDate(DirectoryInfo targetDirectory, out DateTime mostRecentUpdate)
         {
             var foundFiles = new List<string>();
-            dtMostRecentUpdate = DateTime.MinValue;
+            mostRecentUpdate = DateTime.MinValue;
 
             // Find files in targetDirectory
             foreach (var candidateFile in targetDirectory.GetFiles("*.*", SearchOption.AllDirectories))
             {
-                if (candidateFile.LastWriteTimeUtc > dtMostRecentUpdate)
+                if (candidateFile.LastWriteTimeUtc > mostRecentUpdate)
                 {
-                    dtMostRecentUpdate = candidateFile.LastWriteTimeUtc;
+                    mostRecentUpdate = candidateFile.LastWriteTimeUtc;
                 }
 
                 foundFiles.Add(candidateFile.FullName);
@@ -279,9 +279,9 @@ namespace Space_Manager
                             // Files are not yet 3 years old
                             // If all the files are 1 year old, purge files over 50 MB
 
-                            var foundFiles = FindFilesAndNewestDate(subdirectory, out var dtMostRecentUpdate);
+                            var foundFiles = FindFilesAndNewestDate(subdirectory, out var mostRecentUpdate);
 
-                            if (DateTime.UtcNow.Subtract(dtMostRecentUpdate).TotalDays > 365)
+                            if (DateTime.UtcNow.Subtract(mostRecentUpdate).TotalDays > 365)
                             {
                                 // Purge all files over 50 MB in size
                                 var filesMatched = AddFilesToPurge(subdirectory, "*.*", 50 * 1024, true, serverFilesToPurge);

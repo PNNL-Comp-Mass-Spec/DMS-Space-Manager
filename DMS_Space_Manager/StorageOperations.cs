@@ -192,7 +192,7 @@ namespace Space_Manager
 
             ReportStatus("Verifying integrity vs. archive, dataset " + datasetInfo.DatasetDirectoryPath);
 
-            switch (CompareDatasetDirectories(datasetInfo, datasetPathSamba, out var lstServerFilesToPurge, out var lstJobsToPurge))
+            switch (CompareDatasetDirectories(datasetInfo, datasetPathSamba, out var serverFilesToPurge, out var jobsToPurge))
             {
                 case ArchiveCompareResults.Compare_Equal:
                     // Everything matches up
@@ -234,7 +234,7 @@ namespace Space_Manager
                     return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (lstServerFilesToPurge.Count == 0)
+            if (serverFilesToPurge.Count == 0)
             {
                 // Nothing was found to purge.
                 var msg = "No purgeable data found for dataset " + datasetInfo.DatasetName +
@@ -260,7 +260,7 @@ namespace Space_Manager
                 }
             }
 
-            var purgeMessage = "Purging " + lstServerFilesToPurge.Count + " file" + CheckPlural(lstServerFilesToPurge.Count) +
+            var purgeMessage = "Purging " + serverFilesToPurge.Count + " file" + CheckPlural(serverFilesToPurge.Count) +
                 " for dataset " + datasetInfo.DatasetDirectoryPath;
 
             var simulateMode = false;
@@ -282,21 +282,21 @@ namespace Space_Manager
             }
 
             // This list keeps track of the directories that we are processing
-            var lstServerDirectories = new SortedSet<string>();
+            var serverDirectories = new SortedSet<string>();
 
             var filesDeleted = 0;
             var directoriesDeleted = 0;
 
-            // Delete the files listed in lstServerFilesToPurge
-            // If the PurgePolicy is AutoPurge or Delete All Except QC, the files in lstServerFilesToPurge could be a subset of the actual files present
-            foreach (var fileToDelete in lstServerFilesToPurge)
+            // Delete the files listed in serverFilesToPurge
+            // If the PurgePolicy is AutoPurge or Delete All Except QC, the files in serverFilesToPurge could be a subset of the actual files present
+            foreach (var fileToDelete in serverFilesToPurge)
             {
                 try
                 {
                     var fiFile = new FileInfo(fileToDelete);
 
                     if (fiFile.Directory != null)
-                        lstServerDirectories.Add(fiFile.Directory.FullName);
+                        serverDirectories.Add(fiFile.Directory.FullName);
 
                     if (!fiFile.Exists)
                     {
@@ -349,7 +349,7 @@ namespace Space_Manager
                 ReportStatus("Deleted " + purgeMessage);
 
             // Look for empty directories that can now be deleted
-            foreach (var serverDirectory in lstServerDirectories)
+            foreach (var serverDirectory in serverDirectories)
             {
                 try
                 {
@@ -385,8 +385,8 @@ namespace Space_Manager
             // Log debug message
             LogDebug("Purged files and directories from dataset directory " + datasetInfo.DatasetDirectoryPath);
 
-            // Mark the jobs in lstJobsToPurge as purged
-            MarkPurgedJobs(lstJobsToPurge);
+            // Mark the jobs in jobsToPurge as purged
+            MarkPurgedJobs(jobsToPurge);
 
             // If we got to here, log success and exit
             purgeMessage = "Purged dataset " + datasetInfo.DatasetName + ", purge policy = " + GetPurgePolicyDescription(datasetInfo.PurgePolicy);
@@ -505,14 +505,14 @@ namespace Space_Manager
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sambaDatasetNamePath">Location of dataset directory in archive (samba)</param>
         /// <param name="serverFilesToPurge"></param>
-        /// <param name="lstJobsToPurge"></param>
+        /// <param name="jobsToPurge"></param>
         /// <returns>Comparison result</returns>
         public ArchiveCompareResults CompareDatasetDirectories(udtDatasetInfoType datasetInfo, string sambaDatasetNamePath,
             out SortedSet<string> serverFilesToPurge,
-            out List<int> lstJobsToPurge)
+            out List<int> jobsToPurge)
         {
             serverFilesToPurge = new SortedSet<string>();
-            lstJobsToPurge = new List<int>();
+            jobsToPurge = new List<int>();
 
             // Set this to true for now
             var compResultOverall = ArchiveCompareResults.Compare_Equal;
@@ -565,8 +565,7 @@ namespace Space_Manager
             }
 
             // Find files to purge based on the purge policy
-            var purgeableFileSearcher = new PurgeableFileSearcher();
-            serverFilesToPurge = purgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, datasetInfo, out lstJobsToPurge);
+            serverFilesToPurge = PurgeableFileSearcher.FindDatasetFilesToPurge(datasetDirectory, datasetInfo, out jobsToPurge);
 
             var mismatchMessage = string.Empty;
 
@@ -1262,22 +1261,22 @@ namespace Space_Manager
 
                     // ReSharper restore CommentTypo
 
-                    var lstHashAndPathInfo = inputLine.Split([' '], 2).ToList();
-                    if (lstHashAndPathInfo.Count > 1)
+                    var hashAndPathInfo = inputLine.Split([' '], 2).ToList();
+                    if (hashAndPathInfo.Count > 1)
                     {
                         // For the above example, we want to store:
                         // "QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15.raw" and "0dcf9d677ac76519ae54c11cc5e10723" or
                         // "SIC201309041722_Auto976603/Default_2008-08-22.xml"    and "796d99bcc6f1824dfe1c36cc9a61636dd1b07625"
 
-                        var hashCode = lstHashAndPathInfo[0];
+                        var hashCode = hashAndPathInfo[0];
 
-                        var lstPathAndFileID = lstHashAndPathInfo[1].Split('\t').ToList();
+                        var pathAndFileID = hashAndPathInfo[1].Split('\t').ToList();
 
-                        var fileNamePath = lstPathAndFileID[0];
+                        var fileNamePath = pathAndFileID[0];
 
                         var myEmslFileID = string.Empty;
-                        if (lstPathAndFileID.Count > 1)
-                            myEmslFileID = lstPathAndFileID[1];
+                        if (pathAndFileID.Count > 1)
+                            myEmslFileID = pathAndFileID[1];
 
                         var subdirectoryToFind = "/" + datasetInfo.DatasetDirectoryName + "/";
 
@@ -1292,6 +1291,7 @@ namespace Space_Manager
                             var newHashInfo = new HashInfo(hashCode, myEmslFileID);
 
                             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
+
                             if (mHashFileContents.ContainsKey(fileNameTrimmed))
                             {
                                 // Preferentially use the newer value, unless the older value is a MyEMSL SHA-1 hash but the newer value is an MD5 hash
@@ -1370,20 +1370,20 @@ namespace Space_Manager
         }
 
         /// <summary>
-        /// Call DMS to change AJ_Purged to 1 for the jobs in lstJobsToPurge
+        /// Call DMS to change AJ_Purged to 1 for the jobs in jobsToPurge
         /// </summary>
-        /// <param name="lstJobsToPurge"></param>
-        private void MarkPurgedJobs(IReadOnlyCollection<int> lstJobsToPurge)
+        /// <param name="jobsToPurge"></param>
+        private void MarkPurgedJobs(IReadOnlyCollection<int> jobsToPurge)
         {
             const string SP_MARK_PURGED_JOBS = "mark_purged_jobs";
 
-            if (lstJobsToPurge.Count == 0)
+            if (jobsToPurge.Count == 0)
             {
                 return;
             }
 
             // Construct a comma-separated list of jobs
-            var jobList = string.Join(", ", lstJobsToPurge);
+            var jobList = string.Join(", ", jobsToPurge);
 
             var simulateMode = false;
 #if !DoDelete
@@ -1391,7 +1391,7 @@ namespace Space_Manager
 #endif
             if (PreviewMode || simulateMode)
             {
-                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(lstJobsToPurge.Count) + " " + jobList;
+                var msg = "SIMULATE: call to " + SP_MARK_PURGED_JOBS + " for job" + CheckPlural(jobsToPurge.Count) + " " + jobList;
                 LogDebug(msg);
                 return;
             }
@@ -1427,7 +1427,7 @@ namespace Space_Manager
 
             if (returnCode == 0)
             {
-                ReportStatus(string.Format("Marked job{0} {1} as purged", CheckPlural(lstJobsToPurge.Count), jobList));
+                ReportStatus(string.Format("Marked job{0} {1} as purged", CheckPlural(jobsToPurge.Count), jobList));
             }
             else
             {
@@ -1435,7 +1435,7 @@ namespace Space_Manager
 
                 var msg = string.Format(
                     "Error calling stored procedure {0} to mark job{1} {2} as purged{3}",
-                    SP_MARK_PURGED_JOBS, CheckPlural(lstJobsToPurge.Count), jobList, appendMsg);
+                    SP_MARK_PURGED_JOBS, CheckPlural(jobsToPurge.Count), jobList, appendMsg);
 
                 LogError(msg);
             }
@@ -1538,7 +1538,7 @@ namespace Space_Manager
                             {
                                 // Old comment:
                                 //   We need the DatasetPurgeArchiveHelper to create a new stagemd5 file that computes a new hash for this file
-                                //   Do not include this line in lstUpdatedMD5Info;
+                                //   Do not include this line in updatedMD5Info;
 
                                 // New Comment:
                                 //   We need to run a new archive update job for this dataset
