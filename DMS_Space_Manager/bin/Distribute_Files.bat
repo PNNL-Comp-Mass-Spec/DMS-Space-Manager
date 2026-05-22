@@ -8,11 +8,14 @@ set TargetBase=\\Proto-3\DMS_Programs_Dist\CaptureTaskManagerDistribution\SpaceM
 echo Copying to %TargetBase%
 
 @echo on
-xcopy Release\net48\Space_Manager.exe                %TargetBase% /D /Y
-xcopy Release\net48\Space_Manager.pdb                %TargetBase% /D /Y
-xcopy Release\net48\Space_Manager.exe.config         %TargetBase% /D /Y
-xcopy Release\net48\*.dll                            %TargetBase% /D /Y /S
-xcopy ..\..\README.md                                %TargetBase% /D /Y
+xcopy Release\net8.0-windows\Space_Manager.exe                %TargetBase% /D /Y
+xcopy Release\net8.0-windows\Space_Manager.pdb                %TargetBase% /D /Y
+xcopy Release\net8.0-windows\Space_Manager.exe.config         %TargetBase% /D /Y
+xcopy Release\net8.0-windows\*.dll                            %TargetBase% /D /Y /S
+xcopy Release\net8.0-windows\Space_Manager.deps.json          %TargetBase% /D /Y
+xcopy Release\net8.0-windows\Space_Manager.runtimeconfig.json %TargetBase% /D /Y
+
+xcopy ..\..\README.md                                         %TargetBase% /D /Y
 
 :Done
 
