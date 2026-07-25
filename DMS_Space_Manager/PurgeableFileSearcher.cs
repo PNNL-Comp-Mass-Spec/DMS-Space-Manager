@@ -7,14 +7,14 @@ namespace Space_Manager
 {
     internal static class PurgeableFileSearcher
     {
-        // Ignore Spelling: idx, wiff, maldi, uimf, tof, baf, ser, fid, xtr
+        // Ignore Spelling: idx, wiff, maldi, uimf, recurse, recursing, tof, baf, ser, fid, xtr
 
         /// <summary>
         /// Look for files in targetDirectory matching filterSpec; do not recurse
         /// Matching files are added to serverFilesToPurge
         /// </summary>
         /// <param name="targetDirectory">Target directory</param>
-        /// <param name="filterSpec">Filter filter spec</param>
+        /// <param name="filterSpec">File filter spec</param>
         /// <param name="serverFilesToPurge">List of server files to purge</param>
         private static void AddFilesToPurge(DirectoryInfo targetDirectory, string filterSpec, ISet<string> serverFilesToPurge)
         {

@@ -16,6 +16,8 @@ namespace Space_Manager
     /// </summary>
     internal static class Program
     {
+        // Ignore Spelling: yyyy
+
         private static readonly string ProgramDate;
 
         private static MainProgram mMainProgram;

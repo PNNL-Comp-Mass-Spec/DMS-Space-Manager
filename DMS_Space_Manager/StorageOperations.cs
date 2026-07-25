@@ -23,7 +23,7 @@ namespace Space_Manager
     /// </summary>
     public class StorageOperations : LoggerBase
     {
-        // Ignore Spelling: dmsarch, frodo, myemsl, pre, purgeable, svc-dms, udt
+        // Ignore Spelling: dmsarch, frodo, myemsl, pre, purgeable, svc-dms, udt, Uncomment
 
         private const string RESULT_FILE_NAME_PREFIX = "results.";
         private const string WAITING_FOR_HASH_FILE = "(HASH)";
@@ -754,7 +754,7 @@ namespace Space_Manager
             fileInMyEMSL = true;
 
             /*
-             * Uncomment to use hardcoded hash values to avoid having to re-hash large files while debugging
+             * Uncomment to use hard-coded hash values to avoid having to re-hash large files while debugging
 
             string serverFileHash;
 
@@ -1425,7 +1425,7 @@ namespace Space_Manager
             var cmd = mDMSProcedureExecutor.CreateCommand(SP_MARK_PURGED_JOBS, CommandType.StoredProcedure);
 
             // Define parameter for procedure's return value
-            // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
+            // If querying a PostgreSQL DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
             var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
             mDMSProcedureExecutor.AddParameter(cmd, "@JobList", SqlType.VarChar, 4000, jobList);

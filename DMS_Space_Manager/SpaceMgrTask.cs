@@ -107,7 +107,7 @@ namespace Space_Manager
                 var cmd = mDMSProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
-                // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
+                // If querying a PostgreSQL DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
                 var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 // ReSharper disable once StringLiteralTypo
@@ -232,7 +232,7 @@ namespace Space_Manager
             var cmd = mDMSProcedureExecutor.CreateCommand(spName, CommandType.StoredProcedure);
 
             // Define parameter for procedure's return value
-            // If querying a Postgres DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
+            // If querying a PostgreSQL DB, mDMSProcedureExecutor will auto-change "@return" to "_returnCode"
             var returnParam = mDMSProcedureExecutor.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
             mDMSProcedureExecutor.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, datasetName);
