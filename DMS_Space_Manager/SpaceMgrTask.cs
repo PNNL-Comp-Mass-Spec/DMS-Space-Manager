@@ -172,6 +172,7 @@ namespace Space_Manager
                         return EnumRequestTaskResult.ResultError;
 
                     case RET_VAL_TASK_NOT_AVAILABLE:
+                    case RET_VAL_TASK_NOT_AVAILABLE_POSTGRES:
                         // No jobs found
                         return EnumRequestTaskResult.NoTaskFound;
 

@@ -23,6 +23,7 @@ namespace Space_Manager
 
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
+        protected const int RET_VAL_TASK_NOT_AVAILABLE_POSTGRES = 5300;
 
         protected readonly MgrSettings mMgrParams;
 
