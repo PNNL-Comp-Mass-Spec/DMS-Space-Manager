@@ -230,7 +230,8 @@ namespace Space_Manager
 
                     // Files ser_part-aa, ser_part-ab, ser_part-ac, etc. are manually created for 12T_FTICR_P_Imaging datasets that have large ser files that cannot be pushed into MyEMSL
                     // The ser_part files are creating using the command "split -b 50G ser ser_part-" in the .d directory of the imaging dataset
-                    AddFilesToPurge(subdirectory, "ser_part-*", 0, true, serverFilesToPurge);	        // Manually created for 12T_FTICR_P_Imaging datasets
+                    // Search all directories in the dataset directory, not just those in the vendor dataset directory
+                    AddFilesToPurge(datasetDirectory, "ser_part-*", 0, true, serverFilesToPurge);	        // Manually created for 12T_FTICR_P_Imaging datasets
 
                     // Purge all files over 2 MB in size
                     AddFilesToPurge(subdirectory, "*.*", 2048, true, serverFilesToPurge);
